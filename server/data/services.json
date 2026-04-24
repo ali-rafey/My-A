@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "title": "Web Development",
+    "description": "High-performance web apps, dashboards, and customer portals built for scale."
+  },
+  {
+    "id": 2,
+    "title": "Mobile Apps",
+    "description": "Cross-platform mobile experiences that stay fast, clean, and maintainable."
+  },
+  {
+    "id": 3,
+    "title": "AI Solutions",
+    "description": "Automations and intelligent assistants that reduce manual effort and improve decisions."
+  }
+]
