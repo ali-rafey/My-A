@@ -223,11 +223,23 @@
     padding: var(--space-5) var(--space-6);
   }
 
+  /* The mobile drawer is positioned below the navbar's bounding box; we have to let it escape
+     the navbar's `overflow: hidden` (which exists to clip the glass-shine ::before on desktop). */
+  .menuOpen {
+    overflow: visible;
+  }
+
   .scrolled {
     width: calc(100% - var(--space-8));
     height: 66px;
     padding: calc(var(--space-4) + 2px) var(--space-6);
     border-radius: 16px;
+  }
+
+  /* When scrolled and menu open at the same time, also keep overflow visible (the .scrolled
+     class is more specific than .navbar — without this the drawer gets clipped again). */
+  .scrolled.menuOpen {
+    overflow: visible;
   }
 
   .links,
