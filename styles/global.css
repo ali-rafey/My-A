@@ -29,6 +29,14 @@ main {
   scroll-margin-top: 90px;
 }
 
+@media (max-width: 768px) {
+  .section {
+    /* Don't force every section to be at least one viewport tall on phones — content drives the height. */
+    min-height: auto;
+    padding: var(--space-16) 0 var(--space-12);
+  }
+}
+
 .container {
   width: min(100%, var(--container-max));
   margin: 0 auto;

@@ -84,7 +84,21 @@
 }
 
 @media (max-width: 768px) {
+  .section {
+    /* Don't pad an extra 5rem on top of the nav height — there's only one column to hold. */
+    padding-top: calc(var(--space-12) + var(--nav-height));
+    padding-bottom: var(--space-12);
+  }
+
   .layout {
     grid-template-columns: 1fr;
+    /* Let content flow from the top instead of centering inside a 100vh box. */
+    min-height: 0;
+    align-items: start;
+    gap: var(--space-8);
+  }
+
+  .panelValue {
+    font-size: 2rem;
   }
 }
