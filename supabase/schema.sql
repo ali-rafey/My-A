@@ -72,18 +72,27 @@ create index if not exists leads_country_idx    on public.leads (country);
 alter table public.blogs enable row level security;
 alter table public.leads enable row level security;
 
--- Explicit table-level grants. RLS only filters which rows a role can touch — it does NOT grant the
--- underlying INSERT/SELECT privilege. Supabase normally auto-grants these to anon/authenticated when
--- a table is created, but the GRANTs can be lost if RLS is toggled or a previous schema run failed
--- mid-way. Make them idempotent here so the contact form always works.
+-- Service role MUST bypass RLS. If "force row level security" is on, even bypassrls roles get
+-- filtered, which means the admin dashboard can SELECT some rows but UPDATE/DELETE silently match
+-- 0 rows. Always-off-force is the only sane setting for these tables.
+alter table public.blogs no force row level security;
+alter table public.leads no force row level security;
+
+-- Explicit table-level grants. RLS only filters which rows a role can touch — it does NOT grant
+-- the underlying INSERT/SELECT/UPDATE/DELETE privilege. Supabase normally auto-grants these, but
+-- a previous schema run, dashboard policy edit, or "Reset RLS" can drop them. Re-grant idempotently.
+grant select, insert, update, delete on public.leads to service_role;
+grant select, insert, update, delete on public.blogs to service_role;
 grant insert on public.leads to anon, authenticated;
 grant select on public.blogs to anon, authenticated;
-grant usage  on schema public to anon, authenticated;
+grant usage  on schema public to anon, authenticated, service_role;
 
 -- Drop existing policies so re-runs don't error.
 drop policy if exists "Public can read published blogs" on public.blogs;
 drop policy if exists "Public can insert leads"         on public.leads;
 drop policy if exists "Public cannot read leads"        on public.leads;
+drop policy if exists "Service role full access on leads" on public.leads;
+drop policy if exists "Service role full access on blogs" on public.blogs;
 
 -- Blogs: public read access, but only for published rows.
 create policy "Public can read published blogs"
@@ -97,6 +106,24 @@ create policy "Public can insert leads"
   on public.leads
   for insert
   to anon, authenticated
+  with check (true);
+
+-- Belt-and-suspenders policies for the service role. Strictly speaking, service_role has
+-- BYPASSRLS so policies don't apply — but if force RLS ever gets re-enabled (Supabase Dashboard
+-- → Authentication → Policies has a "Force RLS" toggle), these policies guarantee the admin
+-- dashboard's UPDATE/DELETE keep working without silent zero-row matches.
+create policy "Service role full access on leads"
+  on public.leads
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+create policy "Service role full access on blogs"
+  on public.blogs
+  for all
+  to service_role
+  using (true)
   with check (true);
 
 -- =============================================================================

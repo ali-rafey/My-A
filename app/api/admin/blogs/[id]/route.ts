@@ -52,12 +52,13 @@ export const PUT = withAdminGuard(async (req: NextRequest, { params }: { params:
   }
 
   const supabase = createServiceClient();
+  // No .single() — surface RLS-blocked-zero-row scenarios as a clear 404 instead of a confusing
+  // "Cannot coerce the result to a single JSON object".
   const { data, error } = await supabase
     .from('blogs')
     .update({ title, slug, content, meta_description, cover_image, tags, published })
     .eq('id', params.id)
-    .select()
-    .single();
+    .select();
 
   if (error) {
     console.error('[admin/blogs/:id PUT] supabase error:', error);
@@ -66,12 +67,22 @@ export const PUT = withAdminGuard(async (req: NextRequest, { params }: { params:
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  if (!data || data.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          `No row matched id ${params.id}. The post may have been deleted, OR row-level security ` +
+          `is blocking the service role. Run the policies in supabase/schema.sql.`,
+      },
+      { status: 404 },
+    );
+  }
 
   revalidatePath('/blogs');
   if (slug) revalidatePath(`/blogs/${slug}`);
   revalidatePath('/');
 
-  return NextResponse.json({ blog: data });
+  return NextResponse.json({ blog: data[0] });
 });
 
 export const DELETE = withAdminGuard(async (_req: NextRequest, { params }: { params: { id: string } }) => {
@@ -82,15 +93,25 @@ export const DELETE = withAdminGuard(async (_req: NextRequest, { params }: { par
     .eq('id', params.id)
     .maybeSingle();
 
-  const { error } = await supabase.from('blogs').delete().eq('id', params.id);
+  const { data, error } = await supabase.from('blogs').delete().eq('id', params.id).select();
   if (error) {
     console.error('[admin/blogs/:id DELETE] supabase error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!data || data.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          `Delete affected 0 rows. The post with id ${params.id} either doesn't exist or ` +
+          `row-level security is blocking the service role from deleting it.`,
+      },
+      { status: 404 },
+    );
   }
 
   revalidatePath('/blogs');
   if (existing?.slug) revalidatePath(`/blogs/${existing.slug}`);
   revalidatePath('/');
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, deleted: data.length });
 });

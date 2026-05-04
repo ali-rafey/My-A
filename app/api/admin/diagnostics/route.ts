@@ -55,11 +55,17 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
     return NextResponse.json({ checks, halt: 'Missing env vars — fix in Vercel and redeploy.' });
   }
 
+  // Force `cache: no-store` on every supabase fetch so Next.js's data cache cannot stale-serve us
+  // counts that disagree with what's actually in Postgres right now.
+  const noStoreFetch: typeof fetch = (input, init) => fetch(input, { ...(init ?? {}), cache: 'no-store' });
+
   const serviceClient = createClient(url, service, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: noStoreFetch },
   });
   const anonClient = createClient(url, anon, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: noStoreFetch },
   });
 
   // 2. leads table exists + readable via service role
@@ -175,14 +181,96 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
     });
   }
 
-  // 7. Service-role can DELETE the row.
+  // 7. Service-role can UPDATE the row (the same path /api/admin/leads/:id PATCH takes).
   if (testId) {
-    const { error } = await serviceClient.from('leads').delete().eq('id', testId);
+    const { data, error } = await serviceClient
+      .from('leads')
+      .update({ read: true })
+      .eq('id', testId)
+      .select();
+    const affected = data?.length ?? 0;
+    checks.push({
+      name: 'service-role UPDATE diagnostic row',
+      ok: !error && affected === 1,
+      detail: error
+        ? `${error.code ?? ''} ${error.message}`
+        : affected === 0
+          ? '0 rows affected — RLS is blocking service-role UPDATE. Run: alter table public.leads no force row level security; create policy "Service role full access on leads" on public.leads for all to service_role using (true) with check (true); notify pgrst, \'reload schema\';'
+          : `OK — UPDATE affected ${affected} row(s)`,
+    });
+  }
+
+  // 8. Service-role can DELETE the row.
+  if (testId) {
+    const { data, error } = await serviceClient
+      .from('leads')
+      .delete()
+      .eq('id', testId)
+      .select();
+    const affected = data?.length ?? 0;
     checks.push({
       name: 'service-role DELETE diagnostic row',
-      ok: !error,
-      detail: error ? `${error.code ?? ''} ${error.message}` : 'OK — cleaned up',
+      ok: !error && affected === 1,
+      detail: error
+        ? `${error.code ?? ''} ${error.message}`
+        : affected === 0
+          ? '0 rows affected — RLS is blocking service-role DELETE. Same fix as the UPDATE check above.'
+          : `OK — DELETE affected ${affected} row(s)`,
     });
+  }
+
+  // 9. HEAD count vs full SELECT — if these disagree, RLS is filtering rows from the SELECT path
+  //    that the COUNT path doesn't see, which is exactly the dashboard-vs-leads-page mismatch.
+  {
+    const headRes = await serviceClient
+      .from('leads')
+      .select('*', { count: 'exact', head: true });
+    const fullRes = await serviceClient
+      .from('leads')
+      .select('id, name, email, created_at')
+      .order('created_at', { ascending: false });
+
+    const headCount = headRes.count ?? 0;
+    const fullRows = fullRes.data ?? [];
+    const ok = !headRes.error && !fullRes.error && headCount === fullRows.length;
+    let detail: string;
+    if (headRes.error || fullRes.error) {
+      detail = `error: ${headRes.error?.message ?? fullRes.error?.message}`;
+    } else if (headCount !== fullRows.length) {
+      detail =
+        `MISMATCH — HEAD count says ${headCount} but SELECT returned ${fullRows.length} rows. ` +
+        `RLS or a SELECT policy is filtering ${headCount - fullRows.length} row(s) from service_role. ` +
+        `Fix: alter table public.leads no force row level security; ` +
+        `create policy "Service role full access on leads" on public.leads for all to service_role using (true) with check (true); ` +
+        `notify pgrst, 'reload schema';`;
+    } else {
+      detail = `OK — both queries see ${headCount} rows`;
+    }
+    checks.push({ name: 'HEAD count matches SELECT count (leads)', ok, detail });
+  }
+
+  // 10. Print the actual rows visible to service_role so you can compare with what the leads page renders.
+  {
+    const { data, error } = await serviceClient
+      .from('leads')
+      .select('id, name, email, read, created_at')
+      .order('created_at', { ascending: false });
+    if (error) {
+      checks.push({
+        name: 'service-role SELECT rows preview',
+        ok: false,
+        detail: `${error.code ?? ''} ${error.message}`,
+      });
+    } else {
+      const lines = (data ?? []).map(
+        (r) => `${r.created_at?.slice(0, 19) ?? ''}  ${r.read ? 'R' : 'U'}  ${r.name} <${r.email}>  id=${r.id?.slice(0, 8)}…`,
+      );
+      checks.push({
+        name: 'service-role SELECT rows preview',
+        ok: true,
+        detail: lines.length === 0 ? '(no rows)' : lines.join('\n'),
+      });
+    }
   }
 
   return NextResponse.json({ checks, halt: null });
