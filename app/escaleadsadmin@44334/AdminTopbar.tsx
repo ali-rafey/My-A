@@ -11,6 +11,7 @@ const links = [
   { href: `${ADMIN_BASE}`, label: 'Dashboard', exact: true },
   { href: `${ADMIN_BASE}/blogs`, label: 'Blogs' },
   { href: `${ADMIN_BASE}/leads`, label: 'Leads' },
+  { href: `${ADMIN_BASE}/diagnostics`, label: 'Diagnostics' },
 ];
 
 export default function AdminTopbar() {

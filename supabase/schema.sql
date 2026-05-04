@@ -90,3 +90,10 @@ create policy "Public can insert leads"
   for insert
   to anon, authenticated
   with check (true);
+
+-- =============================================================================
+-- IMPORTANT: PostgREST (the API layer between your app and Postgres) caches the
+-- schema. After ALTER TABLE / CREATE TABLE, the cache must be reloaded — otherwise
+-- new columns return "column not found" errors even though they exist.
+-- =============================================================================
+notify pgrst, 'reload schema';
