@@ -3,38 +3,51 @@ import { createServerAnonClient, createServiceClient } from '@/lib/supabase/serv
 import type { Blog } from '@/lib/supabase/types';
 
 // Public reads (RLS-enforced, only published rows).
+// All failures (missing env, network, RLS) degrade to an empty result so the build/render never crashes —
+// pages just show an empty state until Supabase is configured.
 export async function listPublishedBlogs(): Promise<Blog[]> {
-  const supabase = createServerAnonClient();
-  const { data, error } = await supabase
-    .from('blogs')
-    .select('*')
-    .eq('published', true)
-    .order('created_at', { ascending: false });
+  try {
+    const supabase = createServerAnonClient();
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('listPublishedBlogs failed:', error.message);
+    if (error) {
+      console.error('listPublishedBlogs failed:', error.message);
+      return [];
+    }
+    return (data ?? []) as Blog[];
+  } catch (err) {
+    console.error('listPublishedBlogs unavailable:', err instanceof Error ? err.message : err);
     return [];
   }
-  return (data ?? []) as Blog[];
 }
 
 export async function getPublishedBlogBySlug(slug: string): Promise<Blog | null> {
-  const supabase = createServerAnonClient();
-  const { data, error } = await supabase
-    .from('blogs')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle();
+  try {
+    const supabase = createServerAnonClient();
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('*')
+      .eq('slug', slug)
+      .eq('published', true)
+      .maybeSingle();
 
-  if (error) {
-    console.error('getPublishedBlogBySlug failed:', error.message);
+    if (error) {
+      console.error('getPublishedBlogBySlug failed:', error.message);
+      return null;
+    }
+    return (data as Blog | null) ?? null;
+  } catch (err) {
+    console.error('getPublishedBlogBySlug unavailable:', err instanceof Error ? err.message : err);
     return null;
   }
-  return (data as Blog | null) ?? null;
 }
 
-// Admin reads (service role — sees drafts too).
+// Admin reads (service role — sees drafts too). These DO throw on misconfiguration so
+// the admin UI surfaces the problem clearly instead of silently showing zero rows.
 export async function adminListBlogs(): Promise<Blog[]> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
