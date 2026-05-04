@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
-import { sanitizeText, sanitizeRichHtml, slugify } from '@/lib/sanitize';
+import { sanitizeText, slugify } from '@/lib/sanitize';
+import { sanitizeRichHtml } from '@/lib/sanitize-html';
 import { assertSameOrigin } from '@/lib/security/csrf';
 import { rateLimit, clientKey } from '@/lib/rate-limit';
 import type { BlogInput } from '@/lib/supabase/types';

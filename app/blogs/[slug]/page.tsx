@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPublishedBlogBySlug, listPublishedBlogs } from '@/lib/content/blogs';
-import { sanitizeRichHtml } from '@/lib/sanitize';
+import { sanitizeRichHtml } from '@/lib/sanitize-html';
 import { formatDate } from '@/lib/format';
 import styles from '../blogs.module.css';
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionOptions } from '@/lib/auth/session';
+import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie';
 
 // The hidden admin URL. The "@" in the URL is allowed; the filesystem folder uses the same literal name.
 const ADMIN_BASE = '/escaleadsadmin@44334';
@@ -35,7 +35,7 @@ export function middleware(req: NextRequest) {
     return res;
   }
 
-  const cookie = req.cookies.get(sessionOptions.cookieName)?.value;
+  const cookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!cookie) {
     const url = req.nextUrl.clone();
     url.pathname = ADMIN_BASE;

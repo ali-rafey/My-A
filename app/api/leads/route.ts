@@ -5,6 +5,7 @@ import { rateLimit, clientKey } from '@/lib/rate-limit';
 import { assertSameOrigin } from '@/lib/security/csrf';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type LeadPayload = {
   name?: unknown;
@@ -13,7 +14,7 @@ type LeadPayload = {
   message?: unknown;
 };
 
-export async function POST(req: NextRequest) {
+async function handleLead(req: NextRequest): Promise<NextResponse> {
   // 1. Origin check — defense-in-depth on top of SameSite=Lax cookies.
   const csrf = assertSameOrigin(req);
   if (!csrf.ok) {
@@ -80,4 +81,17 @@ export async function POST(req: NextRequest) {
     { status: 'success', message: 'Thanks — we will get back to you soon.' },
     { status: 201 },
   );
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    return await handleLead(req);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown server error.';
+    console.error('[api/leads] uncaught error:', err);
+    return NextResponse.json(
+      { status: 'error', message: `We could not process your request: ${message}` },
+      { status: 500 },
+    );
+  }
 }

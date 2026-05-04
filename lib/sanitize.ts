@@ -1,28 +1,28 @@
-import DOMPurify from 'isomorphic-dompurify';
+// Plain-text sanitizer — NO DOMPurify dependency.
+// This is the file imported by hot paths like /api/admin/login and /api/leads, so we keep it
+// dependency-free. Rich-HTML sanitization for blog posts lives in lib/sanitize-html.ts and is
+// imported only by the routes that need it.
 
-// Strip all HTML — for short inputs (name, email, phone, plain message).
 export function sanitizeText(value: unknown, maxLength = 2000): string {
   if (typeof value !== 'string') return '';
-  const stripped = DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+  const stripped = value
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>]/g, '')
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_match, name) => {
+      switch (name) {
+        case 'amp': return '&';
+        case 'lt': return '';
+        case 'gt': return '';
+        case 'quot': return '"';
+        case '#39': return "'";
+        case 'nbsp': return ' ';
+        default: return '';
+      }
+    });
   return stripped.trim().slice(0, maxLength);
 }
 
-// Allow safe rich-text HTML (for blog content authored in admin).
-export function sanitizeRichHtml(value: unknown): string {
-  if (typeof value !== 'string') return '';
-  return DOMPurify.sanitize(value, {
-    ALLOWED_TAGS: [
-      'p', 'br', 'strong', 'em', 'u', 's', 'blockquote', 'code', 'pre',
-      'ul', 'ol', 'li', 'a', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'hr', 'figure', 'figcaption',
-    ],
-    ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'rel', 'target'],
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
-  });
-}
-
 export function isValidEmail(value: string): boolean {
-  // Conservative RFC-5322-lite check; the real check is the confirmation email anyway.
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
 }
 
