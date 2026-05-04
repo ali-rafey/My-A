@@ -8,12 +8,14 @@
 /** @type {import('next').NextConfig} */
 const ContentSecurityPolicy = [
   "default-src 'self'",
-  // next/script needs 'unsafe-inline' for the inline runtime; we restrict to self + Vercel-style hash injection where possible.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // next/script needs 'unsafe-inline' for the inline runtime; GA4 loads gtag.js from googletagmanager.com.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
   "font-src 'self' fonts.gstatic.com data:",
+  // GA pixels and tag-manager preview UI need to load from these domains.
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // GA4 beacons hit google-analytics.com / analytics.google.com / *.g.doubleclick.net.
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

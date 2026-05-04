@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/components/navbar/Navbar';
+import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
 import '@/styles/index.css';
 
 const inter = Inter({
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        <GoogleAnalytics />
       </body>
     </html>
   );
