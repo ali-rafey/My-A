@@ -131,10 +131,21 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
       .single();
 
     if (error) {
+      // Disambiguate the two flavours of 42501:
+      //  - Missing table-level GRANT → "permission denied for table leads"
+      //  - RLS rejecting the row     → "new row violates row-level security policy"
+      let hint = '';
+      if (error.code === '42501') {
+        if (/permission denied/i.test(error.message)) {
+          hint = ' Run: grant insert on public.leads to anon, authenticated; notify pgrst, \'reload schema\';';
+        } else if (/row-level security/i.test(error.message)) {
+          hint = ' Either the RLS policy "Public can insert leads" is missing, OR the anon role lacks GRANT INSERT on public.leads. Run: grant insert on public.leads to anon, authenticated; notify pgrst, \'reload schema\';';
+        }
+      }
       checks.push({
         name: 'anon INSERT into leads (full row)',
         ok: false,
-        detail: `${error.code ?? ''} ${error.message}. Check RLS policy "Public can insert leads".`,
+        detail: `${error.code ?? ''} ${error.message}.${hint}`,
       });
     } else {
       testId = data?.id ?? null;

@@ -72,6 +72,14 @@ create index if not exists leads_country_idx    on public.leads (country);
 alter table public.blogs enable row level security;
 alter table public.leads enable row level security;
 
+-- Explicit table-level grants. RLS only filters which rows a role can touch — it does NOT grant the
+-- underlying INSERT/SELECT privilege. Supabase normally auto-grants these to anon/authenticated when
+-- a table is created, but the GRANTs can be lost if RLS is toggled or a previous schema run failed
+-- mid-way. Make them idempotent here so the contact form always works.
+grant insert on public.leads to anon, authenticated;
+grant select on public.blogs to anon, authenticated;
+grant usage  on schema public to anon, authenticated;
+
 -- Drop existing policies so re-runs don't error.
 drop policy if exists "Public can read published blogs" on public.blogs;
 drop policy if exists "Public can insert leads"         on public.leads;
