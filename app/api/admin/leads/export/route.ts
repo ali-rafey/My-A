@@ -29,7 +29,10 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const rows = data ?? [];
-  const header = ['id', 'name', 'email', 'phone', 'message', 'read', 'created_at'];
+  const header = [
+    'id', 'name', 'email', 'phone', 'message', 'read', 'created_at',
+    'ip_address', 'country', 'region', 'city',
+  ];
   const lines = [header.join(',')];
 
   for (const lead of rows) {
@@ -41,6 +44,10 @@ export async function GET() {
       lead.message,
       lead.read ? 'true' : 'false',
       lead.created_at,
+      lead.ip_address ?? '',
+      lead.country ?? '',
+      lead.region ?? '',
+      lead.city ?? '',
     ].map(csvEscape).join(','));
   }
 

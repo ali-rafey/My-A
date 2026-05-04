@@ -44,11 +44,22 @@ create table if not exists public.leads (
   phone       text,
   message     text not null,
   read        boolean not null default false,
-  created_at  timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+  ip_address  text,
+  country     text,
+  region      text,
+  city        text
 );
+
+-- Idempotent column additions for tables created before geo tracking was added.
+alter table public.leads add column if not exists ip_address text;
+alter table public.leads add column if not exists country    text;
+alter table public.leads add column if not exists region     text;
+alter table public.leads add column if not exists city       text;
 
 create index if not exists leads_created_at_idx on public.leads (created_at desc);
 create index if not exists leads_read_idx       on public.leads (read, created_at desc);
+create index if not exists leads_country_idx    on public.leads (country);
 
 -- =============================================================================
 -- ROW LEVEL SECURITY

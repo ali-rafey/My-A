@@ -19,6 +19,10 @@ export type Lead = {
   message: string;
   read: boolean;
   created_at: string;
+  ip_address: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
 };
 
 export type BlogInput = {

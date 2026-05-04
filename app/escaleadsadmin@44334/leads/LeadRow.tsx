@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import type { Lead } from '@/lib/supabase/types';
 import styles from '../admin.module.css';
 
+// Render a flag emoji for a 2-letter country code (purely cosmetic; falls back to empty string).
+function flagFor(country: string | null): string {
+  if (!country || country.length !== 2) return '';
+  const A = 0x1f1e6;
+  return String.fromCodePoint(A + (country.charCodeAt(0) - 65), A + (country.charCodeAt(1) - 65));
+}
+
+function formatLocation(lead: Pick<Lead, 'city' | 'region' | 'country'>): string {
+  return [lead.city, lead.region, lead.country].filter(Boolean).join(', ');
+}
+
 export default function LeadRow({ lead, formattedDate }: { lead: Lead; formattedDate: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -56,6 +67,22 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
       <td>{lead.phone ? <a className={styles.linkRow} href={`tel:${lead.phone}`}>{lead.phone}</a> : '—'}</td>
       <td>
         <div className={styles.leadDetails}>{lead.message}</div>
+      </td>
+      <td>
+        {lead.city || lead.region || lead.country ? (
+          <span title={[lead.city, lead.region, lead.country].filter(Boolean).join(', ')}>
+            {flagFor(lead.country)} {formatLocation(lead) || '—'}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--color-silver-dark)' }}>—</span>
+        )}
+      </td>
+      <td>
+        {lead.ip_address ? (
+          <code style={{ fontSize: '0.8rem', color: 'var(--color-silver-dark)' }}>{lead.ip_address}</code>
+        ) : (
+          <span style={{ color: 'var(--color-silver-dark)' }}>—</span>
+        )}
       </td>
       <td>{formattedDate}</td>
       <td>

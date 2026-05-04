@@ -3,6 +3,7 @@ import { createServerAnonClient } from '@/lib/supabase/server';
 import { sanitizeText, isValidEmail } from '@/lib/sanitize';
 import { rateLimit, clientKey } from '@/lib/rate-limit';
 import { assertSameOrigin } from '@/lib/security/csrf';
+import { getClientInfo } from '@/lib/client-info';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,13 +61,21 @@ async function handleLead(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Insert via the anon client — RLS allows INSERT only.
+  // 3. Capture connection metadata for the admin dashboard. Vercel injects geo headers automatically;
+  //    on other hosts those are null and only the IP is stored. Not surfaced to the client.
+  const clientInfo = getClientInfo(req.headers);
+
+  // 4. Insert via the anon client — RLS allows INSERT only.
   const supabase = createServerAnonClient();
   const { error } = await supabase.from('leads').insert({
     name,
     email,
     phone: phone || null,
     message,
+    ip_address: clientInfo.ip,
+    country: clientInfo.country,
+    region: clientInfo.region,
+    city: clientInfo.city,
   });
 
   if (error) {

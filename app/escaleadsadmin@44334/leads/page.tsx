@@ -49,6 +49,8 @@ export default async function AdminLeadsPage() {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Message</th>
+                  <th>Location</th>
+                  <th>IP</th>
                   <th>Received</th>
                   <th>Actions</th>
                 </tr>
