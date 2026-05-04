@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/session';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { withAdminGuard } from '@/lib/admin-handler';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -13,20 +14,17 @@ function csvEscape(value: unknown): string {
   return str;
 }
 
-export async function GET() {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdminGuard(async (_req: NextRequest) => {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('leads')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[admin/leads/export] supabase error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   const rows = data ?? [];
   const header = [
@@ -61,4 +59,4 @@ export async function GET() {
       'Cache-Control': 'no-store',
     },
   });
-}
+}, { csrf: false });

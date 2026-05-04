@@ -66,22 +66,55 @@ async function handleLead(req: NextRequest): Promise<NextResponse> {
   const clientInfo = getClientInfo(req.headers);
 
   // 4. Insert via the anon client — RLS allows INSERT only.
+  //    Schema-tolerant: if the IP/geo columns aren't present yet (because the migration hasn't been
+  //    run on this Supabase project), Postgres returns 42703 (undefined_column) or PostgREST PGRST204
+  //    ("Could not find the 'ip_address' column"). We retry with the base columns so the lead still
+  //    saves, and log a loud hint that the migration is pending.
   const supabase = createServerAnonClient();
-  const { error } = await supabase.from('leads').insert({
+  const baseRow = {
     name,
     email,
     phone: phone || null,
     message,
+  };
+  const fullRow = {
+    ...baseRow,
     ip_address: clientInfo.ip,
     country: clientInfo.country,
     region: clientInfo.region,
     city: clientInfo.city,
-  });
+  };
+
+  let { error } = await supabase.from('leads').insert(fullRow);
+
+  if (error && isMissingColumnError(error)) {
+    console.warn(
+      '[api/leads] geo/ip columns missing on leads table — falling back to base insert. ' +
+      'Run supabase/schema.sql in the Supabase SQL Editor to add ip_address/country/region/city columns. ' +
+      'PG error:',
+      error.code,
+      error.message,
+    );
+    const retry = await supabase.from('leads').insert(baseRow);
+    error = retry.error;
+  }
 
   if (error) {
-    console.error('lead insert failed:', error.message);
+    console.error('[api/leads] insert failed:', {
+      code: error.code,
+      message: error.message,
+      details: (error as { details?: string }).details,
+      hint: (error as { hint?: string }).hint,
+    });
     return NextResponse.json(
-      { status: 'error', message: 'We could not save your message. Please try again.' },
+      {
+        status: 'error',
+        message: 'We could not save your message. Please try again in a moment.',
+        // Surface a debug hint in non-production so the operator can act on it.
+        ...(process.env.NODE_ENV !== 'production'
+          ? { debug: error.message }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -90,6 +123,14 @@ async function handleLead(req: NextRequest): Promise<NextResponse> {
     { status: 'success', message: 'Thanks — we will get back to you soon.' },
     { status: 201 },
   );
+}
+
+function isMissingColumnError(error: { code?: string; message?: string }): boolean {
+  // 42703 = undefined_column (Postgres). PGRST204 = PostgREST schema-cache miss.
+  if (error.code === '42703' || error.code === 'PGRST204') return true;
+  const msg = error.message?.toLowerCase() ?? '';
+  return /could not find the .* column|does not exist/.test(msg) &&
+    /(ip_address|country|region|city)/.test(msg);
 }
 
 export async function POST(req: NextRequest) {

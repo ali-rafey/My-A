@@ -1,42 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { requireAdmin } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sanitizeText, slugify } from '@/lib/sanitize';
 import { sanitizeRichHtml } from '@/lib/sanitize-html';
-import { assertSameOrigin } from '@/lib/security/csrf';
-import { rateLimit, clientKey } from '@/lib/rate-limit';
+import { withAdminGuard } from '@/lib/admin-handler';
 import type { BlogInput } from '@/lib/supabase/types';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-async function ensureAdmin() {
-  try {
-    await requireAdmin();
-    return null;
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-}
-
-function checkCsrfAndRate(req: NextRequest): NextResponse | null {
-  const csrf = assertSameOrigin(req);
-  if (!csrf.ok) {
-    return NextResponse.json({ error: csrf.reason }, { status: 403 });
-  }
-  const limited = rateLimit(clientKey(req.headers, 'admin-write'), 60);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(limited.retryAfterMs / 1000)) } },
-    );
-  }
-  return null;
-}
-
-export async function GET() {
-  const denied = await ensureAdmin();
-  if (denied) return denied;
-
+export const GET = withAdminGuard(async (_req: NextRequest) => {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('blogs')
@@ -44,17 +16,13 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error('[admin/blogs GET] supabase error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ blogs: data ?? [] });
-}
+}, { csrf: false });
 
-export async function POST(req: NextRequest) {
-  const blocked = checkCsrfAndRate(req);
-  if (blocked) return blocked;
-  const denied = await ensureAdmin();
-  if (denied) return denied;
-
+export const POST = withAdminGuard(async (req: NextRequest) => {
   let body: Partial<BlogInput>;
   try {
     body = (await req.json()) as Partial<BlogInput>;
@@ -88,10 +56,11 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
+    console.error('[admin/blogs POST] supabase error:', error);
     if (error.code === '23505') {
       return NextResponse.json({ error: 'A post with this slug already exists.' }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ blog: data }, { status: 201 });
-}
+});

@@ -1,43 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sanitizeText, slugify } from '@/lib/sanitize';
 import { sanitizeRichHtml } from '@/lib/sanitize-html';
-import { assertSameOrigin } from '@/lib/security/csrf';
-import { rateLimit, clientKey } from '@/lib/rate-limit';
+import { withAdminGuard } from '@/lib/admin-handler';
 import type { BlogInput } from '@/lib/supabase/types';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-async function ensureAdmin() {
-  try {
-    await requireAdmin();
-    return null;
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-}
-
-function checkCsrfAndRate(req: NextRequest): NextResponse | null {
-  const csrf = assertSameOrigin(req);
-  if (!csrf.ok) {
-    return NextResponse.json({ error: csrf.reason }, { status: 403 });
-  }
-  const limited = rateLimit(clientKey(req.headers, 'admin-write'), 60);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(limited.retryAfterMs / 1000)) } },
-    );
-  }
-  return null;
-}
-
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await ensureAdmin();
-  if (denied) return denied;
-
+export const GET = withAdminGuard(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('blogs')
@@ -45,17 +17,15 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     .eq('id', params.id)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[admin/blogs/:id GET] supabase error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ blog: data });
-}
+}, { csrf: false });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const blocked = checkCsrfAndRate(req);
-  if (blocked) return blocked;
-  const denied = await ensureAdmin();
-  if (denied) return denied;
-
+export const PUT = withAdminGuard(async (req: NextRequest, { params }: { params: { id: string } }) => {
   let body: Partial<BlogInput>;
   try {
     body = (await req.json()) as Partial<BlogInput>;
@@ -90,6 +60,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     .single();
 
   if (error) {
+    console.error('[admin/blogs/:id PUT] supabase error:', error);
     if (error.code === '23505') {
       return NextResponse.json({ error: 'A post with this slug already exists.' }, { status: 409 });
     }
@@ -101,14 +72,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   revalidatePath('/');
 
   return NextResponse.json({ blog: data });
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const blocked = checkCsrfAndRate(req);
-  if (blocked) return blocked;
-  const denied = await ensureAdmin();
-  if (denied) return denied;
-
+export const DELETE = withAdminGuard(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const supabase = createServiceClient();
   const { data: existing } = await supabase
     .from('blogs')
@@ -117,11 +83,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     .maybeSingle();
 
   const { error } = await supabase.from('blogs').delete().eq('id', params.id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[admin/blogs/:id DELETE] supabase error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   revalidatePath('/blogs');
   if (existing?.slug) revalidatePath(`/blogs/${existing.slug}`);
   revalidatePath('/');
 
   return NextResponse.json({ ok: true });
-}
+});
