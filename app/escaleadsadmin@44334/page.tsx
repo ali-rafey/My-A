@@ -28,7 +28,7 @@ export default async function AdminRootPage() {
 
   if (!session.isAdmin) {
     return (
-      <div className={styles.shell}>
+      <div className={`${styles.shell} ${styles.shellCentered}`}>
         <LoginForm />
       </div>
     );
@@ -48,28 +48,26 @@ export default async function AdminRootPage() {
         </div>
 
         <div className={styles.cardGrid}>
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.statCard}`}>
             <div className={styles.statValue}>{stats.blogs}</div>
             <div className={styles.statLabel}>Total blog posts</div>
           </div>
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.statCard}`}>
             <div className={styles.statValue}>{stats.drafts}</div>
             <div className={styles.statLabel}>Drafts</div>
           </div>
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.statCard}`}>
             <div className={styles.statValue}>{stats.leads}</div>
             <div className={styles.statLabel}>Total leads</div>
           </div>
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.statCard}`}>
             <div className={styles.statValue}>{stats.unread}</div>
             <div className={styles.statLabel}>Unread leads</div>
           </div>
         </div>
 
         <div className={styles.card}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--color-text-dark)' }}>
-            Quick links
-          </h2>
+          <h2 className={styles.sectionHeading}>Quick links</h2>
           <div className={styles.formActions}>
             <Link className={styles.button} href="/escaleadsadmin@44334/blogs/new">
               Write a new post

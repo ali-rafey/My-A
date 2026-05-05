@@ -37,41 +37,47 @@ export default function DiagnosticsRunner() {
         </button>
       </div>
 
-      {error ? <div className={styles.error} role="alert" style={{ marginTop: 16 }}>{error}</div> : null}
+      {error ? <div className={`${styles.error} ${styles.topSpacing}`} role="alert">{error}</div> : null}
 
       {result ? (
-        <div style={{ marginTop: 16 }}>
+        <div className={styles.resultsPanel}>
           {result.halt ? (
-            <div className={styles.error} role="alert" style={{ marginBottom: 16 }}>
+            <div className={styles.error} role="alert">
               <strong>Halted:</strong> {result.halt}
             </div>
           ) : null}
 
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th style={{ width: 40 }}></th>
-                <th>Check</th>
-                <th>Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.checks.map((check) => (
-                <tr key={check.name}>
-                  <td style={{ fontSize: '1.2rem' }}>{check.ok ? '✅' : '❌'}</td>
-                  <td><strong>{check.name}</strong></td>
-                  <td>
-                    <code style={{ fontSize: '0.85rem', wordBreak: 'break-word' }}>
-                      {check.detail}
-                    </code>
-                  </td>
+          <div className={`${styles.card} ${styles.tableCard}`}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Check</th>
+                  <th>Detail</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {result.checks.map((check) => (
+                  <tr key={check.name}>
+                    <td>
+                      <span
+                        className={`${styles.checkStatus} ${check.ok ? styles.checkStatusOk : styles.checkStatusFail}`}
+                      >
+                        {check.ok ? 'Pass' : 'Fail'}
+                      </span>
+                    </td>
+                    <td><strong>{check.name}</strong></td>
+                    <td>
+                      <code className={styles.detailCode}>{check.detail}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {result.checks.every((c) => c.ok) && !result.halt ? (
-            <div className={styles.success} style={{ marginTop: 16 }}>
+            <div className={styles.success}>
               All checks passed. The lead pipeline is fully functional. If the contact form still isn&apos;t
               saving leads in production, hard-refresh the public site (Cmd/Ctrl + Shift + R) so the
               browser picks up the latest deployed JS.

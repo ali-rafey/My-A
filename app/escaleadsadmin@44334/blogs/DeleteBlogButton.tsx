@@ -43,7 +43,7 @@ export default function DeleteBlogButton({ id, title }: { id: string; title: str
       >
         {busy ? 'Deleting…' : 'Delete'}
       </button>
-      {error ? <span className={styles.error} role="alert" style={{ marginLeft: 8 }}>{error}</span> : null}
+      {error ? <span className={`${styles.error} ${styles.inlineError}`} role="alert">{error}</span> : null}
     </>
   );
 }

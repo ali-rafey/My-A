@@ -47,7 +47,7 @@ export default function AdminTopbar() {
           </Link>
         ))}
       </nav>
-      <button type="button" className={styles.logout} onClick={handleLogout} disabled={busy}>
+      <button type="button" className={`${styles.button} ${styles.logout}`} onClick={handleLogout} disabled={busy}>
         {busy ? 'Logging out…' : 'Logout'}
       </button>
     </div>

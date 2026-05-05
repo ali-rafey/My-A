@@ -16,15 +16,11 @@ export default function AdminError({
   }, [error]);
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${styles.shellCentered}`}>
       <div className={styles.container}>
         <div className={styles.card}>
-          <h1 style={{ color: 'var(--color-text-dark)', fontSize: '1.5rem', fontWeight: 800 }}>
-            Something broke in the admin
-          </h1>
-          <p style={{ color: 'var(--color-text-body)', marginTop: '0.5rem' }}>
-            The page hit an error. Try again, or head back to the dashboard.
-          </p>
+          <h1 className={styles.stateTitle}>Something broke in the admin</h1>
+          <p className={styles.stateText}>The page hit an error. Try again, or head back to the dashboard.</p>
           <div className={styles.formActions}>
             <button type="button" className={styles.button} onClick={() => reset()}>
               Try again

@@ -40,8 +40,8 @@ export default async function AdminLeadsPage() {
         {leads.length === 0 ? (
           <div className={styles.empty}>No leads yet. Submissions from the contact form will appear here.</div>
         ) : (
-          <div className={styles.card} style={{ padding: 0, overflow: 'hidden' }}>
-            <table className={styles.table}>
+          <div className={`${styles.card} ${styles.tableCard}`}>
+            <table className={`${styles.table} ${styles.tableWide}`}>
               <thead>
                 <tr>
                   <th>Status</th>

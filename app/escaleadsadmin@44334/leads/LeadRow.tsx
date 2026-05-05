@@ -67,7 +67,7 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
 
   return (
     <>
-      <tr style={read ? { opacity: 0.7 } : undefined}>
+      <tr className={read ? styles.readRow : undefined}>
         <td>
           <span className={`${styles.badge} ${read ? styles.badgeRead : styles.badgeUnread}`}>
             {read ? 'Read' : 'Unread'}
@@ -87,14 +87,14 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
               {flagFor(lead.country)} {formatLocation(lead) || '—'}
             </span>
           ) : (
-            <span style={{ color: 'var(--color-silver-dark)' }}>—</span>
+            <span className={styles.muted}>—</span>
           )}
         </td>
         <td>
           {lead.ip_address ? (
-            <code style={{ fontSize: '0.8rem', color: 'var(--color-silver-dark)' }}>{lead.ip_address}</code>
+            <code className={styles.mono}>{lead.ip_address}</code>
           ) : (
-            <span style={{ color: 'var(--color-silver-dark)' }}>—</span>
+            <span className={styles.muted}>—</span>
           )}
         </td>
         <td>{formattedDate}</td>
@@ -121,7 +121,7 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
       </tr>
       {error ? (
         <tr>
-          <td colSpan={9} style={{ paddingTop: 0 }}>
+          <td colSpan={9} className={styles.errorRowCell}>
             <div className={styles.error} role="alert">{error}</div>
           </td>
         </tr>

@@ -29,7 +29,7 @@ export default async function AdminBlogsPage() {
             No blog posts yet. Click <strong>New post</strong> to publish your first one.
           </div>
         ) : (
-          <div className={styles.card} style={{ padding: 0, overflow: 'hidden' }}>
+          <div className={`${styles.card} ${styles.tableCard}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -46,12 +46,12 @@ export default async function AdminBlogsPage() {
                     <td>
                       <strong>{blog.title}</strong>
                       {blog.meta_description ? (
-                        <div style={{ color: 'var(--color-silver-dark)', fontSize: '0.85rem', marginTop: 4 }}>
+                        <div className={styles.metaText}>
                           {blog.meta_description}
                         </div>
                       ) : null}
                     </td>
-                    <td><code>{blog.slug}</code></td>
+                    <td><code className={styles.mono}>{blog.slug}</code></td>
                     <td>
                       <span className={`${styles.badge} ${blog.published ? styles.badgePublished : styles.badgeDraft}`}>
                         {blog.published ? 'Published' : 'Draft'}

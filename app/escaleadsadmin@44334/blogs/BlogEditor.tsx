@@ -92,8 +92,8 @@ export default function BlogEditor({ mode, initial }: Props) {
   };
 
   return (
-    <form className={styles.formGrid} onSubmit={handleSubmit}>
-      <div className={styles.formRow}>
+    <form className={`${styles.formGrid} ${styles.editorGrid}`} onSubmit={handleSubmit}>
+      <div className={`${styles.formRow} ${styles.formRowFull}`}>
         <label htmlFor="title">Title</label>
         <input
           id="title"
@@ -161,14 +161,13 @@ export default function BlogEditor({ mode, initial }: Props) {
         />
       </div>
 
-      <div className={styles.formRow}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className={`${styles.formRow} ${styles.formRowFull}`}>
+        <div className={styles.fieldHeader}>
           <label htmlFor="content">Content (HTML)</label>
           <button
             type="button"
-            className={`${styles.button} ${styles.buttonGhost}`}
+            className={`${styles.button} ${styles.buttonGhost} ${styles.buttonSmall}`}
             onClick={() => setShowPreview((p) => !p)}
-            style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
           >
             {showPreview ? 'Hide preview' : 'Preview'}
           </button>
