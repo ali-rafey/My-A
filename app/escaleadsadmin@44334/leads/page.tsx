@@ -24,6 +24,7 @@ async function getLeads(): Promise<Lead[]> {
 export default async function AdminLeadsPage() {
   const leads = await getLeads();
   const unread = leads.filter((lead) => !lead.read).length;
+  const readCount = leads.length - unread;
 
   return (
     <div className={styles.shell}>
@@ -40,28 +41,28 @@ export default async function AdminLeadsPage() {
         {leads.length === 0 ? (
           <div className={styles.empty}>No leads yet. Submissions from the contact form will appear here.</div>
         ) : (
-          <div className={`${styles.card} ${styles.tableCard}`}>
-            <table className={`${styles.table} ${styles.tableWide}`}>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Message</th>
-                  <th>Location</th>
-                  <th>IP</th>
-                  <th>Received</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <LeadRow key={lead.id} lead={lead} formattedDate={formatDateTime(lead.created_at)} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className={styles.leadSummaryGrid}>
+              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+                <div className={styles.leadSummaryValue}>{leads.length}</div>
+                <div className={styles.leadSummaryLabel}>Total leads</div>
+              </div>
+              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+                <div className={styles.leadSummaryValue}>{unread}</div>
+                <div className={styles.leadSummaryLabel}>Unread leads</div>
+              </div>
+              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+                <div className={styles.leadSummaryValue}>{readCount}</div>
+                <div className={styles.leadSummaryLabel}>Read leads</div>
+              </div>
+            </div>
+
+            <div className={styles.leadList}>
+              {leads.map((lead) => (
+                <LeadRow key={lead.id} lead={lead} formattedDate={formatDateTime(lead.created_at)} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

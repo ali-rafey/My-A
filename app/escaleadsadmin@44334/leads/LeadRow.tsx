@@ -30,6 +30,8 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
   const [busy, setBusy] = useState(false);
   const [read, setRead] = useState(lead.read);
   const [error, setError] = useState<string | null>(null);
+  const location = formatLocation(lead);
+  const flag = flagFor(lead.country);
 
   const toggleRead = async () => {
     setBusy(true);
@@ -66,66 +68,78 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
   };
 
   return (
-    <>
-      <tr className={read ? styles.readRow : undefined}>
-        <td>
-          <span className={`${styles.badge} ${read ? styles.badgeRead : styles.badgeUnread}`}>
-            {read ? 'Read' : 'Unread'}
-          </span>
-        </td>
-        <td><strong>{lead.name}</strong></td>
-        <td>
+    <article className={`${styles.card} ${styles.leadCard} ${read ? styles.leadCardRead : styles.leadCardUnread}`}>
+      <div className={styles.leadCardHeader}>
+        <div className={styles.leadIdentity}>
+          <div className={styles.leadHeaderMeta}>
+            <span className={`${styles.badge} ${read ? styles.badgeRead : styles.badgeUnread}`}>
+              {read ? 'Read' : 'Unread'}
+            </span>
+            <span className={styles.leadTimestampValue}>Received {formattedDate}</span>
+          </div>
+          <h2 className={styles.leadName}>{lead.name}</h2>
+        </div>
+      </div>
+
+      <div className={styles.leadMetaGrid}>
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>Email</span>
           <a className={styles.linkRow} href={`mailto:${lead.email}`}>{lead.email}</a>
-        </td>
-        <td>{lead.phone ? <a className={styles.linkRow} href={`tel:${lead.phone}`}>{lead.phone}</a> : '—'}</td>
-        <td>
-          <div className={styles.leadDetails}>{lead.message}</div>
-        </td>
-        <td>
-          {lead.city || lead.region || lead.country ? (
-            <span title={[lead.city, lead.region, lead.country].filter(Boolean).join(', ')}>
-              {flagFor(lead.country)} {formatLocation(lead) || '—'}
+        </div>
+
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>Phone</span>
+          {lead.phone ? <a className={styles.linkRow} href={`tel:${lead.phone}`}>{lead.phone}</a> : <span className={styles.muted}>—</span>}
+        </div>
+
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>Location</span>
+          {location ? (
+            <span className={styles.leadMetaValue} title={location}>
+              {flag ? `${flag} ${location}` : location}
             </span>
           ) : (
             <span className={styles.muted}>—</span>
           )}
-        </td>
-        <td>
+        </div>
+
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>IP address</span>
           {lead.ip_address ? (
-            <code className={styles.mono}>{lead.ip_address}</code>
+            <code className={`${styles.mono} ${styles.leadCode}`}>{lead.ip_address}</code>
           ) : (
             <span className={styles.muted}>—</span>
           )}
-        </td>
-        <td>{formattedDate}</td>
-        <td>
-          <div className={styles.tableActions}>
-            <button
-              type="button"
-              className={`${styles.button} ${styles.buttonGhost}`}
-              onClick={toggleRead}
-              disabled={busy}
-            >
-              {read ? 'Mark unread' : 'Mark read'}
-            </button>
-            <button
-              type="button"
-              className={`${styles.button} ${styles.buttonDanger}`}
-              onClick={remove}
-              disabled={busy}
-            >
-              {busy ? '…' : 'Delete'}
-            </button>
-          </div>
-        </td>
-      </tr>
+        </div>
+
+        <div className={`${styles.leadMetaItem} ${styles.leadMessageCard}`}>
+          <span className={styles.leadMetaLabel}>Message</span>
+          <div className={styles.leadDetails}>{lead.message}</div>
+        </div>
+      </div>
+
+      <div className={styles.leadActions}>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.buttonGhost} ${styles.buttonSmall}`}
+          onClick={toggleRead}
+          disabled={busy}
+        >
+          {read ? 'Mark unread' : 'Mark read'}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.buttonDanger} ${styles.buttonSmall}`}
+          onClick={remove}
+          disabled={busy}
+        >
+          {busy ? 'Deleting…' : 'Delete'}
+        </button>
+      </div>
+
       {error ? (
-        <tr>
-          <td colSpan={9} className={styles.errorRowCell}>
-            <div className={styles.error} role="alert">{error}</div>
-          </td>
-        </tr>
+        <div className={`${styles.error} ${styles.leadError}`} role="alert">{error}</div>
       ) : null}
-    </>
+    </article>
   );
 }
