@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sanitizeText, slugify } from '@/lib/sanitize';
 import { sanitizeRichHtml } from '@/lib/sanitize-html';
+import { textToHtml } from '@/lib/text-to-html';
 import { withAdminGuard } from '@/lib/admin-handler';
 import type { BlogInput } from '@/lib/supabase/types';
 
@@ -33,7 +34,9 @@ export const POST = withAdminGuard(async (req: NextRequest) => {
   const title = sanitizeText(body.title, 200);
   let slug = sanitizeText(body.slug, 80);
   if (!slug && title) slug = slugify(title);
-  const content = sanitizeRichHtml(body.content);
+  // Author types plain text in the editor; textToHtml wraps it into paragraphs (and passes
+  // already-authored HTML through unchanged). sanitizeRichHtml then enforces the safe-tag list.
+  const content = sanitizeRichHtml(textToHtml(typeof body.content === 'string' ? body.content : ''));
   const meta_description = body.meta_description ? sanitizeText(body.meta_description, 300) : null;
   const cover_image = body.cover_image ? sanitizeText(body.cover_image, 500) : null;
   const tags = Array.isArray(body.tags)

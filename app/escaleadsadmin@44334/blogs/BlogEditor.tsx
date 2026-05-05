@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Blog } from '@/lib/supabase/types';
+import { textToHtml } from '@/lib/text-to-html';
 import styles from '../admin.module.css';
 
 type Mode = 'create' | 'edit';
@@ -163,7 +164,7 @@ export default function BlogEditor({ mode, initial }: Props) {
 
       <div className={`${styles.formRow} ${styles.formRowFull}`}>
         <div className={styles.fieldHeader}>
-          <label htmlFor="content">Content (HTML)</label>
+          <label htmlFor="content">Content</label>
           <button
             type="button"
             className={`${styles.button} ${styles.buttonGhost} ${styles.buttonSmall}`}
@@ -177,13 +178,16 @@ export default function BlogEditor({ mode, initial }: Props) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
-          placeholder={`<p>Your post in HTML.</p>\n<h2>A heading</h2>\n<p>Allowed tags: p, h1-h6, ul, ol, li, blockquote, pre, code, img, a, strong, em, hr, figure.</p>`}
+          placeholder={`Just type your post.\n\nLeave a blank line between paragraphs and they'll separate automatically.\n\nAny URLs you paste will become clickable links: https://example.com`}
         />
         <span className={styles.hint}>
-          Content is sanitized server-side. Allowed tags: p, h1–h6, ul/ol/li, a, img, strong, em, blockquote, pre, code, hr, figure.
+          Just type — no HTML needed. Blank lines start new paragraphs, single line breaks stay as line breaks, and pasted URLs become clickable links.
         </span>
         {showPreview ? (
-          <div className={styles.preview} dangerouslySetInnerHTML={{ __html: content }} />
+          <div
+            className={styles.preview}
+            dangerouslySetInnerHTML={{ __html: textToHtml(content) }}
+          />
         ) : null}
       </div>
 
