@@ -9,6 +9,22 @@ import type { BlogInput } from '@/lib/supabase/types';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// Wrap revalidatePath so a revalidation failure never bubbles up as a 500. By the time we call
+// revalidate, the DB write has already succeeded — the user wants the row created/updated/deleted,
+// not "the cache invalidated." If revalidatePath throws (e.g. the slug path no longer resolves
+// through the route manifest after a delete, which is a known Next.js 14.2.x quirk), we log it and
+// the relevant page will refresh on its next ISR cycle anyway (60s for /blogs, 3600s for /).
+function safeRevalidate(path: string) {
+  try {
+    revalidatePath(path);
+  } catch (err) {
+    console.warn(
+      `[revalidatePath] failed for "${path}" (continuing — write already succeeded):`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
 export const GET = withAdminGuard(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -78,40 +94,62 @@ export const PUT = withAdminGuard(async (req: NextRequest, { params }: { params:
     );
   }
 
-  revalidatePath('/blogs');
-  if (slug) revalidatePath(`/blogs/${slug}`);
-  revalidatePath('/');
+  safeRevalidate('/blogs');
+  if (slug) safeRevalidate(`/blogs/${slug}`);
+  safeRevalidate('/');
 
   return NextResponse.json({ blog: data[0] });
 });
 
 export const DELETE = withAdminGuard(async (_req: NextRequest, { params }: { params: { id: string } }) => {
-  const supabase = createServiceClient();
-  const { data: existing } = await supabase
-    .from('blogs')
-    .select('slug')
-    .eq('id', params.id)
-    .maybeSingle();
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'Missing blog id in URL.' }, { status: 400 });
+  }
 
-  const { data, error } = await supabase.from('blogs').delete().eq('id', params.id).select();
+  console.log('[admin/blogs DELETE] start id=', id);
+  const supabase = createServiceClient();
+
+  // Pre-fetch the slug so we can revalidate /blogs/<slug> after delete. Failure here is non-fatal:
+  // we still proceed with the delete; we just can't revalidate the per-post page (it'll fall off
+  // ISR within 60s anyway).
+  let existingSlug: string | null = null;
+  try {
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('slug')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      console.warn('[admin/blogs DELETE] slug pre-fetch error (continuing):', error);
+    } else {
+      existingSlug = data?.slug ?? null;
+    }
+  } catch (err) {
+    console.warn('[admin/blogs DELETE] slug pre-fetch threw (continuing):', err);
+  }
+
+  const { data, error } = await supabase.from('blogs').delete().eq('id', id).select();
   if (error) {
-    console.error('[admin/blogs/:id DELETE] supabase error:', error);
+    console.error('[admin/blogs DELETE] supabase error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   if (!data || data.length === 0) {
     return NextResponse.json(
       {
         error:
-          `Delete affected 0 rows. The post with id ${params.id} either doesn't exist or ` +
+          `Delete affected 0 rows. The post with id ${id} either doesn't exist or ` +
           `row-level security is blocking the service role from deleting it.`,
       },
       { status: 404 },
     );
   }
 
-  revalidatePath('/blogs');
-  if (existing?.slug) revalidatePath(`/blogs/${existing.slug}`);
-  revalidatePath('/');
+  console.log('[admin/blogs DELETE] success — deleted', data.length, 'row(s), slug was', existingSlug);
+
+  safeRevalidate('/blogs');
+  if (existingSlug) safeRevalidate(`/blogs/${existingSlug}`);
+  safeRevalidate('/');
 
   return NextResponse.json({ ok: true, deleted: data.length });
 });
