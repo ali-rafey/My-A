@@ -61,9 +61,10 @@ async function handleLead(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Capture connection metadata for the admin dashboard. Vercel injects geo headers automatically;
-  //    on other hosts those are null and only the IP is stored. Not surfaced to the client.
-  const clientInfo = getClientInfo(req.headers);
+  // 3. Capture connection metadata for the admin dashboard. IPinfo (when IPINFO_TOKEN is set)
+  //    upgrades accuracy from Vercel's GeoLite2 baseline; otherwise falls back to Vercel headers.
+  //    Not surfaced to the client. Network call has a 1.5s timeout — never blocks lead saving.
+  const clientInfo = await getClientInfo(req.headers);
 
   // 4. Insert via the anon client — RLS allows INSERT only.
   //    Schema-tolerant: if the IP/geo columns aren't present yet (because the migration hasn't been

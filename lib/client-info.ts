@@ -3,7 +3,9 @@ import 'server-only';
 // =============================================================================
 // Visitor IP + geolocation extractor
 // =============================================================================
-// Source of truth: request headers injected by the Vercel edge.
+// Source priority:
+//   1. IPinfo.io  (when IPINFO_TOKEN is set — paid/free-keyed, ~85% UK city accuracy)
+//   2. Vercel edge headers (free MaxMind GeoLite2, ~60% city accuracy, anchors to ISP POP)
 //
 // IP HEADERS (in priority order — see getClientInfo):
 //   1. x-real-ip                   — single value, set by Vercel after stripping any client-supplied
@@ -12,22 +14,10 @@ import 'server-only';
 //                                    IP, but on platforms without an edge that strips client-supplied
 //                                    XFF this can be spoofable. Fallback only.
 //
-// GEO HEADERS (set by Vercel's edge using MaxMind GeoLite2):
+// VERCEL GEO HEADERS (fallback when IPinfo is unavailable):
 //   x-vercel-ip-country         — ISO-3166-1 alpha-2  (e.g. "GB")
 //   x-vercel-ip-country-region  — ISO-3166-2 region   (e.g. "ENG")
-//   x-vercel-ip-city            — city name, URL-encoded (e.g. "Brighton")
-//   x-vercel-ip-latitude        — decimal lat as string
-//   x-vercel-ip-longitude       — decimal lon as string
-//   x-vercel-ip-timezone        — IANA timezone (e.g. "Europe/London")
-//
-// ACCURACY DISCLAIMER (read this before "fixing" a Brighton-vs-London report):
-//   GeoLite2 maps each IP block to the centroid of its registered allocation, NOT to the subscriber's
-//   address. UK consumer/mobile ISPs frequently anchor whole /16 blocks at a single regional POP, so
-//   a London resident can appear as Brighton/Reading/Slough depending on their ISP. MaxMind's own
-//   published city-level accuracy for the UK is ~60% within 50 km, dropping to 20–30% for mobile.
-//   No code change in this file can improve that accuracy — the only fixes are (a) pay for a higher-
-//   tier provider like IPinfo or MaxMind GeoIP2 Insights, or (b) ask the visitor for HTML5
-//   Geolocation, which conflicts with the "no client-side disclosure" product requirement.
+//   x-vercel-ip-city            — city name, URL-encoded
 //
 // PRIVACY NOTE: IP is PII under GDPR/UK GDPR when combined with other data. We only store this on
 // /api/leads (after the user submitted a form to us — the strongest possible legitimate-interest
@@ -50,20 +40,116 @@ function safeDecode(value: string): string {
   }
 }
 
-export function getClientInfo(headers: Headers): ClientInfo {
-  // Prefer x-real-ip (single value, set by the edge, not client-controllable). Fall back to the
-  // first hop of x-forwarded-for only if x-real-ip is absent. On Vercel both agree; on other hosts
-  // x-real-ip is the safer default.
+// ---------- IPinfo lookup (network) ----------
+
+type IpinfoResponse = {
+  ip?: string;
+  city?: string;
+  region?: string;
+  country?: string;     // 2-letter code, e.g. "GB"
+  loc?: string;         // "lat,lng"
+  postal?: string;
+  timezone?: string;
+  org?: string;
+  hostname?: string;
+  bogon?: boolean;
+};
+
+// In-memory TTL cache so repeat submissions from the same IP within an hour cost zero API calls.
+// Bounded to 1024 entries; LRU-ish via Map insertion order (oldest evicted first).
+type CacheEntry = { data: IpinfoResponse; expiresAt: number };
+const ipCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_MAX = 1024;
+const IPINFO_TIMEOUT_MS = 1500;
+
+function isPrivateIp(ip: string): boolean {
+  // Skip lookups for loopback/RFC-1918/IPv6 link-local — IPinfo can't resolve them anyway.
+  return (
+    ip === '127.0.0.1' ||
+    ip === '::1' ||
+    ip.startsWith('10.') ||
+    ip.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip) ||
+    ip.toLowerCase().startsWith('fc') ||
+    ip.toLowerCase().startsWith('fd') ||
+    ip.toLowerCase().startsWith('fe80:')
+  );
+}
+
+async function fetchIpinfo(ip: string, token: string): Promise<IpinfoResponse | null> {
+  // Cache hit
+  const cached = ipCache.get(ip);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), IPINFO_TIMEOUT_MS);
+  try {
+    const url = `https://ipinfo.io/${encodeURIComponent(ip)}?token=${encodeURIComponent(token)}`;
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: ac.signal,
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.warn(`[client-info] ipinfo non-ok ${res.status}: ${body.slice(0, 200)}`);
+      return null;
+    }
+    const data = (await res.json()) as IpinfoResponse;
+    if (data.bogon) return null;
+
+    // Cache it. Evict oldest if at capacity.
+    ipCache.set(ip, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+    if (ipCache.size > CACHE_MAX) {
+      const oldestKey = ipCache.keys().next().value as string | undefined;
+      if (oldestKey) ipCache.delete(oldestKey);
+    }
+    return data;
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      console.warn(`[client-info] ipinfo timed out after ${IPINFO_TIMEOUT_MS}ms for ${ip}`);
+    } else {
+      console.warn('[client-info] ipinfo fetch failed:', err instanceof Error ? err.message : err);
+    }
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ---------- Public API ----------
+
+export async function getClientInfo(headers: Headers): Promise<ClientInfo> {
+  // 1. Extract IP (header-only).
   const realIp = headers.get('x-real-ip')?.trim();
   const xff = headers.get('x-forwarded-for');
   const ip = (realIp || xff?.split(',')[0]?.trim() || '') || null;
 
-  const country = headers.get('x-vercel-ip-country') || null;
-  const region = headers.get('x-vercel-ip-country-region') || null;
+  // 2. Vercel-edge geo (free, low-accuracy fallback).
+  const fallbackCountry = headers.get('x-vercel-ip-country') || null;
+  const fallbackRegion = headers.get('x-vercel-ip-country-region') || null;
   const cityRaw = headers.get('x-vercel-ip-city');
-  const city = cityRaw ? safeDecode(cityRaw) : null;
+  const fallbackCity = cityRaw ? safeDecode(cityRaw) : null;
 
-  return { ip, country, region, city };
+  // 3. Upgrade with IPinfo when configured. Any failure (timeout, 401, 5xx, network) silently falls
+  //    back to the Vercel headers — never blocks the lead submission.
+  const token = process.env.IPINFO_TOKEN;
+  if (ip && token && !isPrivateIp(ip)) {
+    const info = await fetchIpinfo(ip, token);
+    if (info) {
+      return {
+        ip,
+        country: info.country || fallbackCountry,
+        region: info.region || fallbackRegion,
+        city: info.city || fallbackCity,
+      };
+    }
+  }
+
+  return { ip, country: fallbackCountry, region: fallbackRegion, city: fallbackCity };
 }
 
 // Format a "City, Region, Country" string for display, gracefully omitting any null parts.
