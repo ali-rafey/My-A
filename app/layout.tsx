@@ -12,6 +12,7 @@ const inter = Inter({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-1K5C057XHQ';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -81,11 +82,32 @@ const websiteJsonLd = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Inline GA4 bootstrap. Lives in <head> as a plain <script> (not next/script) so it appears in
+  // the SSR HTML response — required for Google Search Console GA verification, which scans the
+  // static page body and does NOT execute JavaScript. send_page_view is suppressed because
+  // <GoogleAnalytics /> fires its own pageview on every App Router route change (initial mount
+  // included).
+  const gaBootstrap = `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.gtag = gtag;
+gtag('js', new Date());
+gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
+
   return (
     <html lang="en" className={inter.variable}>
-      <body>
-        <Navbar />
-        <main>{children}</main>
+      <head>
+        {/* GA4 — server-rendered into the response body so Search Console can verify the property. */}
+        {gaMeasurementId ? (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <script dangerouslySetInnerHTML={{ __html: gaBootstrap }} />
+          </>
+        ) : null}
+
+        {/* Structured data — also in <head> for SEO. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
@@ -94,6 +116,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+      </head>
+      <body>
+        <Navbar />
+        <main>{children}</main>
+        {/* Client-only: tracks App Router route changes (gtag.js doesn't auto-pageview SPA navs). */}
         <GoogleAnalytics />
       </body>
     </html>
