@@ -1,104 +1,188 @@
 .section {
-  padding-top: calc(var(--space-20) + var(--nav-height));
+  position: relative;
   background: var(--color-white);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
-.layout {
-  min-height: calc(100vh - var(--nav-height));
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
-  gap: var(--space-12);
+/* Outer wrapper carries ONLY the vertical fade (top → opaque → bottom).
+   Multi-stop gradient so the transition is smooth all the way through,
+   not a "transparent → opaque" cliff with a hard banding edge. The
+   fade eats roughly the top 32% and bottom 32% of the section height. */
+.gridFrame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.15) 8%,
+    rgba(0, 0, 0, 0.45) 18%,
+    rgba(0, 0, 0, 0.80) 26%,
+    rgba(0, 0, 0, 1) 34%,
+    rgba(0, 0, 0, 1) 66%,
+    rgba(0, 0, 0, 0.80) 74%,
+    rgba(0, 0, 0, 0.45) 82%,
+    rgba(0, 0, 0, 0.15) 92%,
+    transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.15) 8%,
+    rgba(0, 0, 0, 0.45) 18%,
+    rgba(0, 0, 0, 0.80) 26%,
+    rgba(0, 0, 0, 1) 34%,
+    rgba(0, 0, 0, 1) 66%,
+    rgba(0, 0, 0, 0.80) 74%,
+    rgba(0, 0, 0, 0.45) 82%,
+    rgba(0, 0, 0, 0.15) 92%,
+    transparent 100%);
+}
+
+/* Inner element draws the grid lines (tighter 56px squares) and applies
+   the horizontal left-side fade. */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(13, 27, 62, 0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(13, 27, 62, 0.10) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to right,
+    transparent 28%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 1) 72%);
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 28%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 1) 72%);
 }
 
 .copy {
-  display: grid;
-  gap: var(--space-6);
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
 }
 
-.actions {
+.headline {
+  margin: 0;
+  color: var(--color-text-dark);
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 6.5vw, 5rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  margin-top: var(--space-4);
+  flex-direction: column;
+  gap: 0.35em;
 }
 
-.primary,
-.secondary {
+.headlineLine {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35em;
+  row-gap: 0.2em;
+}
+
+/* The rounded bordered pill that wraps the rotating word. min-width sizes to the
+   longest word ("Sustainability") so the line doesn't reflow each tick. Tight
+   internal padding keeps the box compact. */
+.rotatingPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 1.5rem;
-  border-radius: var(--radius-full);
-  font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
-  transition: var(--transition);
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
+  min-width: 7em;
+  padding: 0 0.32em 0.04em;
+  border: 1.5px solid var(--color-text-dark);
+  border-radius: 10px;
+  overflow: hidden;
+  vertical-align: baseline;
+  font-weight: 400;
+  /* Slightly tighter than the headline so the pill hugs the cap-height of the word. */
+  line-height: 1.05;
 }
 
-.primary {
-  background: var(--color-blue-primary);
-  color: var(--color-white);
-  box-shadow: var(--shadow-md);
+/* Each tick, RotatingWord remounts this span (via a key bump), restarting the
+   keyframe animation from 0. The animation does a fade + small slide-up. */
+.rotatingWord {
+  display: inline-block;
+  animation: heroWordIn 0.45s cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform, opacity;
 }
 
-.secondary {
-  border: 1px solid var(--color-silver-mid);
-  color: var(--color-text-dark);
-  background: transparent;
+@keyframes heroWordIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.panel {
-  display: flex;
-  justify-content: center;
-}
-
-.panelCard {
-  width: min(100%, 28rem);
-  padding: var(--space-8);
-  border-radius: var(--radius-lg);
-  background: var(--color-silver-light);
-  box-shadow: var(--shadow-md);
-  display: grid;
-  gap: var(--space-4);
-}
-
-.panelLabel {
-  color: var(--color-silver-dark);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-}
-
-.panelValue {
-  color: var(--color-text-dark);
-  font-size: var(--text-4xl);
-  font-weight: var(--fw-extrabold);
-}
-
-.panelText {
+.lead {
+  margin: var(--space-8) 0 0;
   color: var(--color-text-body);
-  font-size: var(--text-lg);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 400;
   line-height: 1.6;
+  max-width: 38rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotatingWord {
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .section {
-    /* Don't pad an extra 5rem on top of the nav height — there's only one column to hold. */
-    padding-top: calc(var(--space-12) + var(--nav-height));
-    padding-bottom: var(--space-12);
+  /* Mobile uses the same multi-stop curve, just tighter overall. */
+  .gridFrame {
+    mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.25) 6%,
+      rgba(0, 0, 0, 0.60) 14%,
+      rgba(0, 0, 0, 1) 24%,
+      rgba(0, 0, 0, 1) 76%,
+      rgba(0, 0, 0, 0.60) 86%,
+      rgba(0, 0, 0, 0.25) 94%,
+      transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.25) 6%,
+      rgba(0, 0, 0, 0.60) 14%,
+      rgba(0, 0, 0, 1) 24%,
+      rgba(0, 0, 0, 1) 76%,
+      rgba(0, 0, 0, 0.60) 86%,
+      rgba(0, 0, 0, 0.25) 94%,
+      transparent 100%);
   }
 
-  .layout {
-    grid-template-columns: 1fr;
-    /* Let content flow from the top instead of centering inside a 100vh box. */
-    min-height: 0;
-    align-items: start;
-    gap: var(--space-8);
+  .grid {
+    background-size: 40px 40px;
+    mask-image: linear-gradient(to right,
+      transparent 18%,
+      rgba(0, 0, 0, 0.45) 42%,
+      rgba(0, 0, 0, 1) 65%);
+    -webkit-mask-image: linear-gradient(to right,
+      transparent 18%,
+      rgba(0, 0, 0, 0.45) 42%,
+      rgba(0, 0, 0, 1) 65%);
   }
 
-  .panelValue {
-    font-size: 2rem;
+  .headline {
+    gap: 0.25em;
+  }
+
+  .rotatingPill {
+    min-width: 6em;
+    padding: 0 0.28em 0.04em;
+    border-radius: 8px;
+    border-width: 1px;
+  }
+
+  .lead {
+    margin-top: var(--space-6);
   }
 }

@@ -1,29 +1,30 @@
-import HeroActions from './HeroActions';
+import RotatingWord from './RotatingWord';
 import styles from './Home.module.css';
 
 export default function Home() {
   return (
     <section className={`${styles.section} section`} id="home">
-      <div className="container">
-        <div className={styles.layout}>
-          <div className={styles.copy}>
-            <span className="eyebrow">Software Solutions for Global Business Growth</span>
-            <h1 className="sectionTitle">We Help Businesses Grow Faster</h1>
-            <p className="sectionLead">
-              Your trusted partner for software solutions worldwide.
-            </p>
-            <HeroActions />
-          </div>
+      {/* Faint graph-paper backdrop. Decorative — hidden from a11y tree.
+          Two nested divs: outer carries the top/bottom fade, inner carries
+          the left-side fade + the grid lines. We split them this way because
+          `mask-composite: intersect` is not reliably honored across browsers
+          when stacking masks on a single element. */}
+      <div className={styles.gridFrame} aria-hidden="true">
+        <div className={styles.grid} />
+      </div>
 
-          <div className={styles.panel} aria-hidden="true">
-            <div className={styles.panelCard}>
-              <span className={styles.panelLabel}>Trusted by</span>
-              <strong className={styles.panelValue}>30+ brands</strong>
-              <span className={styles.panelText}>
-                Modern systems for growth, automation, and delivery.
-              </span>
-            </div>
-          </div>
+      <div className="container">
+        <div className={styles.copy}>
+          <h1 className={styles.headline}>
+            <span className={styles.headlineLine}>We Escalate Your Leads</span>
+            <span className={styles.headlineLine}>
+              Into <RotatingWord />
+            </span>
+          </h1>
+
+          <p className={styles.lead}>
+            Your Business Deserves More Than Just Growth, It Deserves a Legacy
+          </p>
         </div>
       </div>
     </section>
