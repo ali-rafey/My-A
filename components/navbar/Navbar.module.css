@@ -1,306 +1,272 @@
+/* =============================================================================
+   Bottom-anchored expand-on-click navbar.
+   =============================================================================
+   - Collapsed: only the logo — no glass pill, no border, no shadow. The
+     logo floats freely on the page.
+   - Expanded: full glass pill appears around the logo, nav items slide in
+     to its left. Glass identity is preserved from the original top navbar
+     (`--color-white-glass` + blur(30px) saturate(190%)).
+
+   All transitions use one slow, soft curve. cubic-bezier(0.16, 1, 0.3, 1)
+   is Apple's "ease-out-expo": starts gently, glides to a stop. 1 s duration
+   gives the morph a single deliberate, premium feel.
+   ============================================================================= */
 .navbar {
-  --nav-offset-x: 0;
-  /* Buttery iOS-style easing for the scroll morph. Scoped to this component so the global
-     --transition token (used by hover snaps, etc.) stays untouched. */
-  --nav-ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --nav-duration: 0.55s;
+  /* ease-out-quart — softer, more linear in the middle than the previous
+     ease-out-expo. The motion no longer "lands hard" in the first 250 ms. */
+  --nav-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nav-duration: 1s;
+
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  background: var(--color-white);
-  color: var(--color-black);
-  height: 80px;
-  padding: var(--space-4) var(--space-12);
-  transition: all var(--nav-duration) var(--nav-ease);
-  box-shadow: none;
-  border: 1px solid transparent;
-  transform: translateX(var(--nav-offset-x));
-  backdrop-filter: blur(0);
-  -webkit-backdrop-filter: blur(0);
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.navbar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg,
-      var(--color-white-glass-highlight) 0%,
-      transparent 55%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--nav-duration) var(--nav-ease);
-}
-
-.scrolled {
-  top: var(--space-4);
+  bottom: 1.5rem;
   left: 50%;
-  width: min(calc(100% - var(--space-8)),
-      calc(var(--container-max) + var(--space-12) + var(--space-12)));
+  transform: translateX(-50%);
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  /* Gap is 0 when collapsed (so the logo sits at the navbar's centre with
+     no phantom space for an invisible menu-items wrapper). It grows to
+     1.25rem on expand. */
+  gap: 0;
+
   height: 64px;
-  padding: calc(var(--space-4) + 2px) var(--space-6);
+  padding: 0 0.4rem;
+  border-radius: 22px;
+
+  /* Collapsed defaults — fully invisible chrome. Every property has an
+     explicit start value so the transition has something to interpolate
+     from when the .expanded class is added. */
+  background: rgba(255, 255, 255, 0);
+  border: 1px solid transparent;
+  backdrop-filter: blur(0) saturate(100%);
+  -webkit-backdrop-filter: blur(0) saturate(100%);
+  box-shadow: none;
+
+  transition:
+    gap             var(--nav-duration) var(--nav-ease),
+    padding         var(--nav-duration) var(--nav-ease),
+    background      var(--nav-duration) var(--nav-ease),
+    border-color    var(--nav-duration) var(--nav-ease),
+    box-shadow      var(--nav-duration) var(--nav-ease),
+    backdrop-filter var(--nav-duration) var(--nav-ease),
+    -webkit-backdrop-filter var(--nav-duration) var(--nav-ease);
+
+  isolation: isolate;
+}
+
+.expanded {
+  gap: 1.25rem;
+  padding: 0 0.6rem 0 1.75rem;
   background: var(--color-white-glass);
   border-color: var(--color-white-glass-border);
-  border-radius: 18px;
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
   box-shadow:
     0 20px 48px var(--color-white-glass-shadow),
     inset 0 1px 0 var(--color-white-glass-border);
-  --nav-offset-x: -50%;
-  backdrop-filter: blur(30px) saturate(190%);
-  -webkit-backdrop-filter: blur(30px) saturate(190%);
 }
 
-.scrolled::before {
-  opacity: 1;
-}
-
-.menuOpen {
-  background: var(--color-white-glass-strong);
-  border-color: var(--color-white-glass-border);
-  box-shadow:
-    0 12px 32px var(--color-white-glass-shadow),
-    inset 0 1px 0 var(--color-white-glass-border);
-}
-
-.menuOpen::before {
-  opacity: 1;
-}
-
-.inner {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  width: 100%;
+/* =============================================================================
+   Menu items — horizontal flex strip that grows from max-width 0 → wide.
+   ============================================================================= */
+.menuItems {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8);
+  gap: 1.75rem;
+
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  /* Both max-width and opacity run on the full duration so visible motion
+     fills the whole 1 s window — no front-loaded snap, no end-of-animation
+     "dead zone". */
+  transition:
+    max-width var(--nav-duration) var(--nav-ease),
+    opacity   var(--nav-duration) var(--nav-ease);
 }
 
-.logo {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  transition: all var(--nav-duration) var(--nav-ease);
-}
-
-.logoImage {
-  height: 88px;
-  width: auto;
-  display: block;
-  transition: height var(--nav-duration) var(--nav-ease), opacity var(--nav-duration) var(--nav-ease);
-}
-
-.links {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin: 0 auto;
+.expanded .menuItems {
+  /* Tight target width — sized to the actual content (~540 px for six
+     items + gaps) plus a small buffer so the right-most item never wraps
+     under text-zoom. Crucially, NOT 760 px — overshoot is what caused the
+     visible animation to finish at ~50 % of the duration. */
+  max-width: 600px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .link {
   position: relative;
-  color: var(--color-black);
-  font-size: 0.9rem;
-  font-weight: var(--fw-medium);
-  transition: var(--transition);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-dark);
+  text-decoration: none;
+  letter-spacing: -0.005em;
+  transition: color 0.3s ease;
 }
 
-.link::after {
+.link:hover {
+  color: #0877DE;
+}
+
+.link.active {
+  color: #0877DE;
+  font-weight: 600;
+}
+
+.link.active::after {
   content: '';
   position: absolute;
+  bottom: -8px;
   left: 0;
-  bottom: -6px;
-  width: 100%;
-  height: 1px;
-  background: var(--color-black);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: var(--transition);
+  right: 0;
+  height: 1.5px;
+  background: #0877DE;
+  border-radius: 1px;
 }
 
-.link:hover::after,
-.active::after {
-  transform: scaleX(1);
-}
-
-.active {
-  font-weight: var(--fw-bold);
-}
-
-.cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  min-width: 128px;
-  padding: 0 var(--space-7);
-  border-radius: 14px;
-  background: var(--color-blue-accent);
-  color: var(--color-white);
-  font-size: 0.875rem;
-  font-weight: var(--fw-semibold);
-  line-height: 1;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: var(--transition);
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.cta:hover,
-.cta:focus-visible {
-  background: var(--color-blue-primary);
-}
-
-.scrolled .logoImage {
-  height: 66px;
-  opacity: 0.92;
-}
-
-.scrolled .cta {
-  min-height: 38px;
-  min-width: 118px;
-  padding: 0 var(--space-6);
-  font-size: 0.875rem;
-  font-weight: var(--fw-semibold);
-  border-radius: 12px;
-}
-
-.hamburger {
-  display: none;
-  width: 40px;
-  height: 40px;
-  position: relative;
-  align-items: center;
-  justify-content: center;
+/* =============================================================================
+   Logo button — always visible. Acts as the expand/collapse trigger.
+   No background of its own. Larger when collapsed so it reads as the hero
+   element; shrinks slightly on expand to fit into the glass pill.
+   ============================================================================= */
+.logoButton {
   background: none;
   border: none;
+  padding: 0.25rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 18px;
+  transition: transform var(--nav-duration) var(--nav-ease);
 }
 
-.hamburger span {
-  position: absolute;
-  width: 22px;
-  height: 2px;
-  border-radius: var(--radius-full);
-  background: var(--color-black);
-  transition: var(--transition);
+.logoButton:focus-visible {
+  outline: 2px solid #0877DE;
+  outline-offset: 4px;
 }
 
-.hamburger span:nth-child(1) {
-  transform: translateY(-7px);
+.logoImage {
+  height: 80px;
+  width: auto;
+  display: block;
+  transition: height var(--nav-duration) var(--nav-ease);
 }
 
-.hamburger span:nth-child(2) {
-  transform: translateY(0);
+.expanded .logoImage {
+  height: 60px;
 }
 
-.hamburger span:nth-child(3) {
-  transform: translateY(7px);
-}
-
-.hamburgerOpen span:nth-child(1) {
-  transform: translateY(0) rotate(45deg);
-}
-
-.hamburgerOpen span:nth-child(2) {
+/* =============================================================================
+   Scrim — dim layer behind the expanded navbar, click anywhere to close.
+   ============================================================================= */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 27, 62, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--nav-duration) var(--nav-ease),
+    visibility var(--nav-duration) var(--nav-ease);
+  z-index: 999;
 }
 
-.hamburgerOpen span:nth-child(3) {
-  transform: translateY(0) rotate(-45deg);
+.scrimOpen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-.mobileMenu {
-  display: none;
-}
-
+/* =============================================================================
+   Mobile (≤ 768px) — items pop up vertically above the navbar.
+   The popup is HORIZONTALLY CENTRED above the (also centred) navbar.
+   ============================================================================= */
 @media (max-width: 768px) {
   .navbar {
-    height: 76px;
-    padding: var(--space-4) var(--space-6);
+    bottom: 1rem;
+    height: 60px;
+    padding: 0 0.35rem;
+    border-radius: 18px;
   }
 
-  /* The mobile drawer is positioned below the navbar's bounding box; we have to let it escape
-     the navbar's `overflow: hidden` (which exists to clip the glass-shine ::before on desktop). */
-  .menuOpen {
-    overflow: visible;
+  .expanded {
+    padding: 0 0.35rem;
   }
 
-  .scrolled {
-    width: calc(100% - var(--space-8));
-    height: 62px;
-    padding: calc(var(--space-4) + 2px) var(--space-6);
+  .menuItems {
+    position: absolute;
+    bottom: calc(100% + 0.75rem);
+    /* Centre the popup horizontally above the navbar. translateY handles
+       the slide-up reveal; translateX(-50%) handles the centring. Both
+       transforms must be specified on every state to avoid jumps. */
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+
+    width: 220px;
+    max-width: 220px;
+    max-height: 0;
+    padding: 0;
+
+    background: var(--color-white-glass);
+    border: 1px solid var(--color-white-glass-border);
     border-radius: 16px;
+    backdrop-filter: blur(30px) saturate(190%);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    box-shadow:
+      0 20px 48px var(--color-white-glass-shadow),
+      inset 0 1px 0 var(--color-white-glass-border);
+
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height var(--nav-duration) var(--nav-ease),
+      opacity var(--nav-duration) var(--nav-ease),
+      transform var(--nav-duration) var(--nav-ease),
+      padding var(--nav-duration) var(--nav-ease);
   }
 
-  /* When scrolled and menu open at the same time, also keep overflow visible (the .scrolled
-     class is more specific than .navbar — without this the drawer gets clipped again). */
-  .scrolled.menuOpen {
-    overflow: visible;
+  .expanded .menuItems {
+    /* Tight target height — sized to actual content (~280 px for six
+       stacked items + padding) plus a small buffer. The previous 500 px
+       overshot, so the visible reveal finished at ~55 % of the duration
+       and the eye registered the rest as a pause. */
+    max-height: 320px;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    padding: 0.4rem 0;
   }
 
-  .links,
-  .cta {
+  .link {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+
+  .link.active::after {
     display: none;
   }
 
-  .hamburger {
-    display: inline-flex;
+  .link.active {
+    background: rgba(8, 119, 222, 0.08);
   }
 
-  .mobileMenu {
-    display: grid;
-    gap: var(--space-4);
-    position: absolute;
-    top: calc(100% + var(--space-2));
-    left: 0;
-    width: 100%;
-    padding: var(--space-6);
-    background: var(--color-white-glass-strong);
-    border: 1px solid var(--color-white-glass-border);
-    border-radius: var(--radius-xl);
-    box-shadow:
-      0 12px 32px var(--color-white-glass-shadow),
-      inset 0 1px 0 var(--color-white-glass-border);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(-8px);
-    transition: var(--transition);
-    backdrop-filter: blur(28px) saturate(190%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    z-index: 1;
+  .logoImage {
+    height: 56px;
   }
 
-  .mobileMenuOpen {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-
-  .mobileLink {
-    color: var(--color-black);
-    font-size: var(--text-base);
-    font-weight: var(--fw-medium);
-    background: none;
-    border: none;
-    padding: 0;
-    text-align: left;
-    cursor: pointer;
-    font-family: inherit;
+  .expanded .logoImage {
+    height: 48px;
   }
 }

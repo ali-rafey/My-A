@@ -21,6 +21,16 @@ a {
 
 main {
   width: 100%;
+  /* Clearance so the last content isn't permanently trapped under the
+     bottom-anchored navbar. Navbar is ~88px tall+offset on desktop,
+     ~72px on mobile — 7rem (112px) gives comfortable breathing room. */
+  padding-bottom: 7rem;
+}
+
+@media (max-width: 768px) {
+  main {
+    padding-bottom: 5.5rem;
+  }
 }
 
 .section {
