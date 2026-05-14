@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './Navbar.module.css';
 
@@ -115,7 +116,14 @@ export default function Navbar() {
     >
       <nav className={styles.inner} aria-label="Primary navigation">
         <Link className={styles.logo} href="/" onClick={handleLogoClick}>
-          EscaLeads
+          <Image
+            src="/logo-icon.png"
+            alt="EscaLeads"
+            width={500}
+            height={500}
+            priority
+            className={styles.logoImage}
+          />
         </Link>
 
         <div className={styles.links} aria-label="Desktop navigation">

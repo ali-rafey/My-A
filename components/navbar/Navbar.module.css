@@ -1,5 +1,9 @@
 .navbar {
   --nav-offset-x: 0;
+  /* Buttery iOS-style easing for the scroll morph. Scoped to this component so the global
+     --transition token (used by hover snaps, etc.) stays untouched. */
+  --nav-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --nav-duration: 0.55s;
   position: fixed;
   top: 0;
   left: 0;
@@ -7,9 +11,9 @@
   z-index: 1000;
   background: var(--color-white);
   color: var(--color-black);
-  height: 76px;
-  padding: var(--space-5) var(--space-12);
-  transition: var(--transition);
+  height: 80px;
+  padding: var(--space-4) var(--space-12);
+  transition: all var(--nav-duration) var(--nav-ease);
   box-shadow: none;
   border: 1px solid transparent;
   transform: translateX(var(--nav-offset-x));
@@ -29,7 +33,7 @@
       transparent 55%);
   opacity: 0;
   pointer-events: none;
-  transition: var(--transition);
+  transition: opacity var(--nav-duration) var(--nav-ease);
 }
 
 .scrolled {
@@ -37,7 +41,7 @@
   left: 50%;
   width: min(calc(100% - var(--space-8)),
       calc(var(--container-max) + var(--space-12) + var(--space-12)));
-  height: 68px;
+  height: 64px;
   padding: calc(var(--space-4) + 2px) var(--space-6);
   background: var(--color-white-glass);
   border-color: var(--color-white-glass-border);
@@ -78,12 +82,17 @@
 }
 
 .logo {
-  color: var(--color-black);
-  font-size: 1.4rem;
-  font-weight: var(--fw-extrabold);
   flex-shrink: 0;
-  letter-spacing: -0.03em;
-  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  transition: all var(--nav-duration) var(--nav-ease);
+}
+
+.logoImage {
+  height: 88px;
+  width: auto;
+  display: block;
+  transition: height var(--nav-duration) var(--nav-ease), opacity var(--nav-duration) var(--nav-ease);
 }
 
 .links {
@@ -155,8 +164,9 @@
   background: var(--color-blue-primary);
 }
 
-.scrolled .logo {
-  font-size: 1.28rem;
+.scrolled .logoImage {
+  height: 66px;
+  opacity: 0.92;
 }
 
 .scrolled .cta {
@@ -219,8 +229,8 @@
 
 @media (max-width: 768px) {
   .navbar {
-    height: 74px;
-    padding: var(--space-5) var(--space-6);
+    height: 76px;
+    padding: var(--space-4) var(--space-6);
   }
 
   /* The mobile drawer is positioned below the navbar's bounding box; we have to let it escape
@@ -231,7 +241,7 @@
 
   .scrolled {
     width: calc(100% - var(--space-8));
-    height: 66px;
+    height: 62px;
     padding: calc(var(--space-4) + 2px) var(--space-6);
     border-radius: 16px;
   }
