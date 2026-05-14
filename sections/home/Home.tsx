@@ -15,6 +15,9 @@ export default function Home() {
 
       <div className="container">
         <div className={styles.copy}>
+          {/* Editorial drafting marker. Purely decorative — no content meaning. */}
+          <span className={styles.accentBar} aria-hidden="true" />
+
           <h1 className={styles.headline}>
             <span className={styles.headlineLine}>We Escalate Your Leads</span>
             <span className={styles.headlineLine}>

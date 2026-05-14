@@ -1,4 +1,16 @@
+/* =============================================================================
+   Hero — premium minimalist
+   =============================================================================
+   Brand palette is scoped to this component (tokens.css is frozen per CLAUDE.md
+   §4.2). Only the 5 brand colors are used anywhere in the hero.
+   ============================================================================= */
 .section {
+  --hero-navy:   #0A2036;  /* Deep Navy Blue       — headline, pill border       */
+  --hero-royal:  #044B89;  /* Dark Royal Blue      — reserved for future states  */
+  --hero-accent: #0877DE;  /* Bright Accent Blue   — rotating word + accent bar  */
+  --hero-steel:  #73838F;  /* Steel Gray           — body copy, grid lines       */
+  --hero-silver: #C6D3DE;  /* Light Silver Gray    — reserved                    */
+
   position: relative;
   background: var(--color-white);
   overflow: hidden;
@@ -6,10 +18,10 @@
   align-items: center;
 }
 
-/* Outer wrapper carries ONLY the vertical fade (top → opaque → bottom).
-   Multi-stop gradient so the transition is smooth all the way through,
-   not a "transparent → opaque" cliff with a hard banding edge. The
-   fade eats roughly the top 32% and bottom 32% of the section height. */
+/* =============================================================================
+   Grid backdrop. Two nested divs so the horizontal + vertical fades don't
+   fight mask-composite compatibility.
+   ============================================================================= */
 .gridFrame {
   position: absolute;
   inset: 0;
@@ -38,14 +50,12 @@
     transparent 100%);
 }
 
-/* Inner element draws the grid lines (tighter 56px squares) and applies
-   the horizontal left-side fade. */
 .grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(13, 27, 62, 0.10) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(13, 27, 62, 0.10) 1px, transparent 1px);
+    linear-gradient(to right, rgba(115, 131, 143, 0.20) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(115, 131, 143, 0.20) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: linear-gradient(to right,
     transparent 28%,
@@ -57,23 +67,44 @@
     rgba(0, 0, 0, 1) 72%);
 }
 
+/* =============================================================================
+   Copy column — single visual block, choreographed mount cascade
+   ============================================================================= */
 .copy {
   position: relative;
   z-index: 1;
-  max-width: 1100px;
+  max-width: 1080px;
+  animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Single decorative element. A 40px horizontal line in the accent blue, set
+   above the headline. Animates in with a scale-x reveal anchored at the left. */
+.accentBar {
+  display: block;
+  width: 2.5rem;
+  height: 1.5px;
+  background: var(--hero-accent);
+  margin: 0 0 1.75rem;
+  transform-origin: left center;
+  animation: accentBarIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* Headline. Weight 300 (Inter Light), tight tracking, tight line-height. The
+   font-feature-settings line enables Inter's premium stylistic alternates. */
 .headline {
   margin: 0;
-  color: var(--color-text-dark);
+  color: var(--hero-navy);
   font-family: var(--font-sans);
-  font-size: clamp(2.25rem, 6.5vw, 5rem);
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1.0;
+  letter-spacing: -0.035em;
+  font-feature-settings: 'ss01', 'cv11';
   display: flex;
   flex-direction: column;
-  gap: 0.35em;
+  gap: 0.18em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .headlineLine {
@@ -81,63 +112,78 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35em;
-  row-gap: 0.2em;
+  row-gap: 0.15em;
 }
 
-/* The rounded bordered pill that wraps the rotating word. min-width sizes to the
-   longest word ("Sustainability") so the line doesn't reflow each tick. Tight
-   internal padding keeps the box compact. */
+/* The rounded bordered pill. Pure border on a transparent background. */
 .rotatingPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 7em;
-  padding: 0 0.32em 0.04em;
-  border: 1.5px solid var(--color-text-dark);
-  border-radius: 10px;
+  padding: 0 0.45em 0.04em;
+  border: 1px solid var(--hero-navy);
+  border-radius: 12px;
   overflow: hidden;
   vertical-align: baseline;
-  font-weight: 400;
-  /* Slightly tighter than the headline so the pill hugs the cap-height of the word. */
-  line-height: 1.05;
+  line-height: 1.0;
+  font-weight: 300;
+  background: transparent;
 }
 
-/* Each tick, RotatingWord remounts this span (via a key bump), restarting the
-   keyframe animation from 0. The animation does a fade + small slide-up. */
+/* The only saturated colour in the hero. Slightly heavier weight (400) than
+   the surrounding light text (300) so the eye lands on it without size change. */
 .rotatingWord {
   display: inline-block;
-  animation: heroWordIn 0.45s cubic-bezier(0.32, 0.72, 0, 1) both;
+  color: var(--hero-accent);
+  font-weight: 400;
+  animation: heroWordIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
   will-change: transform, opacity;
 }
 
-@keyframes heroWordIn {
-  from {
-    opacity: 0;
-    transform: translateY(0.4em);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Lead. Steel gray, regular weight, generous line-height. */
+.lead {
+  margin: 2.5rem 0 0;
+  color: var(--hero-steel);
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.65;
+  max-width: 34rem;
+  letter-spacing: 0.005em;
+  animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
 
-.lead {
-  margin: var(--space-8) 0 0;
-  color: var(--color-text-body);
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  font-weight: 400;
-  line-height: 1.6;
-  max-width: 38rem;
+/* =============================================================================
+   Animations
+   ============================================================================= */
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroWordIn {
+  from { opacity: 0; transform: translateY(0.45em); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes accentBarIn {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rotatingWord {
+  .copy,
+  .lead,
+  .rotatingWord,
+  .accentBar {
     animation: none;
   }
 }
 
+/* =============================================================================
+   Mobile (≤ 768 px)
+   ============================================================================= */
 @media (max-width: 768px) {
-  /* Mobile uses the same multi-stop curve, just tighter overall. */
   .gridFrame {
     mask-image: linear-gradient(to bottom,
       transparent 0%,
@@ -171,18 +217,23 @@
       rgba(0, 0, 0, 1) 65%);
   }
 
+  .accentBar {
+    width: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
   .headline {
-    gap: 0.25em;
+    gap: 0.2em;
+    letter-spacing: -0.028em;
   }
 
   .rotatingPill {
     min-width: 6em;
-    padding: 0 0.28em 0.04em;
-    border-radius: 8px;
-    border-width: 1px;
+    padding: 0 0.35em 0.04em;
+    border-radius: 10px;
   }
 
   .lead {
-    margin-top: var(--space-6);
+    margin-top: 2rem;
   }
 }
