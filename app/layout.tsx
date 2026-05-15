@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/components/navbar/Navbar';
 import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
+import StylesPreloader from './StylesPreloader';
 import '@/styles/index.css';
 
 const inter = Inter({
@@ -118,6 +119,10 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
         />
       </head>
       <body>
+        {/* Bundles every section's CSS module into the layout's CSS chunk
+            so client-side route transitions don't fetch new stylesheets
+            mid-navigation (which produced a brief unstyled flash). */}
+        <StylesPreloader />
         <Navbar />
         <main>{children}</main>
         {/* Client-only: tracks App Router route changes (gtag.js doesn't auto-pageview SPA navs). */}
