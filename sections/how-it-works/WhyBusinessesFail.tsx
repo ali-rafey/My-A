@@ -3,21 +3,22 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './WhyBusinessesFail.module.css';
 
-// Editorial bento section: five problem cards, each anchored by a single
-// stat. Animates in once when scrolled into view with a 80ms cascade.
+// Editorial bento section: five problem cards on an asymmetric pastel grid.
+// Each card has the same building blocks (title, stat numeral, stat label,
+// body copy) but card 1 uses a horizontal layout (title left / stat right)
+// while cards 2-5 use a vertical layout (title top / stat middle / body
+// bottom). Placement and colour are assigned via :nth-child in CSS so the
+// TSX stays pure data.
 //
-// Animation rationale: a one-shot IntersectionObserver flips a class on
-// the grid; cards transition via animation-delay nth-child stagger.
-// animation-delay is decoupled from transition-delay, so hover (which
-// reuses the same transform property) responds instantly without waiting
-// out the stagger offset.
+// Animation: IntersectionObserver flips a `visible` class on the grid; the
+// CSS keyframe + nth-child stagger then reveals each card with an 80 ms
+// cascade. animation-delay (not transition-delay) so hover stays instant.
 
 type Card = {
   title: string;
   stat: string;
   statLabel: string;
   body: string;
-  span: 1 | 2;
 };
 
 const CARDS: Card[] = [
@@ -28,14 +29,12 @@ const CARDS: Card[] = [
     body:
       'Having a website is no longer a competitive advantage. Without strategy, ' +
       'visibility, and the right digital ecosystem, most businesses simply go unnoticed.',
-    span: 2,
   },
   {
     title: 'Advertise Smarter Not Louder',
     stat: '200%',
     statLabel: 'Cost Rise',
     body: 'Spending more on ads without strategy burns budget and builds nothing.',
-    span: 1,
   },
   {
     title: 'SEO in the AI Era',
@@ -44,14 +43,12 @@ const CARDS: Card[] = [
     body:
       'Search has changed. AI is reshaping how customers find businesses. ' +
       'Old SEO tactics no longer work.',
-    span: 1,
   },
   {
     title: 'Most Businesses Go Online and Disappear',
     stat: '10%',
     statLabel: 'Survive 90 Days',
     body: 'Launching is easy. Surviving requires data, strategy, and execution.',
-    span: 1,
   },
   {
     title: 'Blind Decisions on Wrong Data',
@@ -60,7 +57,6 @@ const CARDS: Card[] = [
     body:
       "Vanity metrics like traffic and followers don't pay bills. " +
       'Real growth needs real data.',
-    span: 1,
   },
 ];
 
@@ -72,7 +68,6 @@ export default function WhyBusinessesFail() {
     const el = gridRef.current;
     if (!el) return;
 
-    // Reduced motion: skip the scroll trigger, render fully visible immediately.
     if (
       typeof matchMedia === 'function' &&
       matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -111,22 +106,12 @@ export default function WhyBusinessesFail() {
           className={`${styles.grid} ${visible ? styles.visible : ''}`}
         >
           {CARDS.map((card) => (
-            <article
-              key={card.title}
-              className={
-                card.span === 2 ? `${styles.card} ${styles.cardLarge}` : styles.card
-              }
-            >
-              {/* Thin gradient accent line that reveals on hover. */}
-              <span className={styles.accent} aria-hidden="true" />
-
+            <article key={card.title} className={styles.card}>
               <h3 className={styles.cardTitle}>{card.title}</h3>
-
               <div className={styles.stat}>
                 <span className={styles.statNumber}>{card.stat}</span>
                 <span className={styles.statLabel}>{card.statLabel}</span>
               </div>
-
               <p className={styles.cardBody}>{card.body}</p>
             </article>
           ))}
