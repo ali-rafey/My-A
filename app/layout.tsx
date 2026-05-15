@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import Navbar from '@/components/navbar/Navbar';
 import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
 import StylesPreloader from './StylesPreloader';
@@ -10,6 +10,16 @@ const inter = Inter({
   display: 'swap',
   variable: '--font-inter',
   preload: true,
+});
+
+// Playfair Display — high-contrast editorial serif. Used selectively for
+// section headlines + display stats where a refined typographic break from
+// Inter elevates the moment (e.g. the "Why Businesses Fail Online" bento).
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair',
+  weight: ['400', '600', '700'],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -95,7 +105,7 @@ gtag('js', new Date());
 gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
         {/* GA4 — server-rendered into the response body so Search Console can verify the property. */}
         {gaMeasurementId ? (

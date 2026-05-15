@@ -11,12 +11,13 @@
 // `import styles from ...` as normal — Next.js deduplicates, so they pull
 // from the layout chunk instead of fetching new chunks.
 
-import homeStyles       from '@/sections/home/Home.module.css';
-import servicesStyles   from '@/sections/services/Services.module.css';
-import howItWorksStyles from '@/sections/how-it-works/HowItWorks.module.css';
-import ourWorkStyles    from '@/sections/our-work/OurWork.module.css';
-import contactStyles    from '@/sections/contact/Contact.module.css';
-import blogsPageStyles  from './blogs/blogs.module.css';
+import homeStyles            from '@/sections/home/Home.module.css';
+import servicesStyles        from '@/sections/services/Services.module.css';
+import howItWorksStyles      from '@/sections/how-it-works/HowItWorks.module.css';
+import whyBusinessesFailStyles from '@/sections/how-it-works/WhyBusinessesFail.module.css';
+import ourWorkStyles         from '@/sections/our-work/OurWork.module.css';
+import contactStyles         from '@/sections/contact/Contact.module.css';
+import blogsPageStyles       from './blogs/blogs.module.css';
 
 export default function StylesPreloader() {
   // Renders nothing visible. The className references below are what
@@ -27,6 +28,7 @@ export default function StylesPreloader() {
       <span className={homeStyles.section} />
       <span className={servicesStyles.section} />
       <span className={howItWorksStyles.section} />
+      <span className={whyBusinessesFailStyles.section} />
       <span className={ourWorkStyles.section} />
       <span className={contactStyles.section} />
       <span className={blogsPageStyles.page} />
