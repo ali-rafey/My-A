@@ -1,5 +1,15 @@
 html {
   scroll-behavior: smooth;
+  /* Hide the native right-edge scrollbar on every page. Scrolling itself
+     (wheel, trackpad, arrow keys, PgUp/PgDn, Home/End, touch) is unaffected
+     — only the visual rail is removed for a cleaner page edge. */
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;          /* IE / legacy Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;                     /* WebKit: Chrome, Safari, modern Edge */
 }
 
 body {
