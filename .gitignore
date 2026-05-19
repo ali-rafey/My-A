@@ -36,3 +36,33 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Claude Code worktrees (project-root .claude/ contains the AI's
+# isolated checkout — never belongs in git history).
+.claude/
+
+# Supabase CLI local state (login tokens, project refs).
+# NOTE: this is the LEADING-DOT folder created by the CLI. The
+# supabase/ folder at the repo root (no dot) IS tracked because it
+# holds schema.sql — the single source of truth for the DB.
+.supabase/
+
+# Build / dev caches
+.swc/
+.turbo/
+.cache/
+
+# Test coverage
+coverage/
+
+# Editor / scratch backups
+*.bak
+*~
+.*.swp
+.*.swo
+
+# Catch-all logs
+*.log
+
+# macOS AppleDouble metadata
+._*
