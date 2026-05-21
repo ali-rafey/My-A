@@ -3,8 +3,10 @@
 
 export type Service = {
   id: number;
+  serial: string;
   title: string;
   description: string;
+  capabilities: string[];
 };
 
 export type WorkProject = {
@@ -23,18 +25,42 @@ export type Step = {
 export const services: Service[] = [
   {
     id: 1,
-    title: 'Web Development',
-    description: 'High-performance web apps, dashboards, and customer portals built for scale.',
+    serial: '01',
+    title: 'Digital Products',
+    description:
+      'Build software people love. We design and ship web apps, mobile experiences, and AI-powered tools ready to scale.',
+    capabilities: [
+      'Web Applications',
+      'Mobile Apps',
+      'AI Integration',
+      'Backend Engineering',
+    ],
   },
   {
     id: 2,
-    title: 'Mobile Apps',
-    description: 'Cross-platform mobile experiences that stay fast, clean, and maintainable.',
+    serial: '02',
+    title: 'Data Analytics',
+    description:
+      'Turn raw signal into clear decisions. Dashboards, attribution models, and insights that compound.',
+    capabilities: [
+      'Analytics Dashboards',
+      'Attribution Modeling',
+      'Conversion Tracking',
+      'Reporting Systems',
+    ],
   },
   {
     id: 3,
-    title: 'AI Solutions',
-    description: 'Automations and intelligent assistants that reduce manual effort and improve decisions.',
+    serial: '03',
+    title: 'Advertising & Marketing',
+    description:
+      'Stop wasting budget. Performance ads, SEO, and growth campaigns engineered for ROI.',
+    capabilities: [
+      'Performance Media',
+      'SEO Strategy',
+      'Content & Brand',
+      'Growth Engineering',
+    ],
   },
 ];
 
