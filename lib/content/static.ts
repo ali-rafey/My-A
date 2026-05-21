@@ -3,8 +3,8 @@
 
 export type Service = {
   id: number;
-  serial: string;
-  title: string;
+  title: string;       // Tag label (rendered uppercase via CSS).
+  headline: string;    // Poster-style line below the tag.
   description: string;
   capabilities: string[];
 };
@@ -25,23 +25,23 @@ export type Step = {
 export const services: Service[] = [
   {
     id: 1,
-    serial: '01',
-    title: 'Digital Products',
+    title: 'Digital Presence',
+    headline: 'Built to be seen.',
     description:
-      'Build software people love. We design and ship web apps, mobile experiences, and AI-powered tools ready to scale.',
+      'Your digital storefront, performance-tuned. Websites, brand, and product experiences that turn visitors into customers.',
     capabilities: [
-      'Web Applications',
-      'Mobile Apps',
-      'AI Integration',
-      'Backend Engineering',
+      'Web Development',
+      'Brand Identity',
+      'UX & Design',
+      'Performance & SEO',
     ],
   },
   {
     id: 2,
-    serial: '02',
     title: 'Data Analytics',
+    headline: 'Insight that compounds.',
     description:
-      'Turn raw signal into clear decisions. Dashboards, attribution models, and insights that compound.',
+      'Turn raw signal into clear decisions. Dashboards, attribution models, and insights that compound over time.',
     capabilities: [
       'Analytics Dashboards',
       'Attribution Modeling',
@@ -51,10 +51,10 @@ export const services: Service[] = [
   },
   {
     id: 3,
-    serial: '03',
     title: 'Advertising & Marketing',
+    headline: 'Reach that converts.',
     description:
-      'Stop wasting budget. Performance ads, SEO, and growth campaigns engineered for ROI.',
+      'Stop wasting budget. Performance ads, organic strategy, and growth campaigns engineered for ROI.',
     capabilities: [
       'Performance Media',
       'SEO Strategy',

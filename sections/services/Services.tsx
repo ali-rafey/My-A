@@ -3,14 +3,13 @@ import { services } from '@/lib/content/static';
 import styles from './Services.module.css';
 
 // =============================================================================
-// Services — three disciplines in a row.
+// Services — three corner-tab cards in a row.
 // =============================================================================
-// Editorial card grid: each service has a serial number stamp (01/02/03),
-// a strong title, a short description, a thin divider, and a list of the
-// concrete capabilities it includes. A small corner arrow indicates the
-// card's hover affordance; the whole grid lives in a viewport-fitting
-// section centred vertically. Footer CTA pushes interested visitors to
-// /contact.
+// Each card carries a navy "corner tab" label at the top-left (sharing the
+// card's outer top-left curve and tapering with a smaller inner radius on
+// the bottom-right). Beneath the tab area: a poster-style headline, a
+// description, a hairline divider, and a list of concrete capabilities.
+// Footer CTA points at /contact.
 // =============================================================================
 
 export default function Services() {
@@ -29,24 +28,25 @@ export default function Services() {
         <div className={styles.grid}>
           {services.map((service) => (
             <article key={service.id} className={styles.card}>
-              <div className={styles.cardTop}>
-                <span className={styles.serial}>{service.serial}</span>
-                <span className={styles.cardArrow} aria-hidden="true">↗</span>
+              <div className={styles.tag}>
+                <span>{service.title}</span>
               </div>
 
-              <h3 className={styles.cardTitle}>{service.title}</h3>
-              <p className={styles.cardDescription}>{service.description}</p>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardHeadline}>{service.headline}</h3>
+                <p className={styles.cardDescription}>{service.description}</p>
 
-              <span className={styles.divider} aria-hidden="true" />
+                <span className={styles.divider} aria-hidden="true" />
 
-              <ul className={styles.capabilities}>
-                {service.capabilities.map((capability) => (
-                  <li key={capability} className={styles.capability}>
-                    <span className={styles.capabilityArrow} aria-hidden="true">→</span>
-                    <span>{capability}</span>
-                  </li>
-                ))}
-              </ul>
+                <ul className={styles.capabilities}>
+                  {service.capabilities.map((capability) => (
+                    <li key={capability} className={styles.capability}>
+                      <span className={styles.capabilityArrow} aria-hidden="true">→</span>
+                      <span>{capability}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </article>
           ))}
         </div>
