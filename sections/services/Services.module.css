@@ -1,42 +1,417 @@
+/* =============================================================================
+   Services — three cards in a row, editorial premium minimalist.
+   =============================================================================
+   - Section fills the viewport (calc(100vh − 7rem)) so the page doesn't
+     scroll on laptops. Header + grid + footer CTA centred vertically.
+   - Each card: serial-number stamp, hover arrow, title, description,
+     hairline divider, capability list.
+   - Pure CSS reveal cascade on mount via nth-child animation-delay.
+     animation-delay (not transition-delay) so hover stays instant.
+   ============================================================================= */
+
 .section {
-  background: var(--color-silver-light);
-}
+  --srv-navy:   #0A2036;
+  --srv-royal:  #044B89;
+  --srv-accent: #0877DE;
+  --srv-steel:  #73838F;
+  --srv-silver: #C6D3DE;
 
-.header {
-  display: grid;
-  gap: var(--space-4);
-  max-width: 48rem;
-}
+  --srv-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-.grid {
-  margin-top: var(--space-12);
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-6);
-}
-
-.card {
-  padding: var(--space-8);
-  border-radius: var(--radius-lg);
+  position: relative;
+  min-height: calc(100vh - 7rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   background: var(--color-white);
-  box-shadow: var(--shadow-sm);
+  padding: var(--space-12) 0;
+  overflow: hidden;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* =============================================================================
+   Header
+   ============================================================================= */
+.header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto var(--space-12);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.95rem 0.4rem 0.55rem;
+  border: 1px solid rgba(10, 32, 54, 0.1);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--srv-steel);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  opacity: 0;
+  transform: translateY(10px);
+  animation: copyIn 0.9s var(--srv-ease) 0.1s forwards;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--srv-accent);
+  box-shadow: 0 0 10px rgba(8, 119, 222, 0.5);
+  animation: dotPulse 2.6s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(8, 119, 222, 0.4);
+    scale: 1;
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(8, 119, 222, 0.8);
+    scale: 1.18;
+  }
+}
+
+.title {
+  margin: var(--space-4) 0 var(--space-3);
+  font-family: var(--font-playfair), 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  color: var(--srv-navy);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+
+  opacity: 0;
+  transform: translateY(14px);
+  animation: copyIn 1s var(--srv-ease) 0.2s forwards;
+}
+
+.subtitle {
+  margin: 0 auto;
+  max-width: 32rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
+  font-weight: 400;
+  color: var(--srv-steel);
+  line-height: 1.55;
+
+  opacity: 0;
+  transform: translateY(10px);
+  animation: copyIn 1s var(--srv-ease) 0.32s forwards;
+}
+
+/* =============================================================================
+   Grid — three equal cards in a row.
+   ============================================================================= */
+.grid {
   display: grid;
-  gap: var(--space-4);
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =============================================================================
+   Card
+   ============================================================================= */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.65rem 1.5rem;
+  background: var(--color-white);
+  border: 1px solid rgba(10, 32, 54, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+
+  opacity: 0;
+  transform: translateY(22px);
+  animation: cardIn 0.95s var(--srv-ease) forwards;
+
+  transition:
+    transform 0.45s var(--srv-ease),
+    border-color 0.45s var(--srv-ease),
+    box-shadow 0.45s var(--srv-ease);
+}
+
+.card:nth-child(1) { animation-delay: 0.42s; }
+.card:nth-child(2) { animation-delay: 0.52s; }
+.card:nth-child(3) { animation-delay: 0.62s; }
+
+/* Hover lift + accent border + soft blue glow. */
+.card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(8, 119, 222, 0.45);
+  box-shadow:
+    0 24px 60px -18px rgba(8, 119, 222, 0.25),
+    0 1px 0 rgba(8, 119, 222, 0.08) inset;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+/* Editorial serial stamp — Playfair italic at large size in a light tone. */
+.serial {
+  font-family: var(--font-playfair), 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 2rem;
+  color: rgba(10, 32, 54, 0.22);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 0.45s var(--srv-ease);
+}
+
+.card:hover .serial {
+  color: rgba(8, 119, 222, 0.45);
+}
+
+/* Corner arrow — appears on hover, scales in. */
+.cardArrow {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: rgba(10, 32, 54, 0.25);
+  line-height: 1;
+  transform: translate(2px, 2px) scale(0.92);
+  transition:
+    color 0.45s var(--srv-ease),
+    transform 0.45s var(--srv-ease);
+}
+
+.card:hover .cardArrow {
+  color: var(--srv-accent);
+  transform: translate(0, 0) scale(1.08);
 }
 
 .cardTitle {
-  color: var(--color-text-dark);
-  font-size: var(--text-2xl);
-  font-weight: var(--fw-bold);
+  margin: 0 0 0.55rem;
+  font-family: var(--font-sans);
+  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  font-weight: 700;
+  color: var(--srv-navy);
+  letter-spacing: -0.018em;
+  line-height: 1.15;
 }
 
-.cardText {
-  color: var(--color-text-body);
-  line-height: 1.7;
+.cardDescription {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--srv-steel);
+  line-height: 1.55;
 }
 
+/* Hairline divider with gradient fade to the edges. */
+.divider {
+  display: block;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(10, 32, 54, 0.12) 25%,
+    rgba(10, 32, 54, 0.12) 75%,
+    transparent 100%);
+  margin: 0 0 1.1rem;
+}
+
+.capabilities {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.capability {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--srv-navy);
+  letter-spacing: 0.005em;
+}
+
+.capabilityArrow {
+  flex-shrink: 0;
+  width: 1rem;
+  color: var(--srv-accent);
+  font-weight: 600;
+  transition: transform 0.4s var(--srv-ease);
+}
+
+.capability:hover .capabilityArrow {
+  transform: translateX(3px);
+}
+
+/* =============================================================================
+   Footer CTA
+   ============================================================================= */
+.footer {
+  margin-top: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  opacity: 0;
+  transform: translateY(12px);
+  animation: copyIn 1s var(--srv-ease) 0.95s forwards;
+}
+
+.footerLead {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--srv-steel);
+}
+
+.footerCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1.25rem;
+  border: 1px solid var(--srv-navy);
+  border-radius: 9999px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--srv-navy);
+  text-decoration: none;
+  transition:
+    background 0.4s var(--srv-ease),
+    color 0.4s var(--srv-ease),
+    border-color 0.4s var(--srv-ease),
+    transform 0.4s var(--srv-ease),
+    box-shadow 0.4s var(--srv-ease);
+}
+
+.footerCta:hover {
+  background: var(--srv-navy);
+  color: var(--color-white);
+  border-color: var(--srv-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -10px rgba(10, 32, 54, 0.35);
+}
+
+.footerArrow {
+  display: inline-block;
+  transition: transform 0.4s var(--srv-ease);
+}
+
+.footerCta:hover .footerArrow {
+  transform: translateX(3px);
+}
+
+/* =============================================================================
+   Reveal keyframes
+   ============================================================================= */
+@keyframes cardIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes copyIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================================================
+   Reduced motion
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow,
+  .title,
+  .subtitle,
+  .card,
+  .footer {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+  .eyebrowDot {
+    animation: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+  .footerCta:hover {
+    transform: none;
+  }
+}
+
+/* =============================================================================
+   Tablet (≤ 1024 px) — drop to 2 columns then below
+   ============================================================================= */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .section {
+    min-height: auto;
+    padding: var(--space-16) 0;
+  }
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    max-width: 800px;
+  }
+  .card:last-child {
+    grid-column: 1 / 3;
+    max-width: 50%;
+    margin: 0 auto;
+  }
+}
+
+/* =============================================================================
+   Mobile — stack
+   ============================================================================= */
 @media (max-width: 768px) {
+  .section {
+    min-height: auto;
+    padding: var(--space-14) 0;
+  }
+  .header {
+    margin-bottom: var(--space-8);
+  }
   .grid {
     grid-template-columns: 1fr;
+    gap: 0.9rem;
+    max-width: 480px;
+  }
+  .card {
+    padding: 1.5rem 1.4rem 1.35rem;
+  }
+  .card:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+  }
+  .footer {
+    flex-direction: column;
+    gap: 0.65rem;
+    text-align: center;
   }
 }
