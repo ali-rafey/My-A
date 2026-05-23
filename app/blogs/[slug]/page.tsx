@@ -7,6 +7,11 @@ import { sanitizeRichHtml } from '@/lib/sanitize-html';
 import { formatDate } from '@/lib/format';
 import styles from '../blogs.module.css';
 
+// Node runtime explicit — sanitize-html and the Supabase server client both depend on Node APIs.
+// Without this, Vercel can pick the Edge runtime for ISR-rendered slugs, which fails to load these
+// modules and produces an unrendered 500. The admin API routes already pin to nodejs for the same
+// reason; the public blog detail page was relying on the implicit default and that wasn't holding.
+export const runtime = 'nodejs';
 export const revalidate = 60;
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
