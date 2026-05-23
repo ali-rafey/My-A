@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { listPublishedBlogs } from '@/lib/content/blogs';
 import { formatDate } from '@/lib/format';
 import styles from './blogs.module.css';
@@ -27,47 +26,60 @@ export default async function BlogsPage() {
   const blogs = await listPublishedBlogs();
 
   return (
-    <div className={`${styles.page} container`}>
-      <header className={styles.header}>
-        <span className="eyebrow">Blog</span>
-        <h1 className="sectionTitle">Ideas, systems, and growth insights</h1>
-        <p className="sectionLead">
-          Practical thinking from the work we do every day across product, engineering, and automation.
-        </p>
-      </header>
+    <section className={`${styles.section} section`}>
+      <div className={`container ${styles.container}`}>
+        <header className={styles.header}>
+          <span className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} aria-hidden="true" />
+            <span>Blog</span>
+          </span>
+          <h1 className={styles.title}>Ideas, systems, and growth insights.</h1>
+          <p className={styles.subtitle}>
+            Practical thinking from the work we do every day.
+          </p>
+        </header>
 
-      {blogs.length === 0 ? (
-        <div className={styles.empty}>New posts are on the way — check back soon.</div>
-      ) : (
-        <div className={styles.grid}>
-          {blogs.map((blog) => (
-            <Link key={blog.id} href={`/blogs/${blog.slug}`} className={styles.card}>
-              {blog.cover_image ? (
-                <Image
-                  className={styles.cover}
-                  src={blog.cover_image}
-                  alt={`Cover image for ${blog.title}`}
-                  width={600}
-                  height={400}
-                  loading="lazy"
-                />
-              ) : null}
-              <span className={styles.date}>{formatDate(blog.created_at)}</span>
-              <h2 className={styles.title}>{blog.title}</h2>
-              {blog.meta_description ? (
-                <p className={styles.excerpt}>{blog.meta_description}</p>
-              ) : null}
-              {blog.tags && blog.tags.length > 0 ? (
-                <div className={styles.tags}>
-                  {blog.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className={styles.tag}>{tag}</span>
-                  ))}
-                </div>
-              ) : null}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+        {blogs.length === 0 ? (
+          <div className={styles.empty}>New posts are on the way — check back soon.</div>
+        ) : (
+          <div className={styles.grid}>
+            {blogs.map((blog) => {
+              // Tab label: first tag if present, else "Article" fallback.
+              // CSS uppercases it so authored case doesn't matter.
+              const tabLabel =
+                Array.isArray(blog.tags) && blog.tags.length > 0
+                  ? blog.tags[0]
+                  : 'Article';
+
+              return (
+                <Link
+                  key={blog.id}
+                  href={`/blogs/${blog.slug}`}
+                  className={styles.card}
+                >
+                  <div className={styles.cornerTab}>
+                    <span>{tabLabel}</span>
+                  </div>
+
+                  <div className={styles.cardBody}>
+                    <h2 className={styles.cardHeadline}>{blog.title}</h2>
+                    {blog.meta_description ? (
+                      <p className={styles.cardDescription}>{blog.meta_description}</p>
+                    ) : null}
+
+                    <span className={styles.divider} aria-hidden="true" />
+
+                    <div className={styles.cardFooter}>
+                      <span className={styles.cardDate}>{formatDate(blog.created_at)}</span>
+                      <span className={styles.cardArrow} aria-hidden="true">→</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

@@ -1,87 +1,418 @@
-.page {
-  padding-top: calc(120px);
-  padding-bottom: var(--space-24);
-  min-height: 100vh;
+/* =============================================================================
+   Blog listing — corner-tab card grid (matches /services template).
+   =============================================================================
+   The listing classes (.section, .header, .grid, .card, .cornerTab, .cardBody,
+   etc.) live above. Detail-page classes (.article*, .tags, .tag, .breadcrumb)
+   are preserved below, untouched, so /blogs/[slug] keeps working.
+   ============================================================================= */
+
+.section {
+  --blg-navy:        #0A2036;
+  --blg-navy-light:  #1B3858;
+  --blg-accent:      #0877DE;
+  --blg-steel:       #73838F;
+  --blg-card-bg:     #F4F4F5;
+  --blg-card-bg-hover: #EFF0F2;
+
+  --blg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
+  min-height: calc(100vh - 7rem);
   background: var(--color-white);
+  padding: var(--space-14) 0 var(--space-12);
+  overflow: visible;
 }
 
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* =============================================================================
+   Header
+   ============================================================================= */
 .header {
-  display: grid;
-  gap: var(--space-4);
-  max-width: 48rem;
-  margin-bottom: var(--space-12);
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto var(--space-12);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-6);
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.95rem 0.4rem 0.55rem;
+  border: 1px solid rgba(10, 32, 54, 0.1);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--blg-steel);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  opacity: 0;
+  transform: translateY(10px);
+  animation: blgCopyIn 0.9s var(--blg-ease) 0.1s forwards;
 }
 
-.card {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-8);
-  background: var(--color-silver-light);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: inherit;
-  transition: var(--transition);
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blg-accent);
+  box-shadow: 0 0 10px rgba(8, 119, 222, 0.5);
+  animation: blgDotPulse 2.6s ease-in-out infinite;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.cover {
-  width: 100%;
-  height: 200px;
-  border-radius: var(--radius-md);
-  background: var(--color-blue-light);
-  object-fit: cover;
-}
-
-.date {
-  color: var(--color-silver-dark);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
+@keyframes blgDotPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(8, 119, 222, 0.4);
+    scale: 1;
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(8, 119, 222, 0.8);
+    scale: 1.18;
+  }
 }
 
 .title {
-  color: var(--color-text-dark);
-  font-size: var(--text-2xl);
-  font-weight: var(--fw-bold);
-  line-height: 1.25;
+  margin: var(--space-4) 0 var(--space-3);
+  font-family: var(--font-playfair), 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  color: var(--blg-navy);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+
+  opacity: 0;
+  transform: translateY(14px);
+  animation: blgCopyIn 1s var(--blg-ease) 0.2s forwards;
 }
 
-.excerpt {
-  color: var(--color-text-body);
-  line-height: 1.7;
+.subtitle {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
+  font-weight: 400;
+  color: var(--blg-steel);
+  line-height: 1.55;
+
+  opacity: 0;
+  transform: translateY(10px);
+  animation: blgCopyIn 1s var(--blg-ease) 0.32s forwards;
 }
 
-.tags {
+/* =============================================================================
+   Grid + cards (corner-tab design copied from /services).
+   ============================================================================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  --card-radius: 22px;
+
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  flex-direction: column;
+  background: var(--blg-card-bg);
+  border: 1px solid rgba(10, 32, 54, 0.05);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  isolation: isolate;
+  text-decoration: none;
+  color: inherit;
+
+  opacity: 0;
+  transform: translateY(22px);
+  animation: blgCardIn 0.95s var(--blg-ease) forwards;
+
+  transition:
+    transform 0.5s var(--blg-ease),
+    background 0.5s var(--blg-ease),
+    border-color 0.5s var(--blg-ease),
+    box-shadow 0.5s var(--blg-ease);
 }
 
-.tag {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  background: var(--color-blue-light);
-  color: var(--color-blue-primary);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
+/* Stagger cards by nth-child up to a reasonable depth. Cards beyond the 9th
+   share the last delay — keeps the cascade snappy on long lists. */
+.card:nth-child(1) { animation-delay: 0.42s; }
+.card:nth-child(2) { animation-delay: 0.50s; }
+.card:nth-child(3) { animation-delay: 0.58s; }
+.card:nth-child(4) { animation-delay: 0.66s; }
+.card:nth-child(5) { animation-delay: 0.74s; }
+.card:nth-child(6) { animation-delay: 0.82s; }
+.card:nth-child(7) { animation-delay: 0.90s; }
+.card:nth-child(8) { animation-delay: 0.98s; }
+.card:nth-child(n+9) { animation-delay: 1.06s; }
+
+.card:hover {
+  transform: translateY(-6px);
+  background: var(--blg-card-bg-hover);
+  border-color: rgba(10, 32, 54, 0.12);
+  box-shadow:
+    0 28px 64px -22px rgba(10, 32, 54, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
 }
 
+/* =============================================================================
+   Corner tab — same silhouette as the Services cards.
+   ============================================================================= */
+.cornerTab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+
+  display: inline-flex;
+  align-items: center;
+  padding: 1.05rem 1.4rem 0.95rem;
+
+  background: linear-gradient(
+    180deg,
+    var(--blg-navy-light) 0%,
+    var(--blg-navy) 100%);
+  color: #F4F4F5;
+
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* Shape matches /services: outer top-left curve + small bottom-right curve. */
+  border-radius: var(--card-radius) 0 16px 0;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    4px 6px 16px -4px rgba(10, 32, 54, 0.28);
+
+  transition:
+    box-shadow 0.5s var(--blg-ease);
+}
+
+.card:hover .cornerTab {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    6px 10px 24px -4px rgba(10, 32, 54, 0.42);
+}
+
+.cornerTab::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  right: 1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+/* =============================================================================
+   Card body
+   ============================================================================= */
+.cardBody {
+  /* padding-top clears the tab footprint */
+  padding: 4.25rem 1.65rem 1.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+}
+
+.cardHeadline {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 700;
+  color: var(--blg-navy);
+  letter-spacing: -0.014em;
+  line-height: 1.25;
+  /* Limit to three lines on overflow; ellipsises gracefully */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardDescription {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--blg-steel);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.divider {
+  display: block;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(10, 32, 54, 0.13) 22%,
+    rgba(10, 32, 54, 0.13) 78%,
+    transparent 100%);
+  margin: auto 0 0.2rem; /* push divider toward the bottom of the card */
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cardDate {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--blg-steel);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cardArrow {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--blg-accent);
+  font-weight: 600;
+  transition: transform 0.4s var(--blg-ease);
+}
+
+.card:hover .cardArrow {
+  transform: translateX(4px);
+}
+
+/* =============================================================================
+   Skeleton (loading.tsx) — no animation, static fill.
+   ============================================================================= */
+.skeletonCard {
+  --card-radius: 22px;
+  background: var(--blg-card-bg);
+  border: 1px solid rgba(10, 32, 54, 0.05);
+  border-radius: var(--card-radius);
+  min-height: 280px;
+}
+
+/* =============================================================================
+   Empty state
+   ============================================================================= */
 .empty {
   padding: var(--space-12);
   border-radius: var(--radius-lg);
-  background: var(--color-silver-light);
-  color: var(--color-text-body);
+  background: var(--blg-card-bg);
+  color: var(--blg-steel);
   text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  max-width: 36rem;
+  margin: 0 auto;
 }
+
+/* =============================================================================
+   Reveal keyframes
+   ============================================================================= */
+@keyframes blgCardIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blgCopyIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================================================
+   Reduced motion
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow,
+  .title,
+  .subtitle,
+  .card {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+  .eyebrowDot {
+    animation: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+  .card:hover .cardArrow {
+    transform: none;
+  }
+}
+
+/* =============================================================================
+   Tablet — 2 columns
+   ============================================================================= */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    max-width: 800px;
+  }
+}
+
+/* =============================================================================
+   Mobile — single column
+   ============================================================================= */
+@media (max-width: 768px) {
+  .section {
+    padding: var(--space-12) 0;
+  }
+  .header {
+    margin-bottom: var(--space-8);
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+    max-width: 480px;
+  }
+  .card {
+    --card-radius: 18px;
+  }
+  .cornerTab {
+    padding: 0.9rem 1.2rem 0.85rem;
+    font-size: 0.65rem;
+  }
+  .cardBody {
+    padding: 3.75rem 1.4rem 1.4rem;
+  }
+}
+
+/* =============================================================================
+   DETAIL PAGE STYLES — /blogs/[slug] uses these. Preserved verbatim from
+   the previous file so the article view keeps working unchanged.
+   ============================================================================= */
 
 .breadcrumb {
   display: flex;
@@ -95,6 +426,13 @@
 .breadcrumb a {
   color: var(--color-blue-primary);
   font-weight: var(--fw-semibold);
+}
+
+.page {
+  padding-top: calc(120px);
+  padding-bottom: var(--space-24);
+  min-height: 100vh;
+  background: var(--color-white);
 }
 
 .article {
@@ -198,8 +536,18 @@
   padding: 0;
 }
 
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+/* Detail-page inline tag chips (used at the bottom of the article). */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-blue-light);
+  color: var(--color-blue-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
 }
