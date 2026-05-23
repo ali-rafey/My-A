@@ -50,40 +50,22 @@ export default function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen]);
 
-  // First-visit showcase: auto-expand the navbar once, hold briefly, then
-  // collapse. Persisted via localStorage so it never replays on subsequent
-  // visits. Honours prefers-reduced-motion (skipped entirely, but flag
-  // still set so the user doesn't get an unexpected animation later).
+  // Page-load showcase: auto-expand the navbar once on mount, hold briefly,
+  // then collapse. Plays once per full page load (Cmd+R / fresh tab) because
+  // Navbar is mounted in the root layout and client-side route changes do
+  // not remount it — so this effect's empty-deps run is the only trigger.
+  // Honours prefers-reduced-motion (skipped entirely).
   useEffect(() => {
-    const SEEN_KEY = 'escaleads-nav-shown-v1';
-
     if (typeof window === 'undefined') return;
-    try {
-      if (window.localStorage.getItem(SEEN_KEY)) return;
-    } catch {
-      // localStorage may be unavailable (private mode quota, blocked) —
-      // fall through to the showcase; the flag set later will also fail
-      // harmlessly. Worst case: showcase replays next visit.
-    }
 
     const reduceMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      try {
-        window.localStorage.setItem(SEEN_KEY, '1');
-      } catch { /* ignore */ }
-      return;
-    }
+    if (reduceMotion) return;
 
     // Timeline: 900 ms quiet → expand (1 s animation) → 1.2 s hold → collapse.
     const openTimer = window.setTimeout(() => setIsOpen(true), 900);
-    const closeTimer = window.setTimeout(() => {
-      setIsOpen(false);
-      try {
-        window.localStorage.setItem(SEEN_KEY, '1');
-      } catch { /* ignore */ }
-    }, 900 + 1000 + 1200);
+    const closeTimer = window.setTimeout(() => setIsOpen(false), 900 + 1000 + 1200);
 
     return () => {
       window.clearTimeout(openTimer);
