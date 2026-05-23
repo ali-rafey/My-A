@@ -1,0 +1,178 @@
+/* Modal dialog for the @modal parallel route slot. Visual language mirrors the navbar's glass
+   pattern (rgba whites + saturated blur) and reuses the site's design tokens so it sits naturally
+   in the EscaLeads UI without introducing new colors, radii, or shadow recipes. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 27, 62, 0.32);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  z-index: 100;
+  animation: scrimIn 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  cursor: zoom-out;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(880px, calc(100vw - 2rem));
+  max-height: min(88vh, 920px);
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-white-glass-border);
+  box-shadow:
+    0 32px 80px rgba(13, 27, 62, 0.28),
+    0 12px 32px rgba(13, 27, 62, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  z-index: 101;
+  animation: dialogIn 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-silver-mid);
+  background: var(--color-white);
+  color: var(--color-text-dark);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease, border-color 160ms ease, color 160ms ease;
+  z-index: 2;
+  /* Soft shadow lifts the button off the article body when cover image scrolls behind it. */
+  box-shadow: 0 2px 8px rgba(13, 27, 62, 0.10);
+}
+
+.closeBtn:hover {
+  background: var(--color-blue-light);
+  border-color: var(--color-blue-primary);
+  color: var(--color-blue-primary);
+  transform: scale(1.06);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--color-blue-primary);
+  outline-offset: 2px;
+}
+
+.scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  /* Bleed the cover image to the dialog edges when present. Inner padding lives on .body. */
+}
+
+.body {
+  padding: 2.5rem 2.5rem 3rem;
+}
+
+.cover {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.75rem;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-blue-light);
+  color: var(--color-blue-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-full);
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-blue-primary);
+}
+
+.title {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  line-height: 1.15;
+  margin: 1rem 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  color: var(--color-silver-dark);
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-silver-light);
+}
+
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Mobile: bottom-sheet variant — slides up from the bottom edge, fills the width, retains a top
+   radius. Matches the bottom-anchored navbar's spatial language. */
+@media (max-width: 768px) {
+  .dialog {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+    animation: dialogInMobile 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .body {
+    padding: 2rem 1.25rem 2.5rem;
+  }
+  .closeBtn {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+@keyframes dialogInMobile {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .dialog {
+    animation: none;
+  }
+}
