@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import styles from './admin.module.css';
 
+// Rendered inside the persistent admin layout when a child route throws. Layout provides the
+// sidebar + container, so this only renders the error card.
 export default function AdminError({
   error,
   reset,
@@ -16,20 +18,16 @@ export default function AdminError({
   }, [error]);
 
   return (
-    <div className={`${styles.shell} ${styles.shellCentered}`}>
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <h1 className={styles.stateTitle}>Something broke in the admin</h1>
-          <p className={styles.stateText}>The page hit an error. Try again, or head back to the dashboard.</p>
-          <div className={styles.formActions}>
-            <button type="button" className={styles.button} onClick={() => reset()}>
-              Try again
-            </button>
-            <Link href="/escaleadsadmin@44334" className={`${styles.button} ${styles.buttonGhost}`}>
-              Dashboard
-            </Link>
-          </div>
-        </div>
+    <div className={styles.card}>
+      <h1 className={styles.stateTitle}>Something broke in the admin</h1>
+      <p className={styles.stateText}>The page hit an error. Try again, or head back to the dashboard.</p>
+      <div className={styles.formActions}>
+        <button type="button" className={styles.button} onClick={() => reset()}>
+          Try again
+        </button>
+        <Link href="/escaleadsadmin@44334" className={`${styles.button} ${styles.buttonGhost}`}>
+          Dashboard
+        </Link>
       </div>
     </div>
   );

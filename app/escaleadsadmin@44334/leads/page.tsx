@@ -1,7 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/format';
 import type { Lead } from '@/lib/supabase/types';
-import AdminSidebar from '../AdminSidebar';
 import LeadRow from './LeadRow';
 import ExportButton from './ExportButton';
 import styles from '../admin.module.css';
@@ -27,44 +26,41 @@ export default async function AdminLeadsPage() {
   const readCount = leads.length - unread;
 
   return (
-    <div className={styles.shell}>
-      <AdminSidebar />
-      <div className={styles.container}>
-        <div className={styles.pageHeader}>
-          <div>
-            <h1>Leads</h1>
-            <p>{leads.length} total · {unread} unread</p>
-          </div>
-          <ExportButton />
+    <>
+      <div className={styles.pageHeader}>
+        <div>
+          <h1>Leads</h1>
+          <p>{leads.length} total · {unread} unread</p>
         </div>
-
-        {leads.length === 0 ? (
-          <div className={styles.empty}>No leads yet. Submissions from the contact form will appear here.</div>
-        ) : (
-          <>
-            <div className={styles.leadSummaryGrid}>
-              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-                <div className={styles.leadSummaryValue}>{leads.length}</div>
-                <div className={styles.leadSummaryLabel}>Total leads</div>
-              </div>
-              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-                <div className={styles.leadSummaryValue}>{unread}</div>
-                <div className={styles.leadSummaryLabel}>Unread leads</div>
-              </div>
-              <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-                <div className={styles.leadSummaryValue}>{readCount}</div>
-                <div className={styles.leadSummaryLabel}>Read leads</div>
-              </div>
-            </div>
-
-            <div className={styles.leadList}>
-              {leads.map((lead) => (
-                <LeadRow key={lead.id} lead={lead} formattedDate={formatDateTime(lead.created_at)} />
-              ))}
-            </div>
-          </>
-        )}
+        <ExportButton />
       </div>
-    </div>
+
+      {leads.length === 0 ? (
+        <div className={styles.empty}>No leads yet. Submissions from the contact form will appear here.</div>
+      ) : (
+        <>
+          <div className={styles.leadSummaryGrid}>
+            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+              <div className={styles.leadSummaryValue}>{leads.length}</div>
+              <div className={styles.leadSummaryLabel}>Total leads</div>
+            </div>
+            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+              <div className={styles.leadSummaryValue}>{unread}</div>
+              <div className={styles.leadSummaryLabel}>Unread leads</div>
+            </div>
+            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
+              <div className={styles.leadSummaryValue}>{readCount}</div>
+              <div className={styles.leadSummaryLabel}>Read leads</div>
+            </div>
+          </div>
+
+          <div className={styles.leadList}>
+            {leads.map((lead) => (
+              <LeadRow key={lead.id} lead={lead} formattedDate={formatDateTime(lead.created_at)} />
+            ))}
+          </div>
+        </>
+      )}
+    </>
   );
 }
