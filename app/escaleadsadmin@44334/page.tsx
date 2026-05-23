@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAdminSession } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
 import LoginForm from './LoginForm';
-import AdminTopbar from './AdminTopbar';
+import AdminSidebar from './AdminSidebar';
 import styles from './admin.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +38,7 @@ export default async function AdminRootPage() {
 
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>

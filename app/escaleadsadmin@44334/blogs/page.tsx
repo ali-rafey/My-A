@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { adminListBlogs } from '@/lib/content/blogs';
 import { formatDate } from '@/lib/format';
-import AdminTopbar from '../AdminTopbar';
+import AdminSidebar from '../AdminSidebar';
 import DeleteBlogButton from './DeleteBlogButton';
 import styles from '../admin.module.css';
 
@@ -12,7 +12,7 @@ export default async function AdminBlogsPage() {
 
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>

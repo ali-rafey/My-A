@@ -1,4 +1,4 @@
-import AdminTopbar from '../AdminTopbar';
+import AdminSidebar from '../AdminSidebar';
 import DiagnosticsRunner from './DiagnosticsRunner';
 import styles from '../admin.module.css';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default function DiagnosticsPage() {
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>

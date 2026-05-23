@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import AdminTopbar from '../../AdminTopbar';
+import AdminSidebar from '../../AdminSidebar';
 import BlogEditor from '../BlogEditor';
 import styles from '../../admin.module.css';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export default function NewBlogPage() {
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>

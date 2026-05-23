@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/format';
 import type { Lead } from '@/lib/supabase/types';
-import AdminTopbar from '../AdminTopbar';
+import AdminSidebar from '../AdminSidebar';
 import LeadRow from './LeadRow';
 import ExportButton from './ExportButton';
 import styles from '../admin.module.css';
@@ -28,7 +28,7 @@ export default async function AdminLeadsPage() {
 
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>

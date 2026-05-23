@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // We override the public-site Navbar by NOT rendering it here.
-// The root layout still wraps everything; admin pages use their own AdminTopbar.
+// The root layout still wraps everything; admin pages mount their own AdminSidebar.
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

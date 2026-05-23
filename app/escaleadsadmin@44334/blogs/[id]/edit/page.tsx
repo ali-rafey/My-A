@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminGetBlog } from '@/lib/content/blogs';
-import AdminTopbar from '../../../AdminTopbar';
+import AdminSidebar from '../../../AdminSidebar';
 import BlogEditor from '../../BlogEditor';
 import styles from '../../../admin.module.css';
 
@@ -13,7 +13,7 @@ export default async function EditBlogPage({ params }: { params: { id: string } 
 
   return (
     <div className={styles.shell}>
-      <AdminTopbar />
+      <AdminSidebar />
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <div>
