@@ -1,15 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sanitizeText, slugify } from '@/lib/sanitize';
+import { sanitizeRichHtml } from '@/lib/sanitize-html';
 import { textToHtml } from '@/lib/text-to-html';
 import { withAdminGuard } from '@/lib/admin-handler';
 import type { BlogInput } from '@/lib/supabase/types';
-
-// NOTE: sanitizeRichHtml is dynamically imported inside POST (see below). Importing
-// `@/lib/sanitize-html` at the top level pulls in isomorphic-dompurify → jsdom synchronously at
-// module-init time, which has crashed this serverless function on Vercel cold starts (CLAUDE.md
-// §6.3). The dynamic import defers jsdom loading until the handler actually runs, so the route
-// module itself stays light and reliably initializes.
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,8 +36,6 @@ export const POST = withAdminGuard(async (req: NextRequest) => {
   if (!slug && title) slug = slugify(title);
   // Author types plain text in the editor; textToHtml wraps it into paragraphs (and passes
   // already-authored HTML through unchanged). sanitizeRichHtml then enforces the safe-tag list.
-  // Dynamic import keeps jsdom out of module-init — see top-of-file comment.
-  const { sanitizeRichHtml } = await import('@/lib/sanitize-html');
   const content = sanitizeRichHtml(textToHtml(typeof body.content === 'string' ? body.content : ''));
   const meta_description = body.meta_description ? sanitizeText(body.meta_description, 300) : null;
   const cover_image = body.cover_image ? sanitizeText(body.cover_image, 500) : null;
