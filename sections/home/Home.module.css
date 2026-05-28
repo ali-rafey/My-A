@@ -1,108 +1,169 @@
 /* =============================================================================
-   Hero — premium minimalist
+   Hero — premium dark agency
    =============================================================================
-   Brand palette is scoped to this component (tokens.css is frozen per CLAUDE.md
-   §4.2). Only the 5 brand colors are used anywhere in the hero.
+   Deep navy ground with a drifting aurora, faint grid, film grain, and a
+   slow capability marquee at the bottom. The headline (preserved) sits over
+   the lot, with a pulsing availability eyebrow above and a CTA pair below.
+
+   Palette is scoped to this section — tokens.css is frozen (§4.2), and the
+   admin redesign already proved palette-scoping prevents bleed in either
+   direction.
    ============================================================================= */
 .section {
-  --hero-navy:   #0A2036;  /* Deep Navy Blue       — headline, pill border       */
-  --hero-royal:  #044B89;  /* Dark Royal Blue      — reserved for future states  */
-  --hero-accent: #0877DE;  /* Bright Accent Blue   — rotating word + accent bar  */
-  --hero-steel:  #73838F;  /* Steel Gray           — body copy, grid lines       */
-  --hero-silver: #C6D3DE;  /* Light Silver Gray    — reserved                    */
+  --hero-navy:   #0A2036;
+  --hero-deep:   #061525;
+  --hero-accent: #0877DE;
+  --hero-glow:   #2E6EF7;
+  --hero-text:   #FFFFFF;
+  --hero-muted:  rgba(255, 255, 255, 0.66);
+  --hero-soft:   rgba(255, 255, 255, 0.48);
+  --hero-line:   rgba(255, 255, 255, 0.10);
+  --hero-line-2: rgba(255, 255, 255, 0.05);
 
   position: relative;
-  background: var(--color-white);
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 18% 12%, rgba(8, 119, 222, 0.10) 0%, transparent 45%),
+    linear-gradient(180deg, var(--hero-navy) 0%, var(--hero-deep) 100%);
+  color: var(--hero-text);
   overflow: hidden;
   display: flex;
   align-items: center;
+  padding: 7rem 0 6rem;
+  isolation: isolate;
 }
 
 /* =============================================================================
-   Grid backdrop. Two nested divs so the horizontal + vertical fades don't
-   fight mask-composite compatibility.
+   Background layers
    ============================================================================= */
-.gridFrame {
+.bgWrap {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.15) 8%,
-    rgba(0, 0, 0, 0.45) 18%,
-    rgba(0, 0, 0, 0.80) 26%,
-    rgba(0, 0, 0, 1) 34%,
-    rgba(0, 0, 0, 1) 66%,
-    rgba(0, 0, 0, 0.80) 74%,
-    rgba(0, 0, 0, 0.45) 82%,
-    rgba(0, 0, 0, 0.15) 92%,
-    transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.15) 8%,
-    rgba(0, 0, 0, 0.45) 18%,
-    rgba(0, 0, 0, 0.80) 26%,
-    rgba(0, 0, 0, 1) 34%,
-    rgba(0, 0, 0, 1) 66%,
-    rgba(0, 0, 0, 0.80) 74%,
-    rgba(0, 0, 0, 0.45) 82%,
-    rgba(0, 0, 0, 0.15) 92%,
-    transparent 100%);
+  z-index: 0;
 }
 
+/* Soft blurred glow in the top-right. Drifts subtly so the page feels alive
+   without distracting motion. */
+.aurora {
+  position: absolute;
+  top: -15%;
+  right: -10%;
+  width: 65%;
+  height: 80%;
+  background: radial-gradient(circle at center,
+    rgba(8, 119, 222, 0.42) 0%,
+    rgba(46, 110, 247, 0.22) 22%,
+    rgba(8, 119, 222, 0.08) 45%,
+    transparent 68%);
+  filter: blur(80px);
+  animation: auroraDrift 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Counter-glow bottom-left, very subtle — adds depth balance. */
+.aurora::after {
+  content: '';
+  position: absolute;
+  top: 65%;
+  left: -120%;
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(circle at center,
+    rgba(4, 75, 137, 0.30) 0%,
+    rgba(4, 75, 137, 0.10) 35%,
+    transparent 65%);
+  filter: blur(60px);
+}
+
+/* Faint grid lines, masked to a soft ellipse so they don't reach the edges. */
 .grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(115, 131, 143, 0.20) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(115, 131, 143, 0.20) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: linear-gradient(to right,
-    transparent 28%,
-    rgba(0, 0, 0, 0.45) 50%,
-    rgba(0, 0, 0, 1) 72%);
-  -webkit-mask-image: linear-gradient(to right,
-    transparent 28%,
-    rgba(0, 0, 0, 0.45) 50%,
-    rgba(0, 0, 0, 1) 72%);
+    linear-gradient(to right, var(--hero-line-2) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hero-line-2) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(ellipse 75% 60% at 50% 45%, black 35%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 45%, black 35%, transparent 80%);
+}
+
+/* Film grain — SVG fractalNoise inlined as data URL. mix-blend-mode 'overlay'
+   brightens the highlights subtly without crushing shadows. */
+.noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+@keyframes auroraDrift {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-20px, 30px) scale(1.04); }
+  100% { transform: translate(-40px, 10px) scale(1); }
 }
 
 /* =============================================================================
-   Copy column — single visual block, choreographed mount cascade
+   Copy column
    ============================================================================= */
 .copy {
   position: relative;
   z-index: 1;
-  max-width: 1080px;
+  max-width: 940px;
   animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Single decorative element. A 40px horizontal line in the accent blue, set
-   above the headline. Animates in with a scale-x reveal anchored at the left. */
-.accentBar {
-  display: block;
-  width: 2.5rem;
-  height: 1.5px;
-  background: var(--hero-accent);
-  margin: 0 0 1.75rem;
-  transform-origin: left center;
-  animation: accentBarIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+/* Availability eyebrow — glass pill with a pulsing accent dot. The pulse
+   communicates "this is live, we're shipping today" without saying it. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.4375rem 0.875rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--hero-line);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: 2.25rem;
+  animation: heroIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
 
-/* Headline. Weight 300 (Inter Light), tight tracking, tight line-height. The
-   font-feature-settings line enables Inter's premium stylistic alternates. */
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hero-accent);
+  box-shadow: 0 0 0 0 rgba(8, 119, 222, 0.55);
+  animation: pulse 2.4s ease-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0    rgba(8, 119, 222, 0.55); }
+  70%  { box-shadow: 0 0 0 9px  rgba(8, 119, 222, 0); }
+  100% { box-shadow: 0 0 0 0    rgba(8, 119, 222, 0); }
+}
+
+/* Headline — preserved typography. Bumped one size to feel weightier on dark. */
 .headline {
   margin: 0;
-  color: var(--hero-navy);
+  color: var(--hero-text);
   font-family: var(--font-sans);
-  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-size: clamp(2.75rem, 7.5vw, 6rem);
   font-weight: 300;
-  line-height: 1.0;
+  line-height: 0.98;
   letter-spacing: -0.035em;
   font-feature-settings: 'ss01', 'cv11';
   display: flex;
   flex-direction: column;
-  gap: 0.18em;
+  gap: 0.16em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -115,67 +176,191 @@
   row-gap: 0.15em;
 }
 
-/* The rounded bordered pill. Pure border on a transparent background. */
+/* Rotating pill — same shape as before, recoloured for dark ground. The
+   border is now light, the fill is a very subtle white wash, and the rotating
+   word picks up a slightly heavier weight for legibility on dark. */
 .rotatingPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 7em;
   padding: 0 0.45em 0.04em;
-  border: 1px solid var(--hero-navy);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
   vertical-align: baseline;
   line-height: 1.0;
   font-weight: 300;
-  background: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* The only saturated colour in the hero. Slightly heavier weight (400) than
-   the surrounding light text (300) so the eye lands on it without size change. */
 .rotatingWord {
   display: inline-block;
   color: var(--hero-accent);
-  font-weight: 400;
+  font-weight: 500;
   animation: heroWordIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
   will-change: transform, opacity;
 }
 
-/* Lead. Steel gray, regular weight, generous line-height. */
+/* Lead — muted body copy, sized to feel intentional next to the headline. */
 .lead {
-  margin: 2.5rem 0 0;
-  color: var(--hero-steel);
-  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  margin: 2rem 0 2.5rem;
+  color: var(--hero-muted);
+  font-size: clamp(1.0625rem, 1.5vw, 1.1875rem);
   font-weight: 400;
-  line-height: 1.65;
-  max-width: 34rem;
+  line-height: 1.6;
+  max-width: 36rem;
   letter-spacing: 0.005em;
   animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
 
 /* =============================================================================
-   Animations
+   CTAs
+   ============================================================================= */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+.primaryBtn,
+.ghostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              background 220ms ease,
+              border-color 220ms ease,
+              box-shadow 280ms ease;
+  white-space: nowrap;
+}
+
+.primaryBtn {
+  background: var(--hero-accent);
+  color: var(--hero-text);
+  border: 1px solid var(--hero-accent);
+  box-shadow: 0 14px 32px -12px rgba(8, 119, 222, 0.6),
+              inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.primaryBtn:hover {
+  background: #1989E8;
+  border-color: #1989E8;
+  transform: translateY(-2px);
+  box-shadow: 0 22px 40px -12px rgba(8, 119, 222, 0.7),
+              inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.primaryBtn:hover .arrow {
+  transform: translateX(4px);
+}
+
+.ghostBtn {
+  background: transparent;
+  color: var(--hero-text);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ghostBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.32);
+  transform: translateY(-2px);
+}
+
+/* =============================================================================
+   Marquee — bottom strip of capability tags, slow linear scroll
+   ============================================================================= */
+.marquee {
+  position: absolute;
+  bottom: 2.25rem;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  z-index: 1;
+  mask-image: linear-gradient(to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%);
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%);
+}
+
+.marqueeTrack {
+  display: flex;
+  gap: 3rem;
+  width: max-content;
+  animation: marqueeScroll 55s linear infinite;
+  will-change: transform;
+}
+
+.marqueeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  color: var(--hero-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.marqueeDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--hero-accent);
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* =============================================================================
+   Mount animations
    ============================================================================= */
 @keyframes heroIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes heroWordIn {
-  from { opacity: 0; transform: translateY(0.45em); }
+  from { opacity: 0; transform: translateY(0.55em); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes accentBarIn {
-  from { transform: scaleX(0); opacity: 0; }
-  to   { transform: scaleX(1); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .copy,
+  .eyebrow,
   .lead,
+  .actions,
   .rotatingWord,
-  .accentBar {
+  .aurora,
+  .marqueeTrack,
+  .eyebrowDot {
     animation: none;
   }
 }
@@ -184,56 +369,69 @@
    Mobile (≤ 768 px)
    ============================================================================= */
 @media (max-width: 768px) {
-  .gridFrame {
-    mask-image: linear-gradient(to bottom,
-      transparent 0%,
-      rgba(0, 0, 0, 0.25) 6%,
-      rgba(0, 0, 0, 0.60) 14%,
-      rgba(0, 0, 0, 1) 24%,
-      rgba(0, 0, 0, 1) 76%,
-      rgba(0, 0, 0, 0.60) 86%,
-      rgba(0, 0, 0, 0.25) 94%,
-      transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom,
-      transparent 0%,
-      rgba(0, 0, 0, 0.25) 6%,
-      rgba(0, 0, 0, 0.60) 14%,
-      rgba(0, 0, 0, 1) 24%,
-      rgba(0, 0, 0, 1) 76%,
-      rgba(0, 0, 0, 0.60) 86%,
-      rgba(0, 0, 0, 0.25) 94%,
-      transparent 100%);
+  .section {
+    min-height: auto;
+    padding: 6rem 0 6rem;
+    align-items: flex-start;
   }
 
-  .grid {
-    background-size: 40px 40px;
-    mask-image: linear-gradient(to right,
-      transparent 18%,
-      rgba(0, 0, 0, 0.45) 42%,
-      rgba(0, 0, 0, 1) 65%);
-    -webkit-mask-image: linear-gradient(to right,
-      transparent 18%,
-      rgba(0, 0, 0, 0.45) 42%,
-      rgba(0, 0, 0, 1) 65%);
+  .aurora {
+    top: -8%;
+    right: -40%;
+    width: 110%;
+    height: 50%;
   }
 
-  .accentBar {
-    width: 1.75rem;
-    margin-bottom: 1.25rem;
+  .copy {
+    max-width: 100%;
+  }
+
+  .eyebrow {
+    margin-bottom: 1.5rem;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
   }
 
   .headline {
-    gap: 0.2em;
+    font-size: clamp(2.25rem, 11.5vw, 4rem);
     letter-spacing: -0.028em;
+    gap: 0.2em;
   }
 
   .rotatingPill {
     min-width: 6em;
     padding: 0 0.35em 0.04em;
-    border-radius: 10px;
+    border-radius: 11px;
   }
 
   .lead {
-    margin-top: 2rem;
+    margin: 1.75rem 0 2rem;
+    font-size: 1rem;
+  }
+
+  .actions {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .primaryBtn,
+  .ghostBtn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .marquee {
+    bottom: 1.5rem;
+  }
+
+  .marqueeItem {
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    gap: 0.625rem;
+  }
+
+  .marqueeTrack {
+    gap: 2rem;
+    animation-duration: 40s;
   }
 }
