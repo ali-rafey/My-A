@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { services } from '@/lib/content/static';
 import EyesAnimation from './EyesAnimation';
+import DataChartAnimation from './DataChartAnimation';
+import TargetArrowAnimation from './TargetArrowAnimation';
 import styles from './Services.module.css';
 
 // =============================================================================
@@ -11,7 +13,19 @@ import styles from './Services.module.css';
 // the bottom-right). Beneath the tab area: a poster-style headline, a
 // description, a hairline divider, and a list of concrete capabilities.
 // Footer CTA points at /contact.
+//
+// Each card also carries a context-specific animation in the .cardArt slot
+// above the body. Maps by service id:
+//   1  Digital Presence       → EyesAnimation (eyes that fall in love)
+//   2  Data Analytics         → DataChartAnimation (bars + trendline + arrow)
+//   3  Advertising & Marketing → TargetArrowAnimation (arrow hitting target + ripples)
 // =============================================================================
+
+const CARD_ANIMATIONS: Record<number, React.ReactNode> = {
+  1: <EyesAnimation />,
+  2: <DataChartAnimation />,
+  3: <TargetArrowAnimation />,
+};
 
 export default function Services() {
   return (
@@ -27,39 +41,37 @@ export default function Services() {
         </header>
 
         <div className={styles.grid}>
-          {services.map((service) => (
-            <article key={service.id} className={styles.card}>
-              <div className={styles.tag}>
-                <span>{service.title}</span>
-              </div>
-
-              {/* Eyes animation lives only on the Digital Presence card. It
-                  sits in the absolutely-positioned .eyesArea at the top-right,
-                  so the corner tag at top-left stays untouched and the other
-                  two cards don't grow taller than this one. */}
-              {service.id === 1 ? (
-                <div className={styles.eyesArea}>
-                  <EyesAnimation />
+          {services.map((service) => {
+            const art = CARD_ANIMATIONS[service.id];
+            return (
+              <article key={service.id} className={styles.card}>
+                <div className={styles.tag}>
+                  <span>{service.title}</span>
                 </div>
-              ) : null}
 
-              <div className={styles.cardBody}>
-                <h3 className={styles.cardHeadline}>{service.headline}</h3>
-                <p className={styles.cardDescription}>{service.description}</p>
+                {/* Per-card SVG animation. Absolutely-positioned slot at the
+                    top-centre of the card so the corner tag at top-left and
+                    the card body below both keep their layout. */}
+                {art ? <div className={styles.cardArt}>{art}</div> : null}
 
-                <span className={styles.divider} aria-hidden="true" />
+                <div className={styles.cardBody}>
+                  <h3 className={styles.cardHeadline}>{service.headline}</h3>
+                  <p className={styles.cardDescription}>{service.description}</p>
 
-                <ul className={styles.capabilities}>
-                  {service.capabilities.map((capability) => (
-                    <li key={capability} className={styles.capability}>
-                      <span className={styles.capabilityArrow} aria-hidden="true">→</span>
-                      <span>{capability}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </article>
-          ))}
+                  <span className={styles.divider} aria-hidden="true" />
+
+                  <ul className={styles.capabilities}>
+                    {service.capabilities.map((capability) => (
+                      <li key={capability} className={styles.capability}>
+                        <span className={styles.capabilityArrow} aria-hidden="true">→</span>
+                        <span>{capability}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            );
+          })}
         </div>
 
         <footer className={styles.footer}>

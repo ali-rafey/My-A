@@ -242,12 +242,13 @@
 }
 
 /* =============================================================================
-   Eyes area — only present on the Digital Presence card.
+   Card art slot — host for the per-card SVG animation
+   (EyesAnimation / DataChartAnimation / TargetArrowAnimation).
    Centred horizontally near the top of the card; the cardBody padding-top
-   leaves enough headroom for both the corner tag (top-left) and these eyes
-   to sit comfortably without overlap.
+   leaves enough headroom for both the corner tag (top-left) and the
+   ~102px-tall animation to sit comfortably without overlap.
    ============================================================================= */
-.eyesArea {
+.cardArt {
   position: absolute;
   top: 3.5rem;       /* below the corner tag */
   left: 0;
@@ -485,15 +486,15 @@
     font-size: 0.65rem;
   }
   .cardBody {
-    /* No eyes overlap to clear on mobile — tighter top padding. */
+    /* No art-slot overlap to clear on mobile — tighter top padding. */
     padding: 3.75rem 1.6rem 1.6rem;
   }
-  .eyesArea {
-    /* Scale the eyes down a touch and push the cardBody further down so
-       the SVG and content don't overlap on narrow screens. */
+  .cardArt {
+    /* Scale the SVG down a touch and push the cardBody further down so
+       the animation and content don't overlap on narrow screens. */
     padding-top: 1.5rem;
   }
-  .eyesArea + .cardBody {
+  .cardArt + .cardBody {
     padding-top: 8.5rem;
   }
   .card:last-child {

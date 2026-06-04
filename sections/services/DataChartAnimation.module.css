@@ -1,0 +1,107 @@
+/* =============================================================================
+   DataChartAnimation — Data Analytics card decoration
+   =============================================================================
+   Master cycle: 5 seconds, infinite. Phases:
+     0   – 30%   bars cascade in from the baseline (staggered per-bar delay)
+     30  – 45%   trendline strokes across the bar tops
+     45  – 55%   arrow pops at the trendline endpoint
+     55  – 92%   hold
+     92  – 100%  bars collapse, trendline retracts, arrow fades — loop
+   ============================================================================= */
+
+.wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  max-width: 150px;          /* matches EyesAnimation so cards stay aligned */
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ─── BARS ────────────────────────────────────────────────────────────────
+   Each bar grows from its bottom edge — transform-origin: bottom +
+   transform-box: fill-box means scaleY(0) collapses to the baseline. */
+.bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barGrow 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes barGrow {
+  0%       { transform: scaleY(0); }
+  16%      { transform: scaleY(1.08); }
+  22%      { transform: scaleY(1); }
+  88%      { transform: scaleY(1); }
+  96%      { transform: scaleY(0); }
+  100%     { transform: scaleY(0); }
+}
+
+.b1 { animation-delay: 0s; }
+.b2 { animation-delay: 0.12s; }
+.b3 { animation-delay: 0.24s; }
+.b4 { animation-delay: 0.36s; }
+.b5 { animation-delay: 0.48s; }
+
+/* ─── TRENDLINE ───────────────────────────────────────────────────────────
+   Uses SVG pathLength=1 so the dash math is normalised: dashoffset 1 hides
+   the line, 0 reveals it fully. */
+.trendline {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawLine 5s ease-out infinite;
+}
+
+@keyframes drawLine {
+  0%, 30%  { stroke-dashoffset: 1; }
+  46%      { stroke-dashoffset: 0; }
+  90%      { stroke-dashoffset: 0; }
+  98%      { stroke-dashoffset: 1; }
+  100%     { stroke-dashoffset: 1; }
+}
+
+/* ─── ARROW pops at the trendline endpoint ───────────────────────────────── */
+.arrow {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: arrowPop 5s ease-out infinite;
+}
+
+@keyframes arrowPop {
+  0%, 46%   { opacity: 0; transform: translateY(8px) scale(0.4); }
+  52%       { opacity: 1; transform: translateY(-3px) scale(1.25); }
+  58%       { transform: translateY(0) scale(1); }
+  88%       { opacity: 1; transform: translateY(0) scale(1); }
+  96%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+}
+
+/* ─── END DOT pulse alongside the arrow ──────────────────────────────────── */
+.endDot {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: dotPulse 5s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 44%   { opacity: 0; transform: scale(0); }
+  50%       { opacity: 1; transform: scale(1.4); }
+  56%       { opacity: 1; transform: scale(1); }
+  64%       { transform: scale(1.25); }
+  72%       { transform: scale(1); }
+  88%       { opacity: 1; transform: scale(1); }
+  96%, 100% { opacity: 0; transform: scale(0.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar, .trendline, .arrow, .endDot { animation: none; }
+  .arrow, .endDot { opacity: 1; transform: none; }
+  .trendline { stroke-dashoffset: 0; }
+}

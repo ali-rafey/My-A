@@ -1,0 +1,91 @@
+/* =============================================================================
+   TargetArrowAnimation — Advertising & Marketing card decoration
+   =============================================================================
+   Master cycle: 5 seconds, infinite. Phases:
+     0   – 36%  arrow flies in from off-screen left toward the bullseye
+     36  – 42%  bullseye flashes white on impact
+     42  – 78%  three concentric ripples expand outward in waves
+     78  – 92%  hold (arrow stuck in target, bullseye colour returned)
+     92  – 100% arrow + ripples fade back to start positions — loop
+   ============================================================================= */
+
+.wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ─── ARROW flies in from the left ────────────────────────────────────────
+   No transform-box: fill-box on this — we want translate in raw SVG user
+   units so the arrowhead lands exactly at the bullseye centre regardless
+   of the element's own bounding box. */
+.arrow {
+  animation: arrowFly 5s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+}
+
+@keyframes arrowFly {
+  0%        { transform: translateX(-100px); opacity: 0; }
+  4%        { opacity: 1; }
+  /* The arrowhead's natural x is 82. To land at bullseye (x=110), translate
+     by 110-82 = 28. */
+  36%       { transform: translateX(28px); opacity: 1; }
+  /* Stick in target through hold phase. */
+  88%       { transform: translateX(28px); opacity: 1; }
+  /* Quick fade then snap back off-screen for the next loop. */
+  94%       { transform: translateX(28px); opacity: 0; }
+  100%      { transform: translateX(-100px); opacity: 0; }
+}
+
+/* ─── BULLSEYE flash on impact ────────────────────────────────────────────
+   Goes from accent blue → white briefly to read as a "hit" flash, then
+   returns. transform-origin: center scales it from its own centre. */
+.bullseye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bullseyeFlash 5s ease-out infinite;
+}
+
+@keyframes bullseyeFlash {
+  0%, 35%   { transform: scale(1); fill: #0877DE; }
+  37%       { transform: scale(1.6); fill: #FFFFFF; }
+  42%       { transform: scale(1.2); fill: #0877DE; }
+  48%       { transform: scale(1); fill: #0877DE; }
+  100%      { transform: scale(1); fill: #0877DE; }
+}
+
+/* ─── RIPPLE RINGS ────────────────────────────────────────────────────────
+   Three rings that scale outward from r=6 with fading opacity. Per-ring
+   delay staggers them into successive waves. */
+.ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: rippleOut 5s ease-out infinite;
+}
+
+@keyframes rippleOut {
+  0%, 36%   { opacity: 0; transform: scale(0.6); }
+  42%       { opacity: 0.85; transform: scale(1); }
+  74%       { opacity: 0; transform: scale(8); }
+  100%      { opacity: 0; transform: scale(8); }
+}
+
+.r1 { animation-delay: 0s; }
+.r2 { animation-delay: 0.22s; }
+.r3 { animation-delay: 0.44s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow, .bullseye, .ripple { animation: none; }
+  .arrow { transform: translateX(28px); opacity: 1; }
+  .ripple { opacity: 0; }
+}
