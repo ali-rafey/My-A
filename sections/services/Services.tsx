@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { services } from '@/lib/content/static';
+import EyesAnimation from './EyesAnimation';
 import styles from './Services.module.css';
 
 // =============================================================================
@@ -31,6 +32,16 @@ export default function Services() {
               <div className={styles.tag}>
                 <span>{service.title}</span>
               </div>
+
+              {/* Eyes animation lives only on the Digital Presence card. It
+                  sits in the absolutely-positioned .eyesArea at the top-right,
+                  so the corner tag at top-left stays untouched and the other
+                  two cards don't grow taller than this one. */}
+              {service.id === 1 ? (
+                <div className={styles.eyesArea}>
+                  <EyesAnimation />
+                </div>
+              ) : null}
 
               <div className={styles.cardBody}>
                 <h3 className={styles.cardHeadline}>{service.headline}</h3>

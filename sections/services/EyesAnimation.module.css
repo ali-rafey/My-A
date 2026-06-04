@@ -1,0 +1,107 @@
+/* =============================================================================
+   Eyes animation — Digital Presence card decoration
+   =============================================================================
+   Master cycle: 6 seconds, infinite. Every animated property below derives
+   its 100% timeline from those 6 seconds so the elements stay synchronised.
+
+   Phases:
+     0  – 42% (0.0 – 2.5 s)  pupils scan around, settle looking down
+     42 – 48% (2.5 – 2.9 s)  pupils fade; hearts pop into the eye whites
+     48 – 88% (2.9 – 5.3 s)  hearts pulse; six floaters burst out + drift up
+     88 – 100% (5.3 – 6.0 s) hearts fade, pupils fade back in for next cycle
+   ============================================================================= */
+
+.wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  max-width: 150px;             /* keeps eyes from overlapping card title */
+  height: auto;
+  display: block;
+  overflow: visible;            /* hearts float past the svg viewBox */
+}
+
+/* ─── PUPIL ─────────────────────────────────────────────────────────────── */
+.pupil {
+  animation: pupilScan 6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes pupilScan {
+  0%   { transform: translate(0, 0);     opacity: 1; }
+  10%  { transform: translate(-5px, 2px); }
+  22%  { transform: translate(5px, 2px); }
+  34%  { transform: translate(-2px, 5px); }
+  42%  { transform: translate(0, 6px);   opacity: 1; }
+  46%  { transform: translate(0, 6px) scale(0.5); opacity: 0; }
+  92%  { transform: translate(0, 6px) scale(0.5); opacity: 0; }
+  100% { transform: translate(0, 0)   scale(1);   opacity: 1; }
+}
+
+/* ─── HEART-EYE (replaces the pupil during love phase) ──────────────────── */
+.heartScale {
+  animation: heartEyeShow 6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+}
+
+@keyframes heartEyeShow {
+  0%, 42%   { opacity: 0; transform: scale(0); }
+  48%       { opacity: 1; transform: scale(1.4); }
+  54%       { transform: scale(1); }
+  62%       { transform: scale(1.14); }
+  70%       { transform: scale(1); }
+  78%       { transform: scale(1.1); }
+  88%       { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(0.3); }
+}
+
+/* ─── FLOATING HEARTS ──────────────────────────────────────────────────────
+   Each floater is two nested <g>s: the outer one places it via a static
+   SVG transform attribute; the inner one (this class) runs the float-up.
+   Per-floater delay + drift live below. */
+.floaterMove {
+  opacity: 0;
+  animation: floaterPop 6s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes floaterPop {
+  0%, 42%   { opacity: 0; transform: translate(0, 0) scale(0); }
+  48%       { opacity: 0; transform: translate(0, 2px) scale(0.4); }
+  54%       { opacity: 0.95; transform: translate(0, -2px) scale(1); }
+  70%       { opacity: 1; transform: translate(var(--drift, 0px), -20px) scale(1.05); }
+  84%       { opacity: 0.6; transform: translate(calc(var(--drift, 0px) * 1.6), -38px) scale(0.85); }
+  94%       { opacity: 0; transform: translate(calc(var(--drift, 0px) * 1.9), -54px) scale(0.6); }
+  100%      { opacity: 0; transform: translate(calc(var(--drift, 0px) * 1.9), -54px) scale(0.6); }
+}
+
+.f1 .floaterMove { animation-delay: 0s;    --drift: -6px; }
+.f2 .floaterMove { animation-delay: 0.18s; --drift:  4px; }
+.f3 .floaterMove { animation-delay: 0.36s; --drift:  6px; }
+.f4 .floaterMove { animation-delay: 0.54s; --drift: -4px; }
+.f5 .floaterMove { animation-delay: 0.72s; --drift: -8px; }
+.f6 .floaterMove { animation-delay: 0.9s;  --drift:  8px; }
+
+/* Reduced motion — settle to the calm "scanning pupil" state and never
+   trigger the heart cascade. */
+@media (prefers-reduced-motion: reduce) {
+  .pupil,
+  .heartScale,
+  .floaterMove {
+    animation: none;
+  }
+  .heartScale,
+  .floaterMove {
+    opacity: 0;
+  }
+}
