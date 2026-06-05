@@ -110,13 +110,37 @@
 }
 
 /* =============================================================================
+   Two-column hero grid — copy on the left, process curve on the right.
+   ============================================================================= */
+.heroGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: center;
+  width: 100%;
+}
+
+/* =============================================================================
    Copy column
    ============================================================================= */
 .copy {
   position: relative;
   z-index: 1;
-  max-width: 940px;
+  max-width: 580px;
   animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Curve slot — fills the right column. */
+.curveSlot {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  max-height: 520px;
+  animation: heroIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
 }
 
 /* Availability eyebrow — glass pill with a pulsing accent dot. */
@@ -155,14 +179,15 @@
   100% { box-shadow: 0 0 0 0    rgba(8, 119, 222, 0); }
 }
 
-/* Headline — preserved typography. Navy on white. */
+/* Headline — preserved typography. Navy on white. Size tuned for a half-
+   width column (the grid puts the graph in the other half). */
 .headline {
   margin: 0;
   color: var(--hero-navy);
   font-family: var(--font-sans);
-  font-size: clamp(2.75rem, 7.5vw, 6rem);
+  font-size: clamp(2.25rem, 5vw, 4.25rem);
   font-weight: 300;
-  line-height: 0.98;
+  line-height: 1.0;
   letter-spacing: -0.035em;
   font-feature-settings: 'ss01', 'cv11';
   display: flex;
@@ -354,6 +379,23 @@
 @keyframes heroWordIn {
   from { opacity: 0; transform: translateY(0.55em); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================================================
+   Tablet (≤ 1024 px) — stack the grid; graph drops below copy and shrinks.
+   ============================================================================= */
+@media (max-width: 1024px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+  .copy {
+    max-width: 100%;
+  }
+  .curveSlot {
+    min-height: 320px;
+    max-height: 420px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

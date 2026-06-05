@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import styles from './Home.module.css';
 
 // Words cycle every ROTATE_MS. The CSS animation runs for ~450ms inside that
-// window — leaving roughly half a second of "rest" before the next swap.
+// window — the rest of the cycle is comfortable read time before the next swap.
 // Stable order so the hero feels intentional, not random.
 const WORDS = ['Profitability', 'Scalability', 'Sustainability'] as const;
-const ROTATE_MS = 1000;
+const ROTATE_MS = 2500;
 
 export default function RotatingWord() {
   const [index, setIndex] = useState(0);

@@ -1,0 +1,7 @@
+/* The ProcessCurve component renders only a <canvas>; the host section
+   provides the background and the surrounding layout. */
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
