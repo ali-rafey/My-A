@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { services } from '@/lib/content/static';
 import EyesAnimation from './EyesAnimation';
 import DataChartAnimation from './DataChartAnimation';
-import TargetArrowAnimation from './TargetArrowAnimation';
+import MegaphoneAnimation from './MegaphoneAnimation';
 import styles from './Services.module.css';
 
 // =============================================================================
@@ -18,13 +18,13 @@ import styles from './Services.module.css';
 // above the body. Maps by service id:
 //   1  Digital Presence       → EyesAnimation (eyes that fall in love)
 //   2  Data Analytics         → DataChartAnimation (bars + trendline + arrow)
-//   3  Advertising & Marketing → TargetArrowAnimation (arrow hitting target + ripples)
+//   3  Advertising & Marketing → MegaphoneAnimation (megaphone broadcasting waves)
 // =============================================================================
 
 const CARD_ANIMATIONS: Record<number, React.ReactNode> = {
   1: <EyesAnimation />,
   2: <DataChartAnimation />,
-  3: <TargetArrowAnimation />,
+  3: <MegaphoneAnimation />,
 };
 
 export default function Services() {

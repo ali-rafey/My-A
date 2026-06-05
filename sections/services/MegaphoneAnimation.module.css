@@ -1,0 +1,74 @@
+/* =============================================================================
+   MegaphoneAnimation — Advertising & Marketing card decoration
+   =============================================================================
+   Two independent loops:
+     - .wave    2-second ripple, four instances staggered 0.4 s apart so
+                a fresh wave is always emerging from the megaphone mouth
+     - .megaphone  0.6-second subtle wiggle around the handle so the horn
+                reads as actively shouting
+
+   Both opt out under prefers-reduced-motion.
+   ============================================================================= */
+
+.wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  max-width: 150px;          /* matches sibling animations so cards align */
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ─── MEGAPHONE wiggle ────────────────────────────────────────────────────
+   Rotates around a point near the handle (left side of the SVG). With
+   transform-box: fill-box the origin is computed inside the megaphone's
+   own bounding box; 0% 50% pins it to the left-middle, i.e. the grip end. */
+.megaphone {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: megaShake 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes megaShake {
+  0%   { transform: rotate(-1.5deg); }
+  100% { transform: rotate(1.5deg); }
+}
+
+/* ─── SOUND WAVES ─────────────────────────────────────────────────────────
+   Each wave shares the same path geometry. transform-box: fill-box +
+   transform-origin: 0% 50% pins the scale origin to the left edge of the
+   path's bounding box — which is exactly the megaphone mouth, since the
+   path's left endpoints sit at x=108. Scaling the wave outward therefore
+   keeps the mouth contact point stationary and only the curve apex moves
+   right + the height grows. */
+.wave {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  opacity: 0;
+  animation: waveOut 2s ease-out infinite;
+}
+
+@keyframes waveOut {
+  0%   { opacity: 0;    transform: scale(0.3, 0.5); }
+  15%  { opacity: 0.9; }
+  60%  { opacity: 0.55; }
+  100% { opacity: 0;    transform: scale(2.0, 1.55); }
+}
+
+.w1 { animation-delay: 0s; }
+.w2 { animation-delay: 0.4s; }
+.w3 { animation-delay: 0.8s; }
+.w4 { animation-delay: 1.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .megaphone, .wave { animation: none; }
+  .megaphone { transform: rotate(0); }
+  .wave { opacity: 0.6; transform: scale(1, 1); }
+}
