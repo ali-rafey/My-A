@@ -31,9 +31,21 @@ function gradColor(t: number) {
   return lerp(C2, C4, (t - 0.5) / 0.5);
 }
 
-export default function ProcessCurve({ className }: { className?: string }) {
+type ProcessCurveProps = {
+  className?: string;
+  /** 0..1 — fraction of the curve to draw left → right. 1 = fully drawn (default).
+      The host (Home) animates this from 0 → 1 on every page load to "build"
+      the curve before the rest of the hero fades in. */
+  progress?: number;
+};
+
+export default function ProcessCurve({ className, progress = 1 }: ProcessCurveProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
+  // The draw loop reads progress from this ref so prop changes don't restart
+  // the requestAnimationFrame loop.
+  const progressRef = useRef(progress);
+  useEffect(() => { progressRef.current = progress; }, [progress]);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -94,36 +106,43 @@ export default function ProcessCurve({ className }: { className?: string }) {
       gradient.addColorStop(0.75, '#0877DE');
       gradient.addColorStop(1, '#044B89');
 
-      // Glow
-      ctx.save();
-      ctx.filter = 'blur(18px)';
-      ctx.globalAlpha = 0.34;
-      ctx.beginPath();
-      ctx.moveTo(padL, curveY(0, cw, h));
-      for (let x = 0; x <= cw; x += 3) ctx.lineTo(padL + x, curveY(x, cw, h));
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 8;
-      ctx.stroke();
-      ctx.restore();
+      // Partial-draw window — only render up to progress * cw across.
+      const p = Math.max(0, Math.min(1, progressRef.current));
+      const drawW = cw * p;
 
-      // Main curve
-      ctx.beginPath();
-      ctx.moveTo(padL, curveY(0, cw, h));
-      for (let x = 0; x <= cw; x += 2) ctx.lineTo(padL + x, curveY(x, cw, h));
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // Particles
-      particles.forEach((p) => {
-        p.pct = (p.pct + p.speed) % 1;
-        const px = p.pct * cw;
-        const py = curveY(px, cw, h) + p.offsetY + Math.sin(time * 0.03 + p.pct * 10) * 6;
+      if (drawW > 0) {
+        // Glow
+        ctx.save();
+        ctx.filter = 'blur(18px)';
+        ctx.globalAlpha = 0.34;
         ctx.beginPath();
-        ctx.arc(padL + px, py, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = gradColor(p.pct);
-        ctx.globalAlpha = p.opacity * (0.6 + 0.4 * Math.sin(time * 0.04 + p.pct * 8));
+        ctx.moveTo(padL, curveY(0, cw, h));
+        for (let x = 0; x <= drawW; x += 3) ctx.lineTo(padL + x, curveY(x, cw, h));
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        ctx.restore();
+
+        // Main curve
+        ctx.beginPath();
+        ctx.moveTo(padL, curveY(0, cw, h));
+        for (let x = 0; x <= drawW; x += 2) ctx.lineTo(padL + x, curveY(x, cw, h));
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+
+      // Particles — only ones whose pct has already been "drawn" appear.
+      particles.forEach((part) => {
+        part.pct = (part.pct + part.speed) % 1;
+        if (part.pct > p) return;
+        const px = part.pct * cw;
+        const py = curveY(px, cw, h) + part.offsetY + Math.sin(time * 0.03 + part.pct * 10) * 6;
+        ctx.beginPath();
+        ctx.arc(padL + px, py, part.size, 0, Math.PI * 2);
+        ctx.fillStyle = gradColor(part.pct);
+        ctx.globalAlpha = part.opacity * (0.6 + 0.4 * Math.sin(time * 0.04 + part.pct * 8));
         ctx.fill();
         ctx.globalAlpha = 1;
       });
@@ -137,9 +156,10 @@ export default function ProcessCurve({ className }: { className?: string }) {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Milestones
+      // Milestones — each only appears once the curve has drawn past it.
       const stepColors = [C1, C2, C3, C4];
       STEPS.forEach((s, si) => {
+        if (s.pct > p) return;
         const mx = s.pct * cw;
         const my = curveY(mx, cw, h);
         const col = `rgb(${stepColors[si].join(',')})`;

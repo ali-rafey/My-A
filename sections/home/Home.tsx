@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import RotatingWord from './RotatingWord';
 import ProcessCurve from '../process-curve/ProcessCurve';
 import styles from './Home.module.css';
@@ -6,26 +9,89 @@ import styles from './Home.module.css';
 // The list is rendered twice in the DOM so the CSS keyframe can translate -50%
 // and loop seamlessly.
 const MARQUEE_ITEMS = [
-  'Software Engineering',
-  'Mobile Applications',
-  'AI & Automation',
-  'E-commerce Platforms',
-  'SaaS Products',
-  'Brand Systems',
-  'CRM Dashboards',
-  'API Integrations',
-  'Growth Strategy',
-  'Performance UX',
+  'Software Engineering', 'Mobile Applications', 'AI & Automation',
+  'E-commerce Platforms', 'SaaS Products', 'Brand Systems',
+  'CRM Dashboards', 'API Integrations', 'Growth Strategy', 'Performance UX',
 ] as const;
 
+// ---------------------------------------------------------------------------
+// Hero intro — plays on every fresh page load.
+// ---------------------------------------------------------------------------
+//   drawing  curve draws from ground (left) to peak (right), 2.5s.
+//   fading   hero copy + marquee fade in together, 0.8s.
+//   done     normal layout; a CustomEvent fires so the Navbar can run its
+//            own expand-showcase as the final step in the sequence.
+//
+// Visitors with prefers-reduced-motion skip straight to 'done' and we fire
+// the event immediately so the Navbar still gets its trigger (it'll noop
+// on reduced-motion anyway, so no visual disruption either way).
+// ---------------------------------------------------------------------------
+const DRAW_MS = 2500;
+const FADE_HOLD_MS = 150;   // tiny pause after draw before content fades
+const FADE_MS = 800;        // content fade-in duration
+const NAVBAR_LEAD_MS = 200; // pause after content lands before navbar triggers
+
+type Phase = 'drawing' | 'fading' | 'done';
+
 export default function Home() {
+  const [phase, setPhase] = useState<Phase>('drawing');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+      setPhase('done');
+      setProgress(1);
+      window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
+      return;
+    }
+
+    setPhase('drawing');
+    setProgress(0);
+
+    let rafId = 0;
+    let fadeTimer = 0;
+    let doneTimer = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / DRAW_MS);
+      // Ease-out so the curve builds quickly then settles into its peak.
+      const eased = 1 - Math.pow(1 - t, 2.4);
+      setProgress(eased);
+      if (t < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        // Hold a beat, then fade in the rest of the hero.
+        fadeTimer = window.setTimeout(() => {
+          setPhase('fading');
+          // After the fade completes, mark done and signal the navbar.
+          doneTimer = window.setTimeout(() => {
+            setPhase('done');
+            window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
+          }, FADE_MS + NAVBAR_LEAD_MS);
+        }, FADE_HOLD_MS);
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (fadeTimer) clearTimeout(fadeTimer);
+      if (doneTimer) clearTimeout(doneTimer);
+    };
+  }, []);
+
+  // Hero copy + marquee become visible the moment phase leaves 'drawing'.
+  const showSupporting = phase !== 'drawing';
+
   return (
     <section className={`${styles.section} section`} id="home">
-      {/* Decorative background layers — all aria-hidden. From back to front:
-          1. base white→soft gradient is on `.section` itself
-          2. aurora — soft blurred radial in the accent blue, top-right, drifts
-          3. grid — faint orthogonal lines, masked to fade out toward edges
-          4. noise — SVG fractal noise overlay for film-grain texture */}
       <div className={styles.bgWrap} aria-hidden="true">
         <div className={styles.aurora} />
         <div className={styles.grid} />
@@ -33,10 +99,8 @@ export default function Home() {
       </div>
 
       <div className="container">
-        {/* Two-column layout: copy on the left, process curve on the right.
-            Stacks to a single column under 1024px so the headline always reads. */}
         <div className={styles.heroGrid}>
-          <div className={styles.copy}>
+          <div className={`${styles.copy} ${showSupporting ? '' : styles.copyHidden}`}>
             <span className={styles.eyebrow}>
               <span className={styles.eyebrowDot} aria-hidden="true" />
               Available for projects · 2026
@@ -65,15 +129,16 @@ export default function Home() {
           </div>
 
           <div className={styles.curveSlot}>
-            <ProcessCurve />
+            <ProcessCurve progress={progress} />
           </div>
         </div>
       </div>
 
-      <div className={styles.marquee} aria-hidden="true">
+      <div
+        className={`${styles.marquee} ${showSupporting ? '' : styles.marqueeHidden}`}
+        aria-hidden="true"
+      >
         <div className={styles.marqueeTrack}>
-          {/* Two copies of the list. CSS animates the track by -50% so the
-              cut-point lands exactly between identical halves — seamless loop. */}
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
             <span key={i} className={styles.marqueeItem}>
               <span className={styles.marqueeDot} aria-hidden="true" />

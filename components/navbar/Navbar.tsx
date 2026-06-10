@@ -50,11 +50,21 @@ export default function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen]);
 
-  // Page-load showcase: auto-expand the navbar once on mount, hold briefly,
-  // then collapse. Plays once per full page load (Cmd+R / fresh tab) because
-  // Navbar is mounted in the root layout and client-side route changes do
-  // not remount it — so this effect's empty-deps run is the only trigger.
+  // Page-load showcase: auto-expand the navbar, hold briefly, then collapse.
+  // Runs ONCE per fresh page load (Cmd+R / new tab) — never on client-side
+  // route changes. Even though Navbar lives in the root layout and persists
+  // across navigations, the empty deps array below pins this effect to the
+  // initial mount only. Without that pin, every link click re-triggered the
+  // 900 ms timer on the destination page.
+  //
+  // On the home page the navbar is the FINAL beat of an orchestrated intro
+  // sequence: graph draws → hero copy fades in → navbar expands. The
+  // Home section dispatches `escaleads-intro-complete` once its fade lands;
+  // we listen for that event here instead of using the default 900 ms delay.
+  // A safety fallback still triggers the showcase if the event never fires.
+  //
   // Honours prefers-reduced-motion (skipped entirely).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -63,13 +73,44 @@ export default function Navbar() {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion) return;
 
-    // Timeline: 900 ms quiet → expand (1 s animation) → 1.2 s hold → collapse.
-    const openTimer = window.setTimeout(() => setIsOpen(true), 900);
-    const closeTimer = window.setTimeout(() => setIsOpen(false), 900 + 1000 + 1200);
+    let openTimer = 0;
+    let closeTimer = 0;
+    const startShowcase = () => {
+      openTimer = window.setTimeout(() => setIsOpen(true), 50);
+      closeTimer = window.setTimeout(() => setIsOpen(false), 50 + 1000 + 1200);
+    };
 
+    if (pathname === '/') {
+      // Wait for the Home section's intro to land, then run the showcase.
+      // The fallback timer must be cancelled the moment the event fires —
+      // otherwise BOTH the event handler AND the fallback end up triggering
+      // a showcase, and the navbar expands twice.
+      let fallback = 0;
+      const handler = () => {
+        if (fallback) clearTimeout(fallback);
+        startShowcase();
+      };
+      window.addEventListener('escaleads-intro-complete', handler, { once: true });
+      // Safety net: if the event never arrives (e.g. Home crashed), still
+      // run the showcase after a generous timeout.
+      fallback = window.setTimeout(() => {
+        window.removeEventListener('escaleads-intro-complete', handler);
+        startShowcase();
+      }, 6500);
+      return () => {
+        window.removeEventListener('escaleads-intro-complete', handler);
+        if (fallback) clearTimeout(fallback);
+        if (openTimer) clearTimeout(openTimer);
+        if (closeTimer) clearTimeout(closeTimer);
+      };
+    }
+
+    // Non-home pages: original 900 ms quiet → expand → hold → collapse.
+    openTimer = window.setTimeout(() => setIsOpen(true), 900);
+    closeTimer = window.setTimeout(() => setIsOpen(false), 900 + 1000 + 1200);
     return () => {
-      window.clearTimeout(openTimer);
-      window.clearTimeout(closeTimer);
+      if (openTimer) clearTimeout(openTimer);
+      if (closeTimer) clearTimeout(closeTimer);
     };
   }, []);
 
