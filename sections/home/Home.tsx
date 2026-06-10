@@ -5,89 +5,64 @@ import RotatingWord from './RotatingWord';
 import ProcessCurve from '../process-curve/ProcessCurve';
 import styles from './Home.module.css';
 
-// Marquee items at the bottom of the hero. Slow horizontal scroll, dot-separated.
-// The list is rendered twice in the DOM so the CSS keyframe can translate -50%
-// and loop seamlessly.
-const MARQUEE_ITEMS = [
-  'Software Engineering', 'Mobile Applications', 'AI & Automation',
-  'E-commerce Platforms', 'SaaS Products', 'Brand Systems',
-  'CRM Dashboards', 'API Integrations', 'Growth Strategy', 'Performance UX',
-] as const;
+// ---------------------------------------------------------------------------
+// One-time intro gate
+// ---------------------------------------------------------------------------
+// Module-level flag: persists across remounts in the same browser tab, resets
+// on a fresh page load (Cmd+R, new tab) because the module is re-evaluated.
+// So:
+//   • fresh load on /                          → intro plays
+//   • client-side nav /services → /            → intro skipped, page just shows
+//   • Cmd+R after that                          → intro plays again
+// ---------------------------------------------------------------------------
+let introHasPlayed = false;
 
-// ---------------------------------------------------------------------------
-// Hero intro — plays on every fresh page load.
-// ---------------------------------------------------------------------------
-//   drawing  curve draws from ground (left) to peak (right), 2.5s.
-//   fading   hero copy + marquee fade in together, 0.8s.
-//   done     normal layout; a CustomEvent fires so the Navbar can run its
-//            own expand-showcase as the final step in the sequence.
-//
-// Visitors with prefers-reduced-motion skip straight to 'done' and we fire
-// the event immediately so the Navbar still gets its trigger (it'll noop
-// on reduced-motion anyway, so no visual disruption either way).
-// ---------------------------------------------------------------------------
-const DRAW_MS = 2500;
-const FADE_HOLD_MS = 150;   // tiny pause after draw before content fades
-const FADE_MS = 800;        // content fade-in duration
-const NAVBAR_LEAD_MS = 200; // pause after content lands before navbar triggers
+const FADE_MS = 800;        // hero copy fade-in duration
+const NAVBAR_LEAD_MS = 200; // pause after copy lands before navbar showcase
 
 type Phase = 'drawing' | 'fading' | 'done';
 
 export default function Home() {
-  const [phase, setPhase] = useState<Phase>('drawing');
-  const [progress, setProgress] = useState(0);
+  // First mount in this tab: 'drawing'. Subsequent navigations back to /:
+  // start at 'done' so the page just appears with no animation.
+  const [phase, setPhase] = useState<Phase>(introHasPlayed ? 'done' : 'drawing');
 
   useEffect(() => {
     const reduceMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (reduceMotion) {
+    if (introHasPlayed || reduceMotion) {
+      // Skip — but still fire the event so the Navbar (if it's waiting)
+      // can run its showcase. Reduced-motion users get the flag set too so
+      // they're not re-tried on the next mount.
       setPhase('done');
-      setProgress(1);
       window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
+      if (reduceMotion) introHasPlayed = true;
       return;
     }
-
+    // NOTE: do NOT set introHasPlayed = true here. React Strict Mode in dev
+    // mounts every effect twice (mount → cleanup → mount). If we flagged the
+    // intro as "played" on the first mount, the second mount would skip the
+    // intro and fire the navbar event immediately — which is exactly the
+    // "navbar expands without waiting" bug. The flag is set only AFTER the
+    // intro completes (in handleCurveDone below), so a second strict-mode
+    // mount safely re-starts the same intro and the cleanup of the first
+    // mount has already cancelled the original rAF.
     setPhase('drawing');
-    setProgress(0);
-
-    let rafId = 0;
-    let fadeTimer = 0;
-    let doneTimer = 0;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const elapsed = now - start;
-      const t = Math.min(1, elapsed / DRAW_MS);
-      // Ease-out so the curve builds quickly then settles into its peak.
-      const eased = 1 - Math.pow(1 - t, 2.4);
-      setProgress(eased);
-      if (t < 1) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        // Hold a beat, then fade in the rest of the hero.
-        fadeTimer = window.setTimeout(() => {
-          setPhase('fading');
-          // After the fade completes, mark done and signal the navbar.
-          doneTimer = window.setTimeout(() => {
-            setPhase('done');
-            window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
-          }, FADE_MS + NAVBAR_LEAD_MS);
-        }, FADE_HOLD_MS);
-      }
-    };
-
-    rafId = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (fadeTimer) clearTimeout(fadeTimer);
-      if (doneTimer) clearTimeout(doneTimer);
-    };
   }, []);
 
-  // Hero copy + marquee become visible the moment phase leaves 'drawing'.
+  // Called by ProcessCurve the moment the curve finishes drawing.
+  const handleCurveDone = () => {
+    setPhase('fading');
+    setTimeout(() => {
+      setPhase('done');
+      // Lock in "intro has played" only after the full sequence has finished.
+      introHasPlayed = true;
+      window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
+    }, FADE_MS + NAVBAR_LEAD_MS);
+  };
+
   const showSupporting = phase !== 'drawing';
 
   return (
@@ -129,22 +104,11 @@ export default function Home() {
           </div>
 
           <div className={styles.curveSlot}>
-            <ProcessCurve progress={progress} />
+            <ProcessCurve
+              intro={phase === 'drawing'}
+              onIntroDone={handleCurveDone}
+            />
           </div>
-        </div>
-      </div>
-
-      <div
-        className={`${styles.marquee} ${showSupporting ? '' : styles.marqueeHidden}`}
-        aria-hidden="true"
-      >
-        <div className={styles.marqueeTrack}>
-          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span key={i} className={styles.marqueeItem}>
-              <span className={styles.marqueeDot} aria-hidden="true" />
-              {item}
-            </span>
-          ))}
         </div>
       </div>
     </section>

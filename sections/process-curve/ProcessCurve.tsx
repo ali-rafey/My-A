@@ -33,19 +33,35 @@ function gradColor(t: number) {
 
 type ProcessCurveProps = {
   className?: string;
-  /** 0..1 — fraction of the curve to draw left → right. 1 = fully drawn (default).
-      The host (Home) animates this from 0 → 1 on every page load to "build"
-      the curve before the rest of the hero fades in. */
-  progress?: number;
+  /** When true, the curve animates from 0 → 1 over `introDurationMs` on mount.
+      When false (default), the curve renders fully on every frame. The intro
+      animation runs INSIDE the existing rAF draw loop — no React re-renders. */
+  intro?: boolean;
+  /** Fires once when the intro animation reaches 100%. */
+  onIntroDone?: () => void;
+  /** Duration of the intro draw in milliseconds. Default 2500. */
+  introDurationMs?: number;
 };
 
-export default function ProcessCurve({ className, progress = 1 }: ProcessCurveProps) {
+const DEFAULT_INTRO_MS = 2500;
+
+export default function ProcessCurve({
+  className,
+  intro = false,
+  onIntroDone,
+  introDurationMs = DEFAULT_INTRO_MS,
+}: ProcessCurveProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
-  // The draw loop reads progress from this ref so prop changes don't restart
-  // the requestAnimationFrame loop.
-  const progressRef = useRef(progress);
-  useEffect(() => { progressRef.current = progress; }, [progress]);
+  // All animation state is stored in refs so the rAF loop can read/write
+  // without going through React state — that's what was causing the visible
+  // lag near the top of the curve (60Hz React re-renders + aggressive
+  // ease-out made the last 10 % of the timeline visually almost stall).
+  const progressRef = useRef(intro ? 0 : 1);
+  const introStartRef = useRef<number | null>(null);
+  const introDoneRef = useRef(false);
+  const onIntroDoneRef = useRef(onIntroDone);
+  useEffect(() => { onIntroDoneRef.current = onIntroDone; }, [onIntroDone]);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -90,11 +106,34 @@ export default function ProcessCurve({ className, progress = 1 }: ProcessCurvePr
     const lineSoft = 'rgba(10, 32, 54, 0.12)';
     const dotRing = '#FFFFFF';
 
+    // Mark the intro start the first time draw() runs while intro is on.
+    if (intro && introStartRef.current === null) {
+      introStartRef.current = performance.now();
+      progressRef.current = 0;
+      introDoneRef.current = false;
+    }
+
     function draw() {
       const w = canvas.width / dpr;
       const h = canvas.height / dpr;
       ctx.clearRect(0, 0, w, h);
       time++;
+
+      // Intro tick — advance progress linearly from 0 → 1 over the duration.
+      // Linear (not ease-out) so the curve "lands" at the peak at a steady
+      // pace instead of crawling the last 10 % which read as lag.
+      if (introStartRef.current !== null && !introDoneRef.current) {
+        const elapsed = performance.now() - introStartRef.current;
+        const t = Math.min(1, elapsed / introDurationMs);
+        progressRef.current = t;
+        if (t >= 1) {
+          introDoneRef.current = true;
+          // Defer the callback so it doesn't synchronously trigger React
+          // state updates inside our rAF tick.
+          const cb = onIntroDoneRef.current;
+          if (cb) queueMicrotask(cb);
+        }
+      }
 
       const padL = 40;
       const padR = 40;
