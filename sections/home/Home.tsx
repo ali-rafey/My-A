@@ -8,14 +8,24 @@ import styles from './Home.module.css';
 // ---------------------------------------------------------------------------
 // One-time intro gate
 // ---------------------------------------------------------------------------
-// Module-level flag: persists across remounts in the same browser tab, resets
-// on a fresh page load (Cmd+R, new tab) because the module is re-evaluated.
-// So:
-//   • fresh load on /                          → intro plays
-//   • client-side nav /services → /            → intro skipped, page just shows
-//   • Cmd+R after that                          → intro plays again
+// Module-level state: persists across Home remounts in the same browser tab,
+// resets on a fresh page load (Cmd+R, new tab) because the module is
+// re-evaluated. So:
+//   • fresh load on /                       → intro plays
+//   • Cmd+R on any page, then visit /       → intro plays
+//   • client-side nav from any page to /    → intro skipped, page just shows
+//   • navigate away mid-intro and come back → intro skipped (started counts)
+//
+// The flag flips the instant the intro starts (not when it completes) so the
+// "navigate away mid-intro" case is handled. To survive React Strict Mode's
+// dev double-mount (effect runs → cleanup → effect runs again, all within a
+// frame) we ignore the flag when the previous start was less than
+// STRICT_MODE_WINDOW_MS ago — that's Strict Mode's second pass, not a real
+// re-entry. A real user couldn't navigate that fast.
 // ---------------------------------------------------------------------------
-let introHasPlayed = false;
+let introHasStarted = false;
+let introStartedAt = 0;
+const STRICT_MODE_WINDOW_MS = 100;
 
 const FADE_MS = 800;        // hero copy fade-in duration
 const NAVBAR_LEAD_MS = 200; // pause after copy lands before navbar showcase
@@ -25,30 +35,40 @@ type Phase = 'drawing' | 'fading' | 'done';
 export default function Home() {
   // First mount in this tab: 'drawing'. Subsequent navigations back to /:
   // start at 'done' so the page just appears with no animation.
-  const [phase, setPhase] = useState<Phase>(introHasPlayed ? 'done' : 'drawing');
+  const [phase, setPhase] = useState<Phase>(introHasStarted ? 'done' : 'drawing');
 
   useEffect(() => {
     const reduceMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (introHasPlayed || reduceMotion) {
-      // Skip — but still fire the event so the Navbar (if it's waiting)
-      // can run its showcase. Reduced-motion users get the flag set too so
-      // they're not re-tried on the next mount.
+    const now =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const isStrictModeReentry =
+      introHasStarted && now - introStartedAt < STRICT_MODE_WINDOW_MS;
+
+    if ((introHasStarted && !isStrictModeReentry) || reduceMotion) {
+      // Already played in this module session — OR reduced-motion: skip the
+      // intro and fire the event so the Navbar (if it's waiting) can run.
       setPhase('done');
       window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
-      if (reduceMotion) introHasPlayed = true;
+      if (reduceMotion) {
+        introHasStarted = true;
+        introStartedAt = now;
+      }
       return;
     }
-    // NOTE: do NOT set introHasPlayed = true here. React Strict Mode in dev
-    // mounts every effect twice (mount → cleanup → mount). If we flagged the
-    // intro as "played" on the first mount, the second mount would skip the
-    // intro and fire the navbar event immediately — which is exactly the
-    // "navbar expands without waiting" bug. The flag is set only AFTER the
-    // intro completes (in handleCurveDone below), so a second strict-mode
-    // mount safely re-starts the same intro and the cleanup of the first
-    // mount has already cancelled the original rAF.
+
+    // Flag the start NOW so a navigate-away-mid-intro followed by a navigate
+    // back also counts as "already played" (subsequent mount sees the flag
+    // and skips). The Strict Mode dev double-mount is filtered above by the
+    // 100ms timestamp window — Strict Mode's second pass falls through and
+    // restarts the intro cleanly because the first pass's cleanup has
+    // already cancelled the original rAF inside ProcessCurve.
+    introHasStarted = true;
+    introStartedAt = now;
     setPhase('drawing');
   }, []);
 
@@ -57,8 +77,6 @@ export default function Home() {
     setPhase('fading');
     setTimeout(() => {
       setPhase('done');
-      // Lock in "intro has played" only after the full sequence has finished.
-      introHasPlayed = true;
       window.dispatchEvent(new CustomEvent('escaleads-intro-complete'));
     }, FADE_MS + NAVBAR_LEAD_MS);
   };

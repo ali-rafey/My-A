@@ -1,0 +1,117 @@
+/* =============================================================================
+   ReachAnimation — Advertising & Marketing card decoration
+   =============================================================================
+   Loop: 2.4 s per signal. 6 signals, each delayed 0.4 s, so there's always
+   one mid-flight, one just-arrived, one just-launched, etc. The centre
+   has its own slower 2 s pulse independent of the signals; outer nodes
+   pulse on the exact frame their signal arrives (delay = signal delay +
+   travel duration).
+   ============================================================================= */
+
+.wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  max-width: 150px;          /* matches sibling animations so cards align */
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ─── CENTRE NODE — gentle continuous pulse so the source feels alive ──── */
+.centerHalo {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.18;
+  animation: centerHalo 2s ease-in-out infinite;
+}
+
+@keyframes centerHalo {
+  0%, 100% { opacity: 0.18; transform: scale(0.85); }
+  50%      { opacity: 0.42; transform: scale(1.12); }
+}
+
+.centerNode {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: centerNode 2s ease-in-out infinite;
+}
+
+@keyframes centerNode {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+/* ─── SIGNAL — bright dot launches from the centre, lands on an outer node ─ */
+.signal {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: signalFly 2.4s cubic-bezier(0.35, 0, 0.5, 1) infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes signalFly {
+  /* Idle quarter — invisible at the centre. */
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  /* Pop into existence. */
+  6%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  /* Travel out — fast at first, settle near the destination. */
+  26%  { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1); }
+  /* Arrive — quick scale-up flare. */
+  30%  { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1.6); }
+  /* Snap out — leave the outer node's halo to take over. */
+  34%  { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.6); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.6); }
+}
+
+/* ─── OUTER NODES — base colour pulses to bright when its signal arrives ── */
+.outerNode {
+  transform-box: fill-box;
+  transform-origin: center;
+  fill: rgba(10, 32, 54, 0.55);
+  animation: outerNode 2.4s ease-out infinite;
+  /* The signal travels 0→30 % of the loop, so the outer node lights up
+     exactly when the signal arrives by waiting 30 % of the loop (0.72 s)
+     after the signal's own delay. */
+  animation-delay: calc(var(--delay, 0s) + 0.72s);
+}
+
+@keyframes outerNode {
+  0%, 100% { fill: rgba(10, 32, 54, 0.55); transform: scale(1); }
+  8%       { fill: #0877DE;                transform: scale(1.5); }
+  20%      { fill: #0877DE;                transform: scale(1.1); }
+  50%      { fill: rgba(10, 32, 54, 0.55); transform: scale(1); }
+}
+
+/* Halo that bursts outward from the outer node when the signal arrives.
+   Same delay logic as the node itself. */
+.outerHalo {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: outerHalo 2.4s ease-out infinite;
+  animation-delay: calc(var(--delay, 0s) + 0.72s);
+}
+
+@keyframes outerHalo {
+  0%   { opacity: 0;   transform: scale(0.3); }
+  10%  { opacity: 0.5; transform: scale(1); }
+  35%  { opacity: 0;   transform: scale(1.6); }
+  100% { opacity: 0;   transform: scale(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .centerHalo, .centerNode, .signal, .outerNode, .outerHalo {
+    animation: none;
+  }
+  .signal { opacity: 0; }
+  .outerHalo { opacity: 0; }
+  .outerNode { fill: #0877DE; }
+}

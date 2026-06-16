@@ -243,7 +243,7 @@
 
 /* =============================================================================
    Card art slot — host for the per-card SVG animation
-   (EyesAnimation / DataChartAnimation / MegaphoneAnimation).
+   (EyesAnimation / DataChartAnimation / ReachAnimation).
    Centred horizontally near the top of the card; the cardBody padding-top
    leaves enough headroom for both the corner tag (top-left) and the
    ~102px-tall animation to sit comfortably without overlap.
