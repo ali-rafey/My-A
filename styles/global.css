@@ -5,6 +5,22 @@ html {
      — only the visual rail is removed for a cleaner page edge. */
   scrollbar-width: none;            /* Firefox */
   -ms-overflow-style: none;          /* IE / legacy Edge */
+
+  /* Paint the root element opaque white. Chrome (and other browsers) render
+     the <html> element's background as the BASE layer for every region the
+     page content doesn't cover: the overscroll rubber-band area, any 100vh
+     rounding gap (e.g. while the address bar animates, or when a section
+     forces height:100vh + overflow:hidden), and any transparent sliver. If
+     <html> is left transparent (the default), Chrome fills those regions
+     with the browser profile's THEME colour — which is why a blue/pink band
+     flashed at the bottom on some profiles. An opaque background here means
+     those regions are always white, never the theme tint. body already
+     paints white on top for the actual content area. */
+  background: var(--color-white);
+
+  /* Belt-and-suspenders: stop the overscroll "bounce" from chaining past the
+     page edges, so there's never even a transient gap to reveal. */
+  overscroll-behavior: none;
 }
 
 html::-webkit-scrollbar,

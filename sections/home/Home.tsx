@@ -94,15 +94,17 @@ export default function Home() {
       <div className="container">
         <div className={styles.heroGrid}>
           <div className={`${styles.copy} ${showSupporting ? '' : styles.copyHidden}`}>
-            <span className={styles.eyebrow}>
-              <span className={styles.eyebrowDot} aria-hidden="true" />
-              Available for projects · 2026
-            </span>
+            {/* Masthead — tracked label + hairline rule (replaces the old pill). */}
+            <div className={styles.eyebrow}>
+              <span className={styles.eyebrowDot}>Available for Projects · 2026</span>
+              <span className={styles.mastheadRule} aria-hidden="true" />
+            </div>
 
+            {/* Sans lead-in stacked above a giant serif rotating word. */}
             <h1 className={styles.headline}>
-              <span className={styles.headlineLine}>We Escalate Your Leads</span>
-              <span className={styles.headlineLine}>
-                Into <RotatingWord />
+              <span className={styles.headlineLine}>We Escalate Your Leads Into</span>
+              <span className={styles.headlineWord}>
+                <RotatingWord />
               </span>
             </h1>
 
@@ -116,7 +118,8 @@ export default function Home() {
                 <span className={styles.arrow} aria-hidden="true">→</span>
               </a>
               <a href="#our-work" className={styles.ghostBtn}>
-                See our work
+                <span>See our work</span>
+                <span aria-hidden="true">→</span>
               </a>
             </div>
           </div>

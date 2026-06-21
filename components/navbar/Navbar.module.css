@@ -23,6 +23,16 @@
   transform: translateX(-50%);
   z-index: 1000;
 
+  /* Size to the true content width. A fixed element at left:50% with no
+     explicit width has its shrink-to-fit width capped at the distance from
+     the 50% mark to the viewport's right edge — so once the content (menu +
+     Get a Quote pill + logo) grew past that cap, the logo overflowed past
+     the navbar's right edge. width:max-content sizes the bar to its real
+     content and translateX(-50%) keeps it centred. The max-width guard stops
+     it exceeding the viewport on narrow screens. */
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+
   display: flex;
   align-items: center;
   /* Gap is 0 when collapsed (so the logo sits at the navbar's centre with
@@ -79,6 +89,10 @@
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
+  /* Don't let the navbar's flex layout shrink the strip below its content
+     width — otherwise the rightmost item (the Get a Quote pill) gets clipped
+     by overflow:hidden. max-width:0 still collapses it for the animation. */
+  flex-shrink: 0;
 
   /* Both max-width and opacity run on the full duration so visible motion
      fills the whole 1 s window — no front-loaded snap, no end-of-animation
@@ -89,11 +103,12 @@
 }
 
 .expanded .menuItems {
-  /* Tight target width — sized to the actual content (~540 px for six
-     items + gaps) plus a small buffer so the right-most item never wraps
-     under text-zoom. Crucially, NOT 760 px — overshoot is what caused the
-     visible animation to finish at ~50 % of the duration. */
-  max-width: 600px;
+  /* Sized close to the actual content (six links + gaps + the Get a Quote
+     pill ≈ 700px) plus a small buffer. flex-shrink:0 above guarantees the
+     pill is never clipped, so this only needs to clear the content — kept
+     tight so the max-width reveal animation fills the full duration without
+     a dead zone. */
+  max-width: 760px;
   opacity: 1;
   pointer-events: auto;
 }
@@ -127,6 +142,48 @@
   height: 1.5px;
   background: #0877DE;
   border-radius: 1px;
+}
+
+/* =============================================================================
+   Get a Quote — primary CTA pill. Elegant gradient ground, soft glow, inner
+   highlight, and an arrow that slides on hover. Reads as THE action against
+   the plain text links beside it.
+   ============================================================================= */
+.quoteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.05rem;
+  margin-left: 0.4rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0E84EC 0%, #0877DE 45%, #044B89 100%);
+  color: #FFFFFF;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow:
+    0 8px 20px -8px rgba(8, 119, 222, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    filter 0.3s ease;
+}
+
+.quoteBtn:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    0 14px 28px -8px rgba(8, 119, 222, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.quoteBtn:focus-visible {
+  outline: 2px solid #0877DE;
+  outline-offset: 3px;
 }
 
 /* =============================================================================
@@ -238,11 +295,9 @@
   }
 
   .expanded .menuItems {
-    /* Tight target height — sized to actual content (~280 px for six
-       stacked items + padding) plus a small buffer. The previous 500 px
-       overshot, so the visible reveal finished at ~55 % of the duration
-       and the eye registered the rest as a pause. */
-    max-height: 320px;
+    /* Target height sized to the content: six stacked links + the Get a Quote
+       pill + padding. Bumped from 320px to fit the added CTA. */
+    max-height: 400px;
     opacity: 1;
     transform: translateX(-50%) translateY(0);
     padding: 0.4rem 0;
@@ -260,6 +315,14 @@
 
   .link.active {
     background: rgba(8, 119, 222, 0.08);
+  }
+
+  /* Quote CTA in the stacked drawer — full-width pill, centred, with a little
+     breathing room above it so it reads as the action below the links. */
+  .quoteBtn {
+    margin: 0.45rem 0.75rem 0.2rem;
+    justify-content: center;
+    padding: 0.7rem 1rem;
   }
 
   .logoImage {

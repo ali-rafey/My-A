@@ -33,6 +33,11 @@ const ADMIN_PATH_PREFIXES = ['/escaleadsadmin@44334', '/escaleadsadmin%4044334']
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  // True only while the automatic page-load showcase is driving the navbar
+  // open. The scrim (full-screen dim) is suppressed in this mode — auto-
+  // expanding the bar as a hint shouldn't wash the whole page blue. A manual
+  // click still shows the scrim so clicking the backdrop can close the menu.
+  const [isShowcase, setIsShowcase] = useState(false);
   const onAdmin = ADMIN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
 
   // Auto-collapse on route change.
@@ -64,7 +69,6 @@ export default function Navbar() {
   // A safety fallback still triggers the showcase if the event never fires.
   //
   // Honours prefers-reduced-motion (skipped entirely).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -76,8 +80,14 @@ export default function Navbar() {
     let openTimer = 0;
     let closeTimer = 0;
     const startShowcase = () => {
-      openTimer = window.setTimeout(() => setIsOpen(true), 50);
-      closeTimer = window.setTimeout(() => setIsOpen(false), 50 + 1000 + 1200);
+      openTimer = window.setTimeout(() => {
+        setIsShowcase(true);   // mark this as an auto-open → scrim stays hidden
+        setIsOpen(true);
+      }, 50);
+      closeTimer = window.setTimeout(() => {
+        setIsOpen(false);
+        setIsShowcase(false);
+      }, 50 + 1000 + 1200);
     };
 
     if (pathname === '/') {
@@ -112,10 +122,21 @@ export default function Navbar() {
       if (openTimer) clearTimeout(openTimer);
       if (closeTimer) clearTimeout(closeTimer);
     };
+    // Intentionally run once on mount only — see the comment above. pathname
+    // is read for the initial-route branch but must NOT re-run the showcase.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggle = useCallback(() => setIsOpen((open) => !open), []);
-  const close = useCallback(() => setIsOpen(false), []);
+  // Manual interactions clear the showcase flag so the scrim behaves normally
+  // (a user-opened menu dims the backdrop; clicking it closes the menu).
+  const toggle = useCallback(() => {
+    setIsShowcase(false);
+    setIsOpen((open) => !open);
+  }, []);
+  const close = useCallback(() => {
+    setIsShowcase(false);
+    setIsOpen(false);
+  }, []);
 
   if (onAdmin) return null;
 
@@ -126,9 +147,11 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Subtle dim + blur scrim while expanded. Clicking it collapses. */}
+      {/* Subtle dim + blur scrim while MANUALLY expanded. Clicking it
+          collapses. Hidden during the auto-showcase so the page-load hint
+          doesn't wash the whole screen blue. */}
       <div
-        className={`${styles.scrim} ${isOpen ? styles.scrimOpen : ''}`}
+        className={`${styles.scrim} ${isOpen && !isShowcase ? styles.scrimOpen : ''}`}
         onClick={close}
         aria-hidden="true"
       />
@@ -151,6 +174,17 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+
+          {/* Primary CTA — a gradient accent pill that stands apart from the
+              plain text links. Points at the contact/quote flow. */}
+          <Link
+            href="/contact"
+            className={styles.quoteBtn}
+            tabIndex={isOpen ? 0 : -1}
+            onClick={close}
+          >
+            Get a Quote
+          </Link>
         </div>
 
         <button

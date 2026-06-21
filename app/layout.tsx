@@ -105,8 +105,28 @@ gtag('js', new Date());
 gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
 
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable}`}
+      // Inline background on the root element guarantees an opaque white at
+      // the VERY FIRST paint — before any external/JS-injected CSS loads.
+      // Without this, the brief window before the stylesheet applies leaves
+      // <html> transparent, and the browser fills it (overscroll area, 100vh
+      // gap, etc.) with the user's profile THEME colour for 1-2s. The matching
+      // rule in global.css then keeps it white once CSS is in.
+      style={{ backgroundColor: '#FFFFFF', colorScheme: 'light' }}
+    >
       <head>
+        {/* Critical inline CSS — render-blocking, applied before the external
+            stylesheet so there is never a first-paint window where the root
+            is unpainted and the browser theme colour can show through. */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              'html,body{background:#fff;overscroll-behavior:none}',
+          }}
+        />
+
         {/* GA4 — server-rendered into the response body so Search Console can verify the property. */}
         {gaMeasurementId ? (
           <>
@@ -128,7 +148,29 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body>
+      <body style={{ backgroundColor: '#FFFFFF' }}>
+        {/* Viewport backdrop — a real painted element fixed to the full visual
+            viewport, behind all content (z-index: -1). This is the definitive
+            guard against the browser's profile THEME colour ever showing
+            through. Unlike an html/body background (which the browser stops
+            propagating to the canvas when the root has overflow:hidden +
+            height:100vh, as the Services scroll-lock sets — leaving a strip of
+            raw browser canvas below the short html box), a position:fixed +
+            inset:0 element ALWAYS covers the entire visible viewport,
+            regardless of html height, overflow, address-bar state, or CSS
+            load timing. Inline-styled + server-rendered so it's present at the
+            very first paint with no stylesheet dependency. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: '#FFFFFF',
+            zIndex: -1,
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* Bundles every section's CSS module into the layout's CSS chunk
             so client-side route transitions don't fetch new stylesheets
             mid-navigation (which produced a brief unstyled flash). */}
