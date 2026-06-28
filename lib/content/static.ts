@@ -24,14 +24,17 @@ export type Step = {
 
 // Richer portfolio entries for the dedicated /our-work page (card + carousel
 // showcase). Kept separate from `workProjects` so the homepage #our-work
-// section is unaffected. `accent` drives the placeholder thumbnail tint until
-// real project screenshots are dropped in.
+// section is unaffected. `accent` tints the demo thumbnail; `mockup` selects
+// which UI illustration to render (stand-in until real screenshots exist).
+export type CaseStudyMockup = 'dashboard' | 'mobile' | 'analytics' | 'editor';
+
 export type CaseStudy = {
   id: number;
   title: string;
   description: string;
   tags: string[];
   accent: string;
+  mockup: CaseStudyMockup;
 };
 
 export const caseStudies: CaseStudy[] = [
@@ -42,6 +45,7 @@ export const caseStudies: CaseStudy[] = [
       'MedHealix is a live enterprise HealthTech platform we built from the ground up — a HIPAA-compliant, co-branded health experience connecting patients with providers across a secure, scalable cloud backend.',
     tags: ['HIPAA Compliance', 'Azure', 'HealthTech', 'Enterprise'],
     accent: '#2563EB',
+    mockup: 'dashboard',
   },
   {
     id: 2,
@@ -50,6 +54,7 @@ export const caseStudies: CaseStudy[] = [
       'Earthly Insight is a live, scaling AI platform we built from scratch on Web, iOS, and Android — now with 6,500+ users and 1,000+ daily active sessions, all powered by a multi-model AI engine.',
     tags: ['Multi-AI', 'Cross-Platform', 'GreenTech', 'Mobile'],
     accent: '#16A34A',
+    mockup: 'mobile',
   },
   {
     id: 3,
@@ -58,6 +63,7 @@ export const caseStudies: CaseStudy[] = [
       'Altruva is a live nonprofit FinAI platform backed by $100,000 in Microsoft Azure credits. We built it entirely from scratch — producing financial insights and guidance for mission-driven organizations.',
     tags: ['Azure AI Foundry', 'RAG', 'MCP', 'NonProfit Tech'],
     accent: '#7C3AED',
+    mockup: 'analytics',
   },
   {
     id: 4,
@@ -66,6 +72,7 @@ export const caseStudies: CaseStudy[] = [
       'Syncom AI is a live AI copywriting platform we built end-to-end — trained on Gary Halbert, Dan Kennedy, Eugene Schwartz, and other legendary direct-response copywriters to generate high-converting copy on demand.',
     tags: ['AI Copywriting', 'Direct Response', 'MarTech', 'SaaS'],
     accent: '#0F172A',
+    mockup: 'editor',
   },
 ];
 

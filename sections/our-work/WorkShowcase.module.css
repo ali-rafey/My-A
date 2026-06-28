@@ -129,23 +129,16 @@
 .thumbBody {
   position: absolute;
   inset: 26px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(120% 120% at 30% 20%,
-      color-mix(in srgb, var(--accent) 22%, #FFFFFF) 0%,
-      color-mix(in srgb, var(--accent) 8%, #FFFFFF) 55%,
-      #FFFFFF 100%);
+  background: #FFFFFF;
 }
 
-.thumbMark {
-  font-family: var(--font-sans);
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: color-mix(in srgb, var(--accent) 70%, var(--w-navy));
-  opacity: 0.85;
+/* The inline SVG demo screenshot fills the browser frame. `color` carries the
+   project accent so the mockup's `currentColor` shapes are tinted per project. */
+.mockup {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--accent);
 }
 
 /* ── Card content ────────────────────────────────────────────────────────── */

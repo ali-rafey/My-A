@@ -33,11 +33,6 @@ const ADMIN_PATH_PREFIXES = ['/escaleadsadmin@44334', '/escaleadsadmin%4044334']
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  // True only while the automatic page-load showcase is driving the navbar
-  // open. The scrim (full-screen dim) is suppressed in this mode — auto-
-  // expanding the bar as a hint shouldn't wash the whole page blue. A manual
-  // click still shows the scrim so clicking the backdrop can close the menu.
-  const [isShowcase, setIsShowcase] = useState(false);
   const onAdmin = ADMIN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
 
   // Auto-collapse on route change.
@@ -81,12 +76,10 @@ export default function Navbar() {
     let closeTimer = 0;
     const startShowcase = () => {
       openTimer = window.setTimeout(() => {
-        setIsShowcase(true);   // mark this as an auto-open → scrim stays hidden
         setIsOpen(true);
       }, 50);
       closeTimer = window.setTimeout(() => {
         setIsOpen(false);
-        setIsShowcase(false);
       }, 50 + 1000 + 1200);
     };
 
@@ -127,14 +120,10 @@ export default function Navbar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Manual interactions clear the showcase flag so the scrim behaves normally
-  // (a user-opened menu dims the backdrop; clicking it closes the menu).
   const toggle = useCallback(() => {
-    setIsShowcase(false);
     setIsOpen((open) => !open);
   }, []);
   const close = useCallback(() => {
-    setIsShowcase(false);
     setIsOpen(false);
   }, []);
 
@@ -151,7 +140,7 @@ export default function Navbar() {
           collapses. Hidden during the auto-showcase so the page-load hint
           doesn't wash the whole screen blue. */}
       <div
-        className={`${styles.scrim} ${isOpen && !isShowcase ? styles.scrimOpen : ''}`}
+        className={`${styles.scrim} ${isOpen ? styles.scrimOpen : ''}`}
         onClick={close}
         aria-hidden="true"
       />

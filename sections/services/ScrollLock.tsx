@@ -32,16 +32,32 @@ export default function ScrollLock() {
       bodyOverscroll: body.style.overscrollBehavior,
     };
 
-    docEl.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    docEl.style.overscrollBehavior = 'none';
-    body.style.overscrollBehavior = 'none';
+    // Only lock on desktop, where the Services section fits in a single
+    // viewport. On mobile (≤768px) the section releases its 100vh lock and
+    // grows past the viewport (three stacked cards), so the page MUST stay
+    // scrollable — otherwise cards 2 and 3 are unreachable.
+    const mq = window.matchMedia('(min-width: 769px)');
 
-    return () => {
+    const lock = () => {
+      docEl.style.overflow = 'hidden';
+      body.style.overflow = 'hidden';
+      docEl.style.overscrollBehavior = 'none';
+      body.style.overscrollBehavior = 'none';
+    };
+    const unlock = () => {
       docEl.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       docEl.style.overscrollBehavior = prev.htmlOverscroll;
       body.style.overscrollBehavior = prev.bodyOverscroll;
+    };
+
+    const apply = () => (mq.matches ? lock() : unlock());
+    apply();
+    mq.addEventListener('change', apply);
+
+    return () => {
+      mq.removeEventListener('change', apply);
+      unlock();
     };
   }, []);
 
