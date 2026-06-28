@@ -1,0 +1,289 @@
+/* =============================================================================
+   Work Showcase — dedicated /our-work page.
+   =============================================================================
+   Centred editorial header, then a paged carousel of project cards laid out
+   2×2 per page. Each card is a horizontal split: a placeholder "browser
+   screenshot" thumbnail on the left, the project title / description / tag
+   pills on the right. The track slides one full page at a time; circular
+   prev/next controls disable at the boundaries.
+   ============================================================================= */
+.section {
+  --w-navy:   #0A2036;
+  --w-accent: #0877DE;
+  --w-steel:  #5A6776;
+  --w-line:   #E6E9EF;
+  --w-ease:   cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: #FFFFFF;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 6rem 0;
+}
+
+.container {
+  width: min(100%, var(--container-max));
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  max-width: 44rem;
+  margin: 0 auto 3.5rem;
+}
+
+.title {
+  margin: 0 0 1rem;
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: var(--w-navy);
+}
+
+.subtitle {
+  margin: 0 auto;
+  max-width: 38rem;
+  color: var(--w-steel);
+  font-size: clamp(1rem, 1.3vw, 1.125rem);
+  line-height: 1.6;
+}
+
+/* ── Carousel viewport / track ───────────────────────────────────────────── */
+.viewport {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  transition: transform 0.55s var(--w-ease);
+}
+
+.page {
+  flex: 0 0 100%;
+  min-width: 100%;
+  /* Small inner gutter so card hover-shadows aren't clipped by the viewport. */
+  padding: 0.5rem;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.5rem, 3vw, 3rem) clamp(2rem, 4vw, 4rem);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Placeholder thumbnail (faux browser window) ─────────────────────────── */
+.thumb {
+  --accent: #2563EB;
+
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--w-line);
+  background: #F4F6FA;
+  box-shadow: 0 14px 30px -18px rgba(10, 32, 54, 0.35);
+  transition:
+    transform 0.45s var(--w-ease),
+    box-shadow 0.45s var(--w-ease);
+}
+
+.card:hover .thumb {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 44px -20px rgba(10, 32, 54, 0.45);
+}
+
+.browserBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--w-line);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #D5DBE5;
+}
+
+.dot:nth-child(1) { background: #FF6058; }
+.dot:nth-child(2) { background: #FFBE2F; }
+.dot:nth-child(3) { background: #2ACB42; }
+
+.thumbBody {
+  position: absolute;
+  inset: 26px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(120% 120% at 30% 20%,
+      color-mix(in srgb, var(--accent) 22%, #FFFFFF) 0%,
+      color-mix(in srgb, var(--accent) 8%, #FFFFFF) 55%,
+      #FFFFFF 100%);
+}
+
+.thumbMark {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--accent) 70%, var(--w-navy));
+  opacity: 0.85;
+}
+
+/* ── Card content ────────────────────────────────────────────────────────── */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(1.25rem, 1.8vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--w-navy);
+}
+
+.cardText {
+  margin: 0;
+  color: var(--w-steel);
+  font-size: 0.95rem;
+  line-height: 1.6;
+
+  /* Clamp to four lines so cards stay balanced regardless of copy length. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Tag pills ───────────────────────────────────────────────────────────── */
+.tags {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(8, 119, 222, 0.08);
+  color: var(--w-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ── Carousel controls ───────────────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2.75rem;
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  border: 1px solid var(--w-line);
+  background: #FFFFFF;
+  color: var(--w-navy);
+  cursor: pointer;
+  box-shadow: 0 8px 20px -12px rgba(10, 32, 54, 0.35);
+  transition:
+    background 0.3s var(--w-ease),
+    color 0.3s var(--w-ease),
+    border-color 0.3s var(--w-ease),
+    transform 0.3s var(--w-ease),
+    box-shadow 0.3s var(--w-ease);
+}
+
+.navButton:hover:not(:disabled) {
+  background: var(--w-navy);
+  color: #FFFFFF;
+  border-color: var(--w-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -14px rgba(10, 32, 54, 0.5);
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pageStatus {
+  min-width: 3rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--w-steel);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    transition: none;
+  }
+  .card:hover .thumb,
+  .navButton:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ── Tablet (≤ 980px): cards go full width, one column ───────────────────── */
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* ── Mobile (≤ 600px): stack thumbnail above content ─────────────────────── */
+@media (max-width: 600px) {
+  .section {
+    min-height: auto;
+    padding: 4.5rem 0;
+  }
+  .header {
+    margin-bottom: 2.5rem;
+  }
+  .card {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+  .thumb {
+    aspect-ratio: 16 / 10;
+  }
+}

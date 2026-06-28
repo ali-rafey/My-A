@@ -22,6 +22,53 @@ export type Step = {
   description: string;
 };
 
+// Richer portfolio entries for the dedicated /our-work page (card + carousel
+// showcase). Kept separate from `workProjects` so the homepage #our-work
+// section is unaffected. `accent` drives the placeholder thumbnail tint until
+// real project screenshots are dropped in.
+export type CaseStudy = {
+  id: number;
+  title: string;
+  description: string;
+  tags: string[];
+  accent: string;
+};
+
+export const caseStudies: CaseStudy[] = [
+  {
+    id: 1,
+    title: 'MedHealix',
+    description:
+      'MedHealix is a live enterprise HealthTech platform we built from the ground up — a HIPAA-compliant, co-branded health experience connecting patients with providers across a secure, scalable cloud backend.',
+    tags: ['HIPAA Compliance', 'Azure', 'HealthTech', 'Enterprise'],
+    accent: '#2563EB',
+  },
+  {
+    id: 2,
+    title: 'Earthly Insight',
+    description:
+      'Earthly Insight is a live, scaling AI platform we built from scratch on Web, iOS, and Android — now with 6,500+ users and 1,000+ daily active sessions, all powered by a multi-model AI engine.',
+    tags: ['Multi-AI', 'Cross-Platform', 'GreenTech', 'Mobile'],
+    accent: '#16A34A',
+  },
+  {
+    id: 3,
+    title: 'Altruva',
+    description:
+      'Altruva is a live nonprofit FinAI platform backed by $100,000 in Microsoft Azure credits. We built it entirely from scratch — producing financial insights and guidance for mission-driven organizations.',
+    tags: ['Azure AI Foundry', 'RAG', 'MCP', 'NonProfit Tech'],
+    accent: '#7C3AED',
+  },
+  {
+    id: 4,
+    title: 'Syncom AI',
+    description:
+      'Syncom AI is a live AI copywriting platform we built end-to-end — trained on Gary Halbert, Dan Kennedy, Eugene Schwartz, and other legendary direct-response copywriters to generate high-converting copy on demand.',
+    tags: ['AI Copywriting', 'Direct Response', 'MarTech', 'SaaS'],
+    accent: '#0F172A',
+  },
+];
+
 export const services: Service[] = [
   {
     id: 1,

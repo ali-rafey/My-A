@@ -463,8 +463,14 @@
 
   .rotatingPill {
     min-width: 6em;
-    padding: 0 0.35em 0.04em;
+    padding: 0 0.2em 0.04em;
     border-radius: 11px;
+  }
+
+  /* The longest rotating word ("Sustainability") overflows the viewport at the
+     desktop min clamp (3.25rem). Shrink it on phones so it always fits. */
+  .rotatingWord {
+    font-size: clamp(2.5rem, 9vw, 3.5rem);
   }
 
   .lead {

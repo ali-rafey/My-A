@@ -234,11 +234,17 @@ export default function ProcessCurve({
         ctx.textAlign = 'center';
         ctx.fillText(s.t, padL + mx, baseY + 22);
 
-        ctx.font = "11px 'Inter', system-ui, sans-serif";
-        ctx.fillStyle = inkMuted;
-        s.d.split('\n').forEach((line, li) => {
-          ctx.fillText(line, padL + mx, baseY + 38 + li * 13);
-        });
+        // The two-line descriptions are centred on each milestone and collide
+        // once the milestones are packed closer than the text is wide — which
+        // happens on narrow (mobile) canvases. Below this width, draw only the
+        // short labels above; the descriptions reappear when there's room.
+        if (w >= 520) {
+          ctx.font = "11px 'Inter', system-ui, sans-serif";
+          ctx.fillStyle = inkMuted;
+          s.d.split('\n').forEach((line, li) => {
+            ctx.fillText(line, padL + mx, baseY + 38 + li * 13);
+          });
+        }
       });
 
       frameRef.current = requestAnimationFrame(draw);
