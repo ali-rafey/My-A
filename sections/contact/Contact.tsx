@@ -60,49 +60,57 @@ export default function Contact() {
     }
   };
 
+  const submitting = submitState.status === 'submitting';
+
   return (
     <section className={`${styles.section} section`} id="contact">
-      <div className="container">
-        <div className={styles.layout}>
-          <div className={styles.copy}>
-            <span className="eyebrow">Contact</span>
-            <h2 className="sectionTitle">Start a conversation with our team</h2>
-            <p className="sectionLead">
-              Share your goals and we will respond with a clear next step.
+      <div className={`container ${styles.container}`}>
+        <div className={styles.wrap}>
+          <header className={styles.head}>
+            <span className={styles.eyebrow}>Contact</span>
+            <h2 className={styles.title}>Let&rsquo;s talk.</h2>
+            <p className={styles.lead}>
+              Share your goals and we&rsquo;ll respond with a clear next step.
             </p>
-          </div>
+          </header>
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <label className={styles.label}>
-              Name
-              <input
-                className={styles.input}
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                maxLength={120}
-                autoComplete="name"
-              />
-            </label>
+            <div className={styles.row}>
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>Name</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  maxLength={120}
+                  autoComplete="name"
+                  placeholder="Jane Doe"
+                />
+              </label>
 
-            <label className={styles.label}>
-              Email
-              <input
-                className={styles.input}
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                maxLength={254}
-                autoComplete="email"
-              />
-            </label>
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>Email</span>
+                <input
+                  className={styles.input}
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  maxLength={254}
+                  autoComplete="email"
+                  placeholder="jane@company.com"
+                />
+              </label>
+            </div>
 
-            <label className={styles.label}>
-              Phone (optional)
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>
+                Phone <span className={styles.optional}>optional</span>
+              </span>
               <input
                 className={styles.input}
                 type="tel"
@@ -111,28 +119,29 @@ export default function Contact() {
                 onChange={handleChange}
                 maxLength={40}
                 autoComplete="tel"
+                placeholder="+1 (555) 000-0000"
               />
             </label>
 
-            <label className={styles.label}>
-              Message
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Message</span>
               <textarea
                 className={styles.textarea}
                 name="message"
                 value={form.message}
                 onChange={handleChange}
-                rows={6}
+                rows={5}
                 required
                 maxLength={5000}
+                placeholder="Tell us about your project, timeline, and what success looks like."
               />
             </label>
 
-            <button
-              className={styles.button}
-              type="submit"
-              disabled={submitState.status === 'submitting'}
-            >
-              {submitState.status === 'submitting' ? 'Sending...' : 'Send Message'}
+            <button className={styles.button} type="submit" disabled={submitting}>
+              <span>{submitting ? 'Sending…' : 'Send Message'}</span>
+              {!submitting ? (
+                <span className={styles.buttonArrow} aria-hidden="true">→</span>
+              ) : null}
             </button>
 
             {submitState.status === 'success' ? (
