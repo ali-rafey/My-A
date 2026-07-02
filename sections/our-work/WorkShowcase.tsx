@@ -20,6 +20,11 @@ import styles from './WorkShowcase.module.css';
 function ProjectMockup({ kind }: { kind: CaseStudyMockup }) {
   const common = {
     viewBox: '0 0 320 220',
+    // Intrinsic dimensions so the SVG can never balloon to full size before the
+    // CSS module applies (dev-mode FOUC). `.mockup` scales it to 100% once the
+    // stylesheet loads; these attributes only bound the pre-style frame.
+    width: 320,
+    height: 220,
     className: styles.mockup,
     preserveAspectRatio: 'xMidYMid slice' as const,
     xmlns: 'http://www.w3.org/2000/svg',
