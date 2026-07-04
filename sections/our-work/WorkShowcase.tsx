@@ -1,7 +1,5 @@
-'use client';
-
-import { useState } from 'react';
 import { caseStudies, type CaseStudyMockup } from '@/lib/content/static';
+import Carousel from './Carousel';
 import styles from './WorkShowcase.module.css';
 
 // =============================================================================
@@ -9,9 +7,13 @@ import styles from './WorkShowcase.module.css';
 // =============================================================================
 // Centred header, then a paged carousel of project cards (2×2 per page). Each
 // card pairs a demo "product screenshot" thumbnail (an inline SVG UI mockup
-// tinted with the project's accent) with the title, description, and tags. The
-// carousel slides one page of four at a time; prev/next controls disable at
-// the boundaries. The SVG mockups stand in until real screenshots are added.
+// tinted with the project's accent) with the title, description, and tags.
+//
+// This component is a SERVER component: the cards render on the server so their
+// CSS is part of the route stylesheet (applied before paint on client-side
+// navigation — no flash of unstyled content). Only the carousel's state and
+// controls live in the `Carousel` client wrapper, which slides one page of
+// four at a time. The SVG mockups stand in until real screenshots are added.
 // =============================================================================
 
 // Inline SVG "demo screenshot" for a card. `currentColor` is the project accent
@@ -20,9 +22,8 @@ import styles from './WorkShowcase.module.css';
 function ProjectMockup({ kind }: { kind: CaseStudyMockup }) {
   const common = {
     viewBox: '0 0 320 220',
-    // Intrinsic dimensions so the SVG can never balloon to full size before the
-    // CSS module applies (dev-mode FOUC). `.mockup` scales it to 100% once the
-    // stylesheet loads; these attributes only bound the pre-style frame.
+    // Intrinsic dimensions as a fallback so the SVG can never balloon if styles
+    // are momentarily missing. `.mockup` scales it to 100% to fill the thumb.
     width: 320,
     height: 220,
     className: styles.mockup,
@@ -133,12 +134,6 @@ for (let i = 0; i < caseStudies.length; i += PER_PAGE) {
 }
 
 export default function WorkShowcase() {
-  const [page, setPage] = useState(0);
-  const pageCount = pages.length;
-
-  const goPrev = () => setPage((p) => Math.max(0, p - 1));
-  const goNext = () => setPage((p) => Math.min(pageCount - 1, p + 1));
-
   return (
     <section className={`${styles.section} section`} id="our-work">
       <div className={`container ${styles.container}`}>
@@ -150,92 +145,43 @@ export default function WorkShowcase() {
           </p>
         </header>
 
-        <div className={styles.viewport}>
-          <div
-            className={styles.track}
-            style={{ transform: `translateX(-${page * 100}%)` }}
-          >
-            {pages.map((group, gi) => (
-              <div className={styles.page} key={gi} aria-hidden={gi !== page}>
-                <div className={styles.grid}>
-                  {group.map((project) => (
-                    <article key={project.id} className={styles.card}>
-                      <div
-                        className={styles.thumb}
-                        style={{ '--accent': project.accent } as React.CSSProperties}
-                      >
-                        <div className={styles.browserBar} aria-hidden="true">
-                          <span className={styles.dot} />
-                          <span className={styles.dot} />
-                          <span className={styles.dot} />
-                        </div>
-                        <div className={styles.thumbBody}>
-                          <ProjectMockup kind={project.mockup} />
-                        </div>
+        <Carousel>
+          {pages.map((group, gi) => (
+            <div className={styles.page} key={gi}>
+              <div className={styles.grid}>
+                {group.map((project) => (
+                  <article key={project.id} className={styles.card}>
+                    <div
+                      className={styles.thumb}
+                      style={{ '--accent': project.accent } as React.CSSProperties}
+                    >
+                      <div className={styles.browserBar} aria-hidden="true">
+                        <span className={styles.dot} />
+                        <span className={styles.dot} />
+                        <span className={styles.dot} />
                       </div>
+                      <div className={styles.thumbBody}>
+                        <ProjectMockup kind={project.mockup} />
+                      </div>
+                    </div>
 
-                      <div className={styles.content}>
-                        <h3 className={styles.cardTitle}>{project.title}</h3>
-                        <p className={styles.cardText}>{project.description}</p>
-                        <ul className={styles.tags}>
-                          {project.tags.map((tag) => (
-                            <li key={tag} className={styles.tag}>
-                              {tag}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                    <div className={styles.content}>
+                      <h3 className={styles.cardTitle}>{project.title}</h3>
+                      <p className={styles.cardText}>{project.description}</p>
+                      <ul className={styles.tags}>
+                        {project.tags.map((tag) => (
+                          <li key={tag} className={styles.tag}>
+                            {tag}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </article>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.controls}>
-          <button
-            type="button"
-            className={styles.navButton}
-            onClick={goPrev}
-            disabled={page === 0}
-            aria-label="Previous projects"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M15 18L9 12L15 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          {pageCount > 1 ? (
-            <span className={styles.pageStatus} aria-live="polite">
-              {page + 1} / {pageCount}
-            </span>
-          ) : null}
-
-          <button
-            type="button"
-            className={styles.navButton}
-            onClick={goNext}
-            disabled={page === pageCount - 1}
-            aria-label="Next projects"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M9 6L15 12L9 18"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
+            </div>
+          ))}
+        </Carousel>
       </div>
     </section>
   );
