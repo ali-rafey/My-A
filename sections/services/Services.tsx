@@ -3,7 +3,6 @@ import { services } from '@/lib/content/static';
 import EyesAnimation from './EyesAnimation';
 import DataChartAnimation from './DataChartAnimation';
 import ReachAnimation from './ReachAnimation';
-import ScrollLock from './ScrollLock';
 import styles from './Services.module.css';
 
 // =============================================================================
@@ -31,10 +30,6 @@ const CARD_ANIMATIONS: Record<number, React.ReactNode> = {
 export default function Services() {
   return (
     <section className={`${styles.section} section`} id="services">
-      {/* Pure side-effect: lock <html>/<body> scrolling while this section is
-          mounted, restore on unmount so other routes scroll normally again. */}
-      <ScrollLock />
-
       <div className={`container ${styles.container}`}>
         <header className={styles.header}>
           <span className={styles.eyebrow}>

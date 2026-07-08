@@ -26,13 +26,15 @@
   --srv-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: relative;
-  /* Strict viewport height — section fits exactly, never scrolls. */
-  height: 100vh;
+  /* Fill at least the viewport (minus the fixed bottom navbar clearance) and
+     centre the content, but GROW past it if the cards need more room — the
+     cards size to their content and never get squeezed to fit the screen. */
+  min-height: calc(100vh - 7rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
   background: var(--color-white);
-  padding: var(--space-10) 0;
+  padding: var(--space-16) 0;
   overflow: hidden;
 }
 
@@ -41,10 +43,9 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  /* Header sits at the top, grid expands to fill, footer sits at bottom. */
-  justify-content: space-between;
-  gap: var(--space-6);
+  /* Natural, content-driven flow — header, grid, and footer stack with a gap
+     instead of being stretched to fill a fixed viewport height. */
+  gap: var(--space-8);
 }
 
 /* =============================================================================
@@ -138,9 +139,9 @@
   max-width: 1380px;
   margin: 0 auto;
   width: 100%;
-  /* Take the leftover vertical space between the header and footer. */
-  flex: 1 1 0;
-  min-height: 0;
+  /* Content-driven height. Grid items still stretch to the tallest card in the
+     row (align-items defaults to stretch), so the three cards stay equal
+     height without being forced to fill the viewport. */
 }
 
 /* =============================================================================
