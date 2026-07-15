@@ -60,7 +60,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
-  icons: { icon: '/favicon.ico' },
+  // Favicon/app icons resolve from the file convention (app/icon.png,
+  // app/apple-icon.png) — no manual /favicon.ico reference (that file does not
+  // exist and was 404ing).
 };
 
 export const viewport: Viewport = {
@@ -74,7 +76,9 @@ const orgJsonLd = {
   '@type': 'Organization',
   name: 'EscaLeads',
   url: siteUrl,
-  logo: `${siteUrl}/og-image.png`,
+  logo: `${siteUrl}/logo-icon.png`,
+  // Social/profile URLs for entity recognition (knowledge graph). Add the
+  // agency's real LinkedIn / X / etc. profiles here to strengthen off-page SEO.
   sameAs: [] as string[],
   description:
     'EscaLeads designs and ships software, mobile apps, and AI automations that help businesses grow faster.',

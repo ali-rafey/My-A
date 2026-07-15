@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     publisher: {
       '@type': 'Organization',
       name: 'EscaLeads',
-      logo: { '@type': 'ImageObject', url: `${siteUrl}/og-image.png` },
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/logo-icon.png` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     keywords: blog.tags?.join(', '),

@@ -369,7 +369,7 @@ export default function WhyBusinessesFail() {
 
       <div className={`container ${styles.containerInner}`}>
         <header className={styles.header}>
-          <h2 id="why-fail-title" className={styles.title}>
+          <h1 id="why-fail-title" className={styles.title}>
             {TITLE_WORDS.map((word, i) => (
               <span
                 key={word}
@@ -380,7 +380,7 @@ export default function WhyBusinessesFail() {
                 {i < TITLE_WORDS.length - 1 ? ' ' : ''}
               </span>
             ))}
-          </h2>
+          </h1>
           <p className={styles.subtitle}>
             The numbers reveal what most businesses ignore.
           </p>
