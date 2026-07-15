@@ -1,0 +1,582 @@
+/* =============================================================================
+   Meet Ali — personal portfolio SPA.
+   =============================================================================
+   Light "personal lab" theme, scoped entirely to this page:
+     white canvas · silver hairlines & chrome · navy ink ·
+     Playfair italic display accents · blue as the single accent · window chrome.
+   Self-contained: no dependence on the marketing site's section styles.
+   ============================================================================= */
+.page {
+  --p-bg:         #FFFFFF;
+  --p-bg-soft:    #F7F9FC;
+  --p-ink:        #0A2036;
+  --p-muted:      #5A6776;
+  --p-silver:     #C2CAD6;
+  --p-line:       rgba(10, 32, 54, 0.12);
+  --p-line-soft:  rgba(10, 32, 54, 0.07);
+  --p-accent:     #0877DE;
+  --p-accent-dim: rgba(8, 119, 222, 0.55);
+  --p-accent-bg:  rgba(8, 119, 222, 0.07);
+  --p-chrome:     #F4F6FA;
+  --p-chrome-2:   #FFFFFF;
+  --p-ease:       cubic-bezier(0.22, 1, 0.36, 1);
+
+  min-height: 100vh;
+  background:
+    radial-gradient(90% 60% at 85% -10%, rgba(8, 119, 222, 0.07) 0%, transparent 60%),
+    radial-gradient(70% 50% at 0% 100%, rgba(90, 103, 118, 0.06) 0%, transparent 55%),
+    var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--font-sans);
+  padding: 0 clamp(1.25rem, 5vw, 4rem);
+  /* Swallow <main>'s global bottom padding (reserved for the marketing site's
+     bottom navbar, hidden on this route) so the footer sits at the true bottom.
+     Values mirror global.css. */
+  margin-bottom: -7rem;
+  padding-bottom: 7rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    margin-bottom: -5.5rem;
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* ── Masthead ────────────────────────────────────────────────────────────── */
+.masthead {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.6rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--p-line-soft);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--p-ink);
+}
+
+.wordmarkDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--p-accent);
+  box-shadow: 0 0 10px rgba(8, 119, 222, 0.6);
+}
+
+.mastNav {
+  display: flex;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.mastNav a {
+  color: var(--p-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.3s var(--p-ease);
+}
+
+.mastNav a:hover {
+  color: var(--p-ink);
+}
+
+.mastBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--p-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s var(--p-ease);
+}
+
+.mastBack:hover {
+  color: var(--p-accent);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: clamp(5rem, 13vh, 9rem) 0 clamp(4rem, 10vh, 7rem);
+  text-align: left;
+}
+
+.eyebrow {
+  margin: 0 0 1.5rem;
+  color: var(--p-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 1.75rem;
+  font-size: clamp(3.25rem, 10vw, 7rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  color: var(--p-ink);
+}
+
+.heroTitle em {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--p-accent);
+}
+
+.heroLede {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--p-muted);
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  line-height: 1.7;
+}
+
+.heroCue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 3.5rem;
+  color: var(--p-silver);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.heroCueLine {
+  width: 3.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--p-accent-dim), transparent);
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.section {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: clamp(3rem, 8vh, 5.5rem) 0;
+  border-top: 1px solid var(--p-line-soft);
+  scroll-margin-top: 2rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.sectionIndex {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--p-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.6vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--p-ink);
+}
+
+.sectionTitle em {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.sectionLede {
+  margin: -1.25rem 0 2.5rem;
+  max-width: 36rem;
+  color: var(--p-muted);
+  font-size: 0.975rem;
+  line-height: 1.7;
+}
+
+/* ── Education ───────────────────────────────────────────────────────────── */
+.eduList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eduRow {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: clamp(1rem, 4vw, 3rem);
+  padding: 1.75rem 0;
+  border-bottom: 1px solid var(--p-line-soft);
+}
+
+.eduRow:last-child {
+  border-bottom: none;
+}
+
+.eduPeriod {
+  color: var(--p-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.3rem;
+}
+
+.eduTitle {
+  margin: 0 0 0.3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--p-ink);
+}
+
+.eduPlace {
+  margin: 0 0 0.5rem;
+  color: var(--p-accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.eduNote {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 34rem;
+}
+
+/* ── Hobbies & loves ─────────────────────────────────────────────────────── */
+.hobbyRow {
+  list-style: none;
+  margin: 0 0 2.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hobbyChip {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--p-line);
+  border-radius: 9999px;
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition:
+    border-color 0.35s var(--p-ease),
+    background 0.35s var(--p-ease);
+}
+
+.hobbyChip:hover {
+  border-color: var(--p-accent-dim);
+  background: var(--p-accent-bg);
+}
+
+.loveGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.loveCard {
+  padding: 1.5rem 1.5rem 1.6rem;
+  border: 1px solid var(--p-line-soft);
+  border-radius: 14px;
+  background: var(--p-bg-soft);
+  transition:
+    border-color 0.4s var(--p-ease),
+    box-shadow 0.4s var(--p-ease),
+    transform 0.4s var(--p-ease);
+}
+
+.loveCard:hover {
+  border-color: var(--p-line);
+  box-shadow: 0 18px 36px -24px rgba(10, 32, 54, 0.35);
+  transform: translateY(-3px);
+}
+
+.loveTitle {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+.loveText {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+/* ── Lab: the two windows (1 row × 2 columns) ────────────────────────────── */
+.windowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  max-width: 62rem;
+}
+
+/* Shared window chrome — both lab windows use this frame. */
+.window {
+  display: flex;
+  flex-direction: column;
+  height: clamp(22rem, 46vw, 26rem);
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  background: var(--p-chrome-2);
+  overflow: hidden;
+  box-shadow: 0 30px 60px -35px rgba(10, 32, 54, 0.45);
+}
+
+.windowBar {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  height: 2.4rem;
+  padding: 0 0.9rem;
+  background: var(--p-chrome);
+  border-bottom: 1px solid var(--p-line-soft);
+  flex-shrink: 0;
+}
+
+.windowLights {
+  display: inline-flex;
+  gap: 7px;
+}
+
+.windowLight {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.lightRed    { background: #FF5F57; }
+.lightYellow { background: #FEBC2E; }
+.lightGreen  { background: #28C840; }
+
+.windowName {
+  color: var(--p-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.windowBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--p-accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.windowBadgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--p-accent);
+  box-shadow: 0 0 8px rgba(8, 119, 222, 0.7);
+}
+
+/* ── Pinch Portal launcher window body ───────────────────────────────────── */
+.portalBody {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Dimmed image backdrop — a taste of the carousel that flows in the portal,
+   washed toward white so the silver/blue chrome stays dominant. */
+.portalBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.82)),
+    url('/pinch-portal/img-03.jpeg');
+  background-size: cover;
+  background-position: center;
+}
+
+.portalBody::before {
+  content: '';
+  position: absolute;
+  inset: 0.9rem;
+  z-index: -1;
+  border-radius: 10px;
+  background:
+    linear-gradient(var(--p-accent), var(--p-accent)) top left / 22px 1.5px,
+    linear-gradient(var(--p-accent), var(--p-accent)) top left / 1.5px 22px,
+    linear-gradient(var(--p-accent), var(--p-accent)) top right / 22px 1.5px,
+    linear-gradient(var(--p-accent), var(--p-accent)) top right / 1.5px 22px,
+    linear-gradient(var(--p-accent), var(--p-accent)) bottom left / 22px 1.5px,
+    linear-gradient(var(--p-accent), var(--p-accent)) bottom left / 1.5px 22px,
+    linear-gradient(var(--p-accent), var(--p-accent)) bottom right / 22px 1.5px,
+    linear-gradient(var(--p-accent), var(--p-accent)) bottom right / 1.5px 22px;
+  background-repeat: no-repeat;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.portalTitle {
+  margin: 0;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+.portalText {
+  margin: 0;
+  max-width: 21rem;
+  color: var(--p-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.portalLaunch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  padding: 0.65rem 1.4rem;
+  border: 1px solid var(--p-accent-dim);
+  border-radius: 9999px;
+  background: var(--p-accent-bg);
+  color: var(--p-accent);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.35s var(--p-ease),
+    color 0.35s var(--p-ease),
+    box-shadow 0.35s var(--p-ease),
+    transform 0.35s var(--p-ease);
+}
+
+.portalLaunch:hover {
+  background: var(--p-accent);
+  color: #FFFFFF;
+  box-shadow: 0 14px 30px -12px rgba(8, 119, 222, 0.6);
+  transform: translateY(-2px);
+}
+
+.portalLaunch:focus-visible {
+  outline: 2px solid var(--p-accent);
+  outline-offset: 3px;
+}
+
+.portalNote {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2.25rem 0 2.75rem;
+  border-top: 1px solid var(--p-line-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footerNote {
+  color: var(--p-muted);
+  font-size: 0.8rem;
+}
+
+.footerBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--p-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s var(--p-ease);
+}
+
+.footerBack:hover {
+  color: var(--p-accent);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .windowGrid {
+    grid-template-columns: 1fr;
+    max-width: 30rem;
+  }
+  .window {
+    height: clamp(21rem, 90vw, 24rem);
+  }
+  .loveGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .masthead {
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+  }
+  .mastNav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .eduRow {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+  .eduPeriod {
+    padding-top: 0;
+  }
+}

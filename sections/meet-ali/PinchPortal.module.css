@@ -1,0 +1,226 @@
+/* =============================================================================
+   Pinch Portal — fullscreen overlay, restyled as a window.
+   =============================================================================
+   The live canvas sits inside the portfolio's white/silver window chrome
+   (title bar + traffic lights + status bar) over a blurred navy scrim. The
+   camera stage behind the canvas stays deep navy so the feed reads well.
+   The red light and the esc button both close. Engine code untouched — these
+   styles only wrap the canvas.
+   ============================================================================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 2.5rem);
+  background: rgba(10, 32, 54, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.window {
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, 100%);
+  max-height: 100%;
+  border: 1px solid rgba(10, 32, 54, 0.14);
+  border-radius: 18px;
+  background: #FFFFFF;
+  overflow: hidden;
+  box-shadow:
+    0 40px 90px -30px rgba(10, 32, 54, 0.55),
+    0 0 60px -20px rgba(8, 119, 222, 0.2);
+}
+
+/* ── Title bar ───────────────────────────────────────────────────────────── */
+.windowBar {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  height: 2.6rem;
+  padding: 0 0.9rem;
+  background: #F4F6FA;
+  border-bottom: 1px solid rgba(10, 32, 54, 0.08);
+  flex-shrink: 0;
+}
+
+.windowLights {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.windowLight {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+}
+
+.lightRed {
+  background: #FF5F57;
+  cursor: pointer;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.lightRed:hover {
+  box-shadow: 0 0 10px rgba(255, 95, 87, 0.8);
+  transform: scale(1.12);
+}
+
+.lightRed:focus-visible {
+  outline: 2px solid #FF5F57;
+  outline-offset: 2px;
+}
+
+.lightYellow { background: #FEBC2E; }
+.lightGreen  { background: #28C840; }
+
+.windowName {
+  color: #5A6776;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liveBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #94A1AF;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #C2CAD6;
+}
+
+.liveOn {
+  color: #0877DE;
+}
+
+.liveOn .liveDot {
+  background: #0877DE;
+  box-shadow: 0 0 10px rgba(8, 119, 222, 0.8);
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+.escButton {
+  border: 1px solid rgba(10, 32, 54, 0.16);
+  background: transparent;
+  color: #5A6776;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.escButton:hover {
+  color: #0A2036;
+  border-color: rgba(10, 32, 54, 0.4);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.windowBody {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Deep navy camera stage — the live feed and the blue portal frame both
+     read best against it, and it stays inside the white/silver/blue family. */
+  background: #0A2036;
+  /* Holds the frame open while the engine/camera loads (canvas is 0×0 until
+     the first frame arrives) so the loading/error states have a real stage. */
+  min-height: min(60vh, 34rem);
+}
+
+.canvas {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 12rem);
+  width: auto;
+  height: auto;
+}
+
+.status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.status p {
+  margin: 0;
+  max-width: 26rem;
+  color: #BBD7FA;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+
+/* ── Status bar ──────────────────────────────────────────────────────────── */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  background: #F4F6FA;
+  border-top: 1px solid rgba(10, 32, 54, 0.08);
+  flex-shrink: 0;
+}
+
+.hint {
+  margin: 0;
+  color: #5A6776;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.hint strong {
+  color: #0877DE;
+}
+
+.hintKeys {
+  color: #94A1AF;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .windowName {
+    display: none;
+  }
+  .canvas {
+    max-height: calc(100vh - 10rem);
+  }
+}

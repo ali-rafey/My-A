@@ -34,6 +34,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const onAdmin = ADMIN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+  // Ali's portfolio at /meet-ali is a standalone sub-site with its own
+  // masthead and "Back to EscaLeads" links — the marketing navbar stays off it.
+  const onPortfolio = pathname === '/meet-ali' || pathname.startsWith('/meet-ali/');
 
   // Auto-collapse on route change.
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function Navbar() {
     setIsOpen(false);
   }, []);
 
-  if (onAdmin) return null;
+  if (onAdmin || onPortfolio) return null;
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';

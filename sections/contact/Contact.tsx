@@ -1,6 +1,7 @@
 'use client';
 
 import { type ChangeEvent, type FormEvent, useState } from 'react';
+import Link from 'next/link';
 import styles from './Contact.module.css';
 
 type ContactFormState = {
@@ -68,10 +69,24 @@ export default function Contact() {
         <div className={styles.wrap}>
           <header className={styles.head}>
             <span className={styles.eyebrow}>Contact</span>
-            <h2 className={styles.title}>Let&rsquo;s talk.</h2>
+            <h1 className={styles.title}>Let&rsquo;s talk.</h1>
             <p className={styles.lead}>
               Share your goals and we&rsquo;ll respond with a clear next step.
             </p>
+
+            <Link href="/meet-ali" className={styles.meetAli}>
+              <span className={styles.meetAliAvatar} aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="5.4" r="2.7" fill="currentColor" />
+                  <path
+                    d="M2.9 13.4c0-2.7 2.3-4.4 5.1-4.4s5.1 1.7 5.1 4.4"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              <span>Meet Ali</span>
+              <span className={styles.meetAliArrow} aria-hidden="true">→</span>
+            </Link>
           </header>
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>

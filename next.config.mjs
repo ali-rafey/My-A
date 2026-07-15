@@ -49,6 +49,18 @@ const nextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      {
+        // /meet-ali hosts the Pinch Portal, an in-browser camera experience.
+        // Same locked-down headers as everywhere else, except camera is allowed
+        // for our own origin on THIS route only (getUserMedia stays blocked on
+        // every other page). Later entries override earlier ones per header key.
+        source: '/meet-ali',
+        headers: securityHeaders.map((h) =>
+          h.key === 'Permissions-Policy'
+            ? { key: h.key, value: h.value.replace('camera=()', 'camera=(self)') }
+            : h,
+        ),
+      },
     ];
   },
   experimental: {

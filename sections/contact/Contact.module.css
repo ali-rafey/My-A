@@ -66,6 +66,62 @@
   line-height: 1.6;
 }
 
+/* "Meet Ali" — a personal link to Ali's portfolio. A refined pill with a navy
+   gradient avatar, sitting just below the lead. Lifts and warms to accent on
+   hover; the arrow eases right. */
+.meetAli {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.6rem;
+  padding: 0.4rem 1.05rem 0.4rem 0.4rem;
+  border: 1px solid var(--c-line);
+  border-radius: 9999px;
+  background: #FFFFFF;
+  color: var(--c-navy);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -14px rgba(10, 32, 54, 0.45);
+  transition:
+    border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.meetAli:hover {
+  border-color: rgba(8, 119, 222, 0.4);
+  color: var(--c-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px -14px rgba(8, 119, 222, 0.4);
+}
+
+.meetAliAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  color: #FFFFFF;
+  background: linear-gradient(145deg, #1B3858 0%, #0A2036 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.meetAliArrow {
+  display: inline-block;
+  color: var(--c-accent);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.meetAli:hover .meetAliArrow {
+  transform: translateX(3px);
+}
+
 /* ── Form ────────────────────────────────────────────────────────────────── */
 .form {
   display: flex;
