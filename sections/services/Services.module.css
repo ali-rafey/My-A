@@ -314,72 +314,96 @@
 }
 
 /* =============================================================================
-   Capability grid — 2×2 tiles, each an icon "logo" + label
+   Capabilities — dimensional badge rows
    =============================================================================
-   Replaces the old numbered list. After the description, the capabilities show
-   as a compact grid of white tiles: a rounded accent chip with a line icon on
-   top, the capability name beneath. On hover a tile lifts, its border turns
-   accent, and the icon chip brightens. Sits at the bottom of the card via
-   margin-top: auto.
+   After the description, each capability is a row with a premium gradient icon
+   badge (navy, echoing the corner tab — lit from above with an inner highlight
+   and a soft drop shadow) and the label in refined type. On hover a soft accent
+   wash sweeps in behind the row, the badge warms to a blue gradient and glows,
+   and the label eases to the accent. Depth + restraint. Sits at the bottom of
+   the card via margin-top: auto.
    ============================================================================= */
 .capabilities {
   list-style: none;
-  margin: auto 0 0;             /* pushes the grid to the bottom of cardBody */
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
+  margin: auto 0 0;             /* pushes the list to the bottom of cardBody */
+  padding: 0.4rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-top: 1px solid rgba(10, 32, 54, 0.08);
 }
 
 .capability {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.85rem 0.85rem;
-  border: 1px solid rgba(10, 32, 54, 0.08);
-  border-radius: 14px;
-  background: #FFFFFF;
+  align-items: center;
+  gap: 0.95rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 12px;
+  overflow: hidden;
   font-family: var(--font-sans);
-  transition:
-    transform 0.35s var(--srv-ease),
-    border-color 0.35s var(--srv-ease),
-    box-shadow 0.35s var(--srv-ease);
+  isolation: isolate;
 }
 
-.capability:hover {
-  transform: translateY(-3px);
-  border-color: rgba(8, 119, 222, 0.4);
-  box-shadow: 0 12px 24px -14px rgba(10, 32, 54, 0.3);
+/* Soft accent wash that sweeps in from the left on hover. */
+.capability::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgba(8, 119, 222, 0.09) 0%,
+    rgba(8, 119, 222, 0.02) 65%,
+    transparent 100%);
+  opacity: 0;
+  transition: opacity 0.5s var(--srv-ease);
 }
 
-/* Accent chip holding the capability's line icon — the small "logo" graphic. */
+.capability:hover::before {
+  opacity: 1;
+}
+
+/* Premium gradient badge — navy, lit from above (inner highlight) with a soft
+   drop shadow so it reads as a raised object, not a flat chip. */
 .capabilityIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.05rem;
+  height: 2.05rem;
   border-radius: 10px;
-  color: var(--srv-accent);
-  background: rgba(8, 119, 222, 0.1);
+  color: #FFFFFF;
+  background: linear-gradient(145deg, var(--srv-navy-light) 0%, var(--srv-navy) 100%);
+  box-shadow:
+    0 4px 10px -3px rgba(10, 32, 54, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transition:
-    background 0.35s var(--srv-ease),
-    transform 0.35s var(--srv-ease);
+    background 0.5s var(--srv-ease),
+    box-shadow 0.5s var(--srv-ease),
+    transform 0.5s var(--srv-ease);
 }
 
 .capability:hover .capabilityIcon {
-  background: rgba(8, 119, 222, 0.18);
-  transform: scale(1.08);
+  background: linear-gradient(145deg, #0E84EC 0%, var(--srv-royal) 100%);
+  box-shadow:
+    0 7px 18px -4px rgba(8, 119, 222, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
 }
 
 .capabilityName {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--srv-navy);
-  line-height: 1.25;
-  letter-spacing: -0.005em;
+  line-height: 1.3;
+  letter-spacing: 0.005em;
+  transition: color 0.5s var(--srv-ease);
+}
+
+.capability:hover .capabilityName {
+  color: var(--srv-royal);
 }
 
 /* =============================================================================

@@ -38,7 +38,7 @@ const ICON_PROPS = {
   viewBox: '0 0 16 16',
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 1.6,
+  strokeWidth: 1.5,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
@@ -95,7 +95,7 @@ export default function Services() {
             <span className={styles.eyebrowDot} aria-hidden="true" />
             <span>Services</span>
           </span>
-          <h2 className={styles.title}>What We Build</h2>
+          <h1 className={styles.title}>What We Build</h1>
           <p className={styles.subtitle}>Three disciplines, built to compound.</p>
         </header>
 
