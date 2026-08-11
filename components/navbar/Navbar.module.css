@@ -15,7 +15,7 @@
   /* ease-out-quart — softer, more linear in the middle than the previous
      ease-out-expo. The motion no longer "lands hard" in the first 250 ms. */
   --nav-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --nav-duration: 1s;
+  --nav-duration: 1.5s;
 
   position: fixed;
   bottom: 1.5rem;
@@ -95,7 +95,7 @@
   flex-shrink: 0;
 
   /* Both max-width and opacity run on the full duration so visible motion
-     fills the whole 1 s window — no front-loaded snap, no end-of-animation
+     fills the whole window — no front-loaded snap, no end-of-animation
      "dead zone". */
   transition:
     max-width var(--nav-duration) var(--nav-ease),
@@ -103,12 +103,16 @@
 }
 
 .expanded .menuItems {
-  /* Sized close to the actual content (six links + gaps + the Get a Quote
-     pill ≈ 700px) plus a small buffer. flex-shrink:0 above guarantees the
-     pill is never clipped, so this only needs to clear the content — kept
-     tight so the max-width reveal animation fills the full duration without
-     a dead zone. */
-  max-width: 760px;
+  /* Now that the items are icons, the real content is far narrower than the
+     old text layout — the widest case (six icons + gaps + the "How It Works"
+     active label + the Get a Quote pill) measures ~487px. Target 500px: just
+     clears it (flex-shrink:0 guarantees the pill is never clipped) while
+     keeping the reveal tight to the true width. An oversized target used to
+     let the strip snap fully open in the first ~200ms while gap/padding/logo
+     kept animating for the full duration — that mismatch made the icons
+     visibly drift back (the "shake"). Matching the target to the content
+     keeps the whole expand monotonic. */
+  max-width: 500px;
   opacity: 1;
   pointer-events: auto;
 }

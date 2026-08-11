@@ -57,7 +57,7 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    label: 'How It Works',
+    label: 'Stats',
     href: '/how-it-works',
     icon: (
       <svg {...svgProps}>
@@ -155,7 +155,7 @@ export default function Navbar() {
       }, 50);
       closeTimer = window.setTimeout(() => {
         setIsOpen(false);
-      }, 50 + 1000 + 1200);
+      }, 50 + 1500 + 1200);
     };
 
     if (pathname === '/') {
@@ -185,7 +185,7 @@ export default function Navbar() {
 
     // Non-home pages: original 900 ms quiet → expand → hold → collapse.
     openTimer = window.setTimeout(() => setIsOpen(true), 900);
-    closeTimer = window.setTimeout(() => setIsOpen(false), 900 + 1000 + 1200);
+    closeTimer = window.setTimeout(() => setIsOpen(false), 900 + 1500 + 1200);
     return () => {
       if (openTimer) clearTimeout(openTimer);
       if (closeTimer) clearTimeout(closeTimer);
