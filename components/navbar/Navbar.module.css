@@ -40,9 +40,9 @@
      1.25rem on expand. */
   gap: 0;
 
-  height: 64px;
+  height: 76px;
   padding: 0 0.4rem;
-  border-radius: 22px;
+  border-radius: 24px;
 
   /* Collapsed defaults — fully invisible chrome. Every property has an
      explicit start value so the transition has something to interpolate
@@ -66,8 +66,8 @@
 }
 
 .expanded {
-  gap: 1.25rem;
-  padding: 0 0.6rem 0 1.75rem;
+  gap: 0.75rem;
+  padding: 0 0.6rem 0 0.75rem;
   background: var(--color-white-glass);
   border-color: var(--color-white-glass-border);
   backdrop-filter: blur(30px) saturate(190%);
@@ -83,7 +83,7 @@
 .menuItems {
   display: flex;
   align-items: center;
-  gap: 1.75rem;
+  gap: 0.35rem;
 
   max-width: 0;
   opacity: 0;
@@ -113,15 +113,44 @@
   pointer-events: auto;
 }
 
+/* Each item is an icon by default. The ACTIVE item expands into an
+   icon + label pill; every other item stays icon-only. This keeps the
+   expanded bar compact while still naming the page you're on. */
 .link {
   position: relative;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--color-text-dark);
   text-decoration: none;
   letter-spacing: -0.005em;
-  transition: color 0.3s ease;
+  padding: 0.4rem 0.5rem;
+  border-radius: 999px;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+.linkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Collapsed label: zero width so only the icon shows. It animates open
+   (max-width + opacity + margin) when the item's own page is active. */
+.linkLabel {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-left: 0;
+  transition:
+    max-width var(--nav-duration) var(--nav-ease),
+    opacity 0.35s ease,
+    margin-left var(--nav-duration) var(--nav-ease);
 }
 
 .link:hover {
@@ -131,6 +160,13 @@
 .link.active {
   color: #0877DE;
   font-weight: 600;
+  background: rgba(8, 119, 222, 0.1);
+}
+
+.link.active .linkLabel {
+  max-width: 160px;
+  opacity: 1;
+  margin-left: 0.45rem;
 }
 
 /* =============================================================================
@@ -239,9 +275,9 @@
 @media (max-width: 768px) {
   .navbar {
     bottom: 1rem;
-    height: 60px;
+    height: 70px;
     padding: 0 0.35rem;
-    border-radius: 18px;
+    border-radius: 20px;
   }
 
   .expanded {
@@ -296,10 +332,22 @@
     padding: 0.75rem 1.25rem;
     font-size: 0.95rem;
     width: 100%;
+    border-radius: 0;
+    gap: 0.75rem;
   }
 
   .link.active {
     background: rgba(8, 119, 222, 0.08);
+  }
+
+  /* In the stacked mobile drawer every item shows icon + label — an
+     icon-only vertical list would be unreadable. Override the desktop
+     collapse so all labels are visible regardless of active state. */
+  .linkLabel {
+    max-width: none;
+    opacity: 1;
+    margin-left: 0;
+    overflow: visible;
   }
 
   /* Quote CTA in the stacked drawer — full-width pill, centred, with a little

@@ -17,15 +17,87 @@ import styles from './Navbar.module.css';
 // Closes on: clicking the logo again, clicking a nav link (auto-close on
 // route change), clicking the scrim outside, or pressing Escape.
 
-type NavItem = { label: string; href: string };
+type NavItem = { label: string; href: string; icon: JSX.Element };
+
+// Inline SVGs (no icon-library dependency). All inherit the link colour via
+// `currentColor`, so they turn blue when the item is active/hovered exactly
+// like the text used to.
+const svgProps = {
+  width: 22,
+  height: 22,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  'aria-hidden': true,
+};
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Home',         href: '/' },
-  { label: 'Services',     href: '/services' },
-  { label: 'How It Works', href: '/how-it-works' },
-  { label: 'Our Work',     href: '/our-work' },
-  { label: 'Contact',      href: '/contact' },
-  { label: 'Blogs',        href: '/blogs' },
+  {
+    label: 'Home',
+    href: '/',
+    icon: (
+      <svg {...svgProps}>
+        <path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Services',
+    href: '/services',
+    icon: (
+      <svg {...svgProps}>
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: 'How It Works',
+    href: '/how-it-works',
+    icon: (
+      <svg {...svgProps}>
+        <path d="M9 18h6" />
+        <path d="M10 21h4" />
+        <path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Our Work',
+    href: '/our-work',
+    icon: (
+      <svg {...svgProps}>
+        <rect x="3" y="7" width="18" height="13" rx="2" />
+        <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <path d="M3 12h18" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Contact',
+    href: '/contact',
+    icon: (
+      <svg {...svgProps}>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Blogs',
+    href: '/blogs',
+    icon: (
+      <svg {...svgProps}>
+        <path d="M4 4h13a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+        <path d="M8 8h7M8 12h7M8 16h4" />
+      </svg>
+    ),
+  },
 ];
 
 const ADMIN_PATH_PREFIXES = ['/escaleadsadmin@44334', '/escaleadsadmin%4044334'];
@@ -162,8 +234,13 @@ export default function Navbar() {
               className={`${styles.link} ${isActive(item.href) ? styles.active : ''}`}
               tabIndex={isOpen ? 0 : -1}
               onClick={close}
+              aria-label={item.label}
+              title={item.label}
             >
-              {item.label}
+              <span className={styles.linkIcon}>{item.icon}</span>
+              {/* Label only expands for the active item — every other item
+                  stays icon-only. Rendered always so the reveal can animate. */}
+              <span className={styles.linkLabel}>{item.label}</span>
             </Link>
           ))}
 
