@@ -29,8 +29,8 @@ export default async function AdminLeadsPage() {
     <>
       <div className={styles.pageHeader}>
         <div>
-          <h1>Leads</h1>
-          <p>{leads.length} total · {unread} unread</p>
+          <h1>Inbound</h1>
+          <p>From the contact form · {leads.length} total · {unread} unread</p>
         </div>
         <ExportButton />
       </div>

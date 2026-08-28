@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAdminSession } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
+import { loadProspectRecords } from '@/lib/content/prospects';
 import LoginForm from './LoginForm';
 import styles from './admin.module.css';
 
@@ -15,6 +16,7 @@ async function getStats() {
     supabase.from('blogs').select('*', { count: 'exact', head: true }).eq('published', false),
   ]);
   return {
+    prospects: loadProspectRecords().length,
     blogs: blogsRes.count ?? 0,
     leads: leadsRes.count ?? 0,
     unread: unreadRes.count ?? 0,
@@ -37,7 +39,7 @@ export default async function AdminRootPage() {
 
   // Logged-in: layout already provides the sidebar + container, so this page just returns the
   // dashboard's body content.
-  const stats = await getStats().catch(() => ({ blogs: 0, leads: 0, unread: 0, drafts: 0 }));
+  const stats = await getStats().catch(() => ({ blogs: 0, leads: 0, unread: 0, drafts: 0, prospects: 0 }));
 
   return (
     <>
@@ -65,6 +67,10 @@ export default async function AdminRootPage() {
           <div className={styles.statValue}>{stats.unread}</div>
           <div className={styles.statLabel}>Unread leads</div>
         </div>
+        <div className={`${styles.card} ${styles.statCard}`}>
+          <div className={styles.statValue}>{stats.prospects}</div>
+          <div className={styles.statLabel}>Prospects sourced</div>
+        </div>
       </div>
 
       <div className={styles.card}>
@@ -77,7 +83,10 @@ export default async function AdminRootPage() {
             Manage blogs
           </Link>
           <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/leads">
-            Review leads
+            Review inbound
+          </Link>
+          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/prospects">
+            Work prospects
           </Link>
         </div>
       </div>
