@@ -16,6 +16,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
   const [filter, setFilter] = useState<Filter>('open');
   const [market, setMarket] = useState<string>('all');
   const [query, setQuery] = useState('');
+  const [earlyOnly, setEarlyOnly] = useState(false);
 
   const markets = useMemo(
     () => Array.from(new Set(prospects.map((p) => p.market).filter(Boolean))).sort(),
@@ -28,6 +29,12 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       if (filter === 'open' && CLOSED.includes(p.status)) return false;
       if (filter !== 'all' && filter !== 'open' && p.status !== filter) return false;
       if (market !== 'all' && p.market !== market) return false;
+      // Early-stage filter. Unknown founding years are EXCLUDED rather than assumed early - an
+      // unknown year is a research gap, and showing it here would misrepresent it as qualified.
+      if (earlyOnly) {
+        const year = Number.parseInt(p.founded_year, 10);
+        if (Number.isNaN(year) || year < 2024) return false;
+      }
       if (needle) {
         const haystack = [p.name, p.brand, p.product_category, p.signal_summary, p.country]
           .join(' ')
@@ -36,7 +43,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       }
       return true;
     });
-  }, [prospects, filter, market, query]);
+  }, [prospects, filter, market, query, earlyOnly]);
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -89,6 +96,14 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search prospects"
           />
+          <button
+            type="button"
+            className={`${styles.filterChip} ${earlyOnly ? styles.filterChipActive : ''}`}
+            onClick={() => setEarlyOnly((v) => !v)}
+            title="Only brands with a confirmed founding year of 2024 or later"
+          >
+            Early stage only
+          </button>
           {markets.length > 1 ? (
             <select
               className={styles.prospectSelect}

@@ -79,23 +79,35 @@ function splitList(value: string | undefined): string[] {
 // Weighted for the "technical partner + Fanaar manufacturing" offer: needs_manufacturing carries
 // the heaviest single weight because it is the least contested advantage. Verification is second,
 // because an unchecked lead is a guess, and a guess costs an hour of outreach to disprove.
+// Weights sum to exactly 100 so nothing is lost to clipping, and the penalties push poor fits
+// clearly below good ones. Retuned around the operator's sharpened brief: he wants NEWCOMERS.
+//
+// earlyStage now carries as much weight as needsManufacturing, because an established brand has
+// already chosen a manufacturer and a developer - displacing an incumbent is a far harder sale
+// than being the first one in. establishedPenalty actively pushes long-running brands down rather
+// than merely failing to reward them.
 const SCORE_WEIGHTS = {
-  needsManufacturing: 25,
-  verified: 18,
-  needsTech: 15,
-  directEmail: 12,
-  earlyRevenue: 12,
-  preLaunch: 8,
-  knitwearCategory: 8,
-  freshSignal: 10,
+  needsManufacturing: 20,
+  earlyStage: 20,
+  verified: 15,
+  directContact: 12,
+  needsTech: 12,
+  socialPresence: 10,
+  knitwearCategory: 6,
+  freshSignal: 5,
   outOfMarketPenalty: 15,
+  establishedPenalty: 15,
 } as const;
 
-// Europe and the Americas only, per the brief. Anything else is logged rather than discarded, but
-// pushed down so it never displaces an in-market lead.
+// Europe and the Americas only, per the brief.
 const TARGET_MARKETS = ['EU', 'UK', 'US'];
 
-const KNITWEAR_HINTS = ['loungewear', 'knitwear', 'basics', 'jersey', 'activewear', 'sleepwear'];
+// Brands founded in or after this year count as early-stage; before ESTABLISHED_BEFORE they are
+// treated as incumbents and penalised.
+const EARLY_STAGE_FROM = 2024;
+const ESTABLISHED_BEFORE = 2021;
+
+const KNITWEAR_HINTS = ['loungewear', 'knitwear', 'basics', 'jersey', 'activewear', 'sleepwear', 'fabric', 'textile'];
 
 export function scoreProspect(record: ProspectRecord): { score: number; reasons: string[] } {
   const reasons: string[] = [];
@@ -109,12 +121,10 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
     score += SCORE_WEIGHTS.needsTech;
     reasons.push('Needs technical work');
   }
-  if (record.brand_stage === 'early_revenue') {
-    score += SCORE_WEIGHTS.earlyRevenue;
-    reasons.push('Already selling — has budget and feels the pain daily');
-  } else if (record.brand_stage === 'pre_launch') {
-    score += SCORE_WEIGHTS.preLaunch;
-    reasons.push('Pre-launch — you can shape the whole stack');
+  // brand_stage is now a qualitative note rather than a scored field — founded_year below is the
+  // real stage signal, and scoring both would double-count the same fact.
+  if (record.brand_stage === 'pre_launch') {
+    reasons.push('Pre-launch — you can shape the whole stack from zero');
   }
 
   const category = record.product_category.toLowerCase();
@@ -123,9 +133,27 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
     reasons.push('Category matches Fanaar production capability');
   }
 
-  if (record.contact_route === 'email') {
-    score += SCORE_WEIGHTS.directEmail;
-    reasons.push('Direct email available');
+  if (record.contact_route === 'email' || record.phone) {
+    score += SCORE_WEIGHTS.directContact;
+    reasons.push(record.phone ? 'Phone number available' : 'Direct email available');
+  }
+
+  if (record.instagram || record.linkedin) {
+    score += SCORE_WEIGHTS.socialPresence;
+    reasons.push(record.instagram ? 'Active on Instagram — warm approach possible' : 'Reachable on LinkedIn');
+  }
+
+  // Stage. Parsed leniently because founded_year is often unknown on very new brands; an unknown
+  // year scores neither the bonus nor the penalty rather than guessing.
+  const founded = Number.parseInt(record.founded_year, 10);
+  if (!Number.isNaN(founded)) {
+    if (founded >= EARLY_STAGE_FROM) {
+      score += SCORE_WEIGHTS.earlyStage;
+      reasons.push(`Started ${founded} — still building, nothing locked in yet`);
+    } else if (founded < ESTABLISHED_BEFORE) {
+      score -= SCORE_WEIGHTS.establishedPenalty;
+      reasons.push(`Trading since ${founded} — already has a supplier and a developer to displace`);
+    }
   }
   if (record.verified) {
     score += SCORE_WEIGHTS.verified;
@@ -224,6 +252,10 @@ export function loadProspectRecords(): ProspectRecord[] {
         needsManufacturing === 'yes' ? 'yes' : needsManufacturing === 'no' ? 'no' : 'unknown',
       contact_route: get('contact_route'),
       contact_value: get('contact_value'),
+      instagram: get('instagram'),
+      linkedin: get('linkedin'),
+      phone: get('phone'),
+      founded_year: get('founded_year'),
       verified: toBool(get('verified')),
       verified_on: get('verified_on'),
       opt_out: toBool(get('opt_out')),

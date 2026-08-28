@@ -26,6 +26,7 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
     'signal_type', 'signal_summary', 'signal_quote', 'signal_date',
     'source_platform', 'source_url', 'website', 'tech_gaps',
     'needs_tech', 'needs_manufacturing', 'contact_route', 'contact_value',
+    'instagram', 'linkedin', 'phone', 'founded_year',
     'verified', 'verified_on',
   ];
 
@@ -37,6 +38,7 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
       p.signal_type, p.signal_summary, p.signal_quote, p.signal_date,
       p.source_platform, p.source_url, p.website, p.tech_gaps.join(' | '),
       p.needs_tech ? 'yes' : 'no', p.needs_manufacturing, p.contact_route, p.contact_value,
+      p.instagram, p.linkedin, p.phone, p.founded_year,
       p.verified ? 'yes' : 'no', p.verified_on,
     ].map(csvEscape).join(','));
   }

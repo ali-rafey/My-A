@@ -95,6 +95,14 @@ export type ProspectRecord = {
   needs_manufacturing: 'yes' | 'no' | 'unknown';
   contact_route: string;
   contact_value: string;
+  // Social presence and phone. Sparse by design: small brands publish an email and an Instagram,
+  // very rarely a phone number. Empty strings mean "not published", never "not looked for".
+  instagram: string;
+  linkedin: string;
+  phone: string;
+  // Year the brand started trading. The single most important filter for this list - an operator
+  // six years in already has a supplier and a developer; someone who started last year has neither.
+  founded_year: string;
   verified: boolean;
   verified_on: string;
   opt_out: boolean;

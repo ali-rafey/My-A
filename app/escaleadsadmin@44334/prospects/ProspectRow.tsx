@@ -141,8 +141,44 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
         </div>
 
         <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Signal date</span>
-          <span className={styles.leadMetaValue}>{prospect.signal_date || '—'}</span>
+          <span className={styles.leadMetaLabel}>Started</span>
+          <span className={styles.leadMetaValue}>
+            {prospect.founded_year || <span className={styles.muted}>Unknown</span>}
+          </span>
+        </div>
+
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>Social</span>
+          {prospect.instagram || prospect.linkedin ? (
+            <span className={styles.prospectSocials}>
+              {prospect.instagram ? (
+                <a
+                  className={styles.linkRow}
+                  href={`https://instagram.com/${prospect.instagram.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {prospect.instagram}
+                </a>
+              ) : null}
+              {prospect.linkedin ? (
+                <a className={styles.linkRow} href={prospect.linkedin} target="_blank" rel="noreferrer noopener">
+                  LinkedIn ↗
+                </a>
+              ) : null}
+            </span>
+          ) : (
+            <span className={styles.muted}>None found</span>
+          )}
+        </div>
+
+        <div className={styles.leadMetaItem}>
+          <span className={styles.leadMetaLabel}>Phone</span>
+          {prospect.phone ? (
+            <a className={styles.linkRow} href={`tel:${prospect.phone}`}>{prospect.phone}</a>
+          ) : (
+            <span className={styles.muted}>Not published</span>
+          )}
         </div>
 
         {prospect.tech_gaps.length > 0 ? (
