@@ -70,16 +70,30 @@ function splitList(value: string | undefined): string[] {
 // auditable place and can be retuned across the whole list at once. Weighted for the "technical
 // partner + Fanaar manufacturing" offer: a prospect who needs BOTH is the rarest and least
 // contested opportunity, so needs_manufacturing carries the heaviest single weight.
+// Weights are tuned so the MAXIMUM possible score is exactly 100 and nothing is lost to clipping.
+// This matters: an earlier tuning let an unverified row reach 100 on signals alone, which tied it
+// with a fully verified, directly-contactable lead and made the `verified` flag decorative. Now a
+// record that is neither verified nor directly contactable tops out at 70, so the research queue
+// can never outrank a real, checked lead.
+//
+// Weighted for the "technical partner + Fanaar manufacturing" offer: needs_manufacturing carries
+// the heaviest single weight because it is the least contested advantage. Verification is second,
+// because an unchecked lead is a guess, and a guess costs an hour of outreach to disprove.
 const SCORE_WEIGHTS = {
-  needsManufacturing: 30,
-  needsTech: 25,
-  earlyRevenue: 20,
-  preLaunch: 15,
-  knitwearCategory: 10,
-  directEmail: 10,
-  verified: 10,
-  freshSignal: 15,
+  needsManufacturing: 25,
+  verified: 18,
+  needsTech: 15,
+  directEmail: 12,
+  earlyRevenue: 12,
+  preLaunch: 8,
+  knitwearCategory: 8,
+  freshSignal: 10,
+  outOfMarketPenalty: 15,
 } as const;
+
+// Europe and the Americas only, per the brief. Anything else is logged rather than discarded, but
+// pushed down so it never displaces an in-market lead.
+const TARGET_MARKETS = ['EU', 'UK', 'US'];
 
 const KNITWEAR_HINTS = ['loungewear', 'knitwear', 'basics', 'jersey', 'activewear', 'sleepwear'];
 
@@ -115,7 +129,14 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
   }
   if (record.verified) {
     score += SCORE_WEIGHTS.verified;
-    reasons.push('Signal verified against source');
+    reasons.push('Verified — source fetched and checked directly');
+  } else {
+    reasons.push('NOT yet verified — confirm before spending time on outreach');
+  }
+
+  if (record.market && !TARGET_MARKETS.includes(record.market)) {
+    score -= SCORE_WEIGHTS.outOfMarketPenalty;
+    reasons.push(`Outside your target markets (${record.market})`);
   }
 
   // Signal freshness — a founder who said this last month is still in-market; one from two years
