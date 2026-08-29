@@ -16,7 +16,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
   const [filter, setFilter] = useState<Filter>('open');
   const [market, setMarket] = useState<string>('all');
   const [query, setQuery] = useState('');
-  const [earlyOnly, setEarlyOnly] = useState(false);
+  const [socialOnly, setSocialOnly] = useState(false);
 
   const markets = useMemo(
     () => Array.from(new Set(prospects.map((p) => p.market).filter(Boolean))).sort(),
@@ -29,12 +29,9 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       if (filter === 'open' && CLOSED.includes(p.status)) return false;
       if (filter !== 'all' && filter !== 'open' && p.status !== filter) return false;
       if (market !== 'all' && p.market !== market) return false;
-      // Early-stage filter. Unknown founding years are EXCLUDED rather than assumed early - an
-      // unknown year is a research gap, and showing it here would misrepresent it as qualified.
-      if (earlyOnly) {
-        const year = Number.parseInt(p.founded_year, 10);
-        if (Number.isNaN(year) || year < 2024) return false;
-      }
+      // Contactability filter. Socials are now a hard requirement for outreach, so this hides
+      // every prospect there is no way to open a conversation with.
+      if (socialOnly && !p.instagram && !p.linkedin) return false;
       if (needle) {
         const haystack = [p.name, p.brand, p.product_category, p.signal_summary, p.country]
           .join(' ')
@@ -43,7 +40,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       }
       return true;
     });
-  }, [prospects, filter, market, query, earlyOnly]);
+  }, [prospects, filter, market, query, socialOnly]);
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -98,11 +95,11 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
           />
           <button
             type="button"
-            className={`${styles.filterChip} ${earlyOnly ? styles.filterChipActive : ''}`}
-            onClick={() => setEarlyOnly((v) => !v)}
-            title="Only brands with a confirmed founding year of 2024 or later"
+            className={`${styles.filterChip} ${socialOnly ? styles.filterChipActive : ''}`}
+            onClick={() => setSocialOnly((v) => !v)}
+            title="Only prospects with an Instagram or LinkedIn you can contact"
           >
-            Early stage only
+            Has socials
           </button>
           {markets.length > 1 ? (
             <select
@@ -123,7 +120,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       {visible.length === 0 ? (
         <div className={styles.empty}>No prospects match these filters.</div>
       ) : (
-        <div className={styles.leadList}>
+        <div className={styles.rowList}>
           {visible.map((prospect) => (
             <ProspectRow key={prospect.id} prospect={prospect} />
           ))}

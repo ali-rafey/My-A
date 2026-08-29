@@ -86,51 +86,52 @@ function splitList(value: string | undefined): string[] {
 // already chosen a manufacturer and a developer - displacing an incumbent is a far harder sale
 // than being the first one in. establishedPenalty actively pushes long-running brands down rather
 // than merely failing to reward them.
+// Weights sum to exactly 100 so nothing is lost to clipping.
+//
+// Retargeted on the operator's revised brief: MATURE businesses in ANY sector that need a
+// technical partner. This deliberately inverts the earlier early-stage tuning. The reasoning is
+// sound either way, but they are opposite bets: a newcomer has nothing locked in, while a mature
+// business has revenue, real operational pain and budget to fix it. The operator wants the latter.
+//
+// socialPresence carries the single heaviest weight because it is now a hard requirement, not a
+// bonus - a lead he cannot open a conversation with is worth nothing to him regardless of fit.
 const SCORE_WEIGHTS = {
-  needsManufacturing: 20,
-  earlyStage: 20,
-  verified: 15,
+  socialPresence: 22,
+  needsTech: 18,
+  mature: 16,
+  verified: 14,
   directContact: 12,
-  needsTech: 12,
-  socialPresence: 10,
-  knitwearCategory: 6,
+  techGapDepth: 8,
+  needsManufacturing: 5,
   freshSignal: 5,
   outOfMarketPenalty: 15,
-  establishedPenalty: 15,
+  tooNewPenalty: 10,
 } as const;
 
-// Europe and the Americas only, per the brief.
 const TARGET_MARKETS = ['EU', 'UK', 'US'];
 
-// Brands founded in or after this year count as early-stage; before ESTABLISHED_BEFORE they are
-// treated as incumbents and penalised.
-const EARLY_STAGE_FROM = 2024;
-const ESTABLISHED_BEFORE = 2021;
+// Four or more years trading reads as mature: past survival, into growth problems. Under two
+// years is penalised - likely still pre-revenue and unable to pay for a technical partner.
+const MATURE_BEFORE = 2022;
+const TOO_NEW_FROM = 2024;
 
+// Sector is no longer a filter - the operator now takes any industry - so this only nudges rather
+// than gates, recognising work he can service end to end including production.
 const KNITWEAR_HINTS = ['loungewear', 'knitwear', 'basics', 'jersey', 'activewear', 'sleepwear', 'fabric', 'textile'];
 
 export function scoreProspect(record: ProspectRecord): { score: number; reasons: string[] } {
   const reasons: string[] = [];
   let score = 0;
 
-  if (record.needs_manufacturing === 'yes') {
-    score += SCORE_WEIGHTS.needsManufacturing;
-    reasons.push('Needs a manufacturer — Fanaar closes this, few competitors can');
-  }
-  if (record.needs_tech) {
-    score += SCORE_WEIGHTS.needsTech;
-    reasons.push('Needs technical work');
-  }
-  // brand_stage is now a qualitative note rather than a scored field — founded_year below is the
-  // real stage signal, and scoring both would double-count the same fact.
-  if (record.brand_stage === 'pre_launch') {
-    reasons.push('Pre-launch — you can shape the whole stack from zero');
-  }
-
-  const category = record.product_category.toLowerCase();
-  if (KNITWEAR_HINTS.some((hint) => category.includes(hint))) {
-    score += SCORE_WEIGHTS.knitwearCategory;
-    reasons.push('Category matches Fanaar production capability');
+  // Contactability first - it is the gating factor.
+  if (record.instagram || record.linkedin) {
+    score += SCORE_WEIGHTS.socialPresence;
+    const channels = [record.instagram ? 'Instagram' : '', record.linkedin ? 'LinkedIn' : '']
+      .filter(Boolean)
+      .join(' + ');
+    reasons.push(`Reachable on ${channels}`);
+  } else {
+    reasons.push('NO social handle — you cannot open a conversation');
   }
 
   if (record.contact_route === 'email' || record.phone) {
@@ -138,23 +139,21 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
     reasons.push(record.phone ? 'Phone number available' : 'Direct email available');
   }
 
-  if (record.instagram || record.linkedin) {
-    score += SCORE_WEIGHTS.socialPresence;
-    reasons.push(record.instagram ? 'Active on Instagram — warm approach possible' : 'Reachable on LinkedIn');
+  if (record.needs_tech) {
+    score += SCORE_WEIGHTS.needsTech;
+    reasons.push('Needs technical work');
   }
 
-  // Stage. Parsed leniently because founded_year is often unknown on very new brands; an unknown
-  // year scores neither the bonus nor the penalty rather than guessing.
-  const founded = Number.parseInt(record.founded_year, 10);
-  if (!Number.isNaN(founded)) {
-    if (founded >= EARLY_STAGE_FROM) {
-      score += SCORE_WEIGHTS.earlyStage;
-      reasons.push(`Started ${founded} — still building, nothing locked in yet`);
-    } else if (founded < ESTABLISHED_BEFORE) {
-      score -= SCORE_WEIGHTS.establishedPenalty;
-      reasons.push(`Trading since ${founded} — already has a supplier and a developer to displace`);
-    }
+  // Depth of confirmed problems. More documented gaps means more to talk about on a first
+  // approach and a bigger engagement if it lands.
+  if (record.tech_gaps.length >= 3) {
+    score += SCORE_WEIGHTS.techGapDepth;
+    reasons.push(`${record.tech_gaps.length} concrete gaps documented`);
+  } else if (record.tech_gaps.length > 0) {
+    score += Math.round(SCORE_WEIGHTS.techGapDepth / 2);
+    reasons.push(`${record.tech_gaps.length} gap(s) documented`);
   }
+
   if (record.verified) {
     score += SCORE_WEIGHTS.verified;
     reasons.push('Verified — source fetched and checked directly');
@@ -162,27 +161,40 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
     reasons.push('NOT yet verified — confirm before spending time on outreach');
   }
 
-  if (record.market && !TARGET_MARKETS.includes(record.market)) {
-    score -= SCORE_WEIGHTS.outOfMarketPenalty;
-    reasons.push(`Outside your target markets (${record.market})`);
+  const founded = Number.parseInt(record.founded_year, 10);
+  if (!Number.isNaN(founded)) {
+    if (founded < MATURE_BEFORE) {
+      score += SCORE_WEIGHTS.mature;
+      reasons.push(`Trading since ${founded} — established, with real operational problems`);
+    } else if (founded >= TOO_NEW_FROM) {
+      score -= SCORE_WEIGHTS.tooNewPenalty;
+      reasons.push(`Started ${founded} — may be too early to pay for a technical partner`);
+    }
   }
 
-  // Signal freshness — a founder who said this last month is still in-market; one from two years
-  // ago has already solved the problem or given up. Full marks inside 90 days, decaying to zero
-  // at one year.
+  if (record.needs_manufacturing === 'yes') {
+    score += SCORE_WEIGHTS.needsManufacturing;
+    reasons.push('Also needs a manufacturer — you can serve the whole chain');
+  }
+
+  const category = record.product_category.toLowerCase();
+  if (KNITWEAR_HINTS.some((hint) => category.includes(hint))) {
+    reasons.push('Category also matches Fanaar production');
+  }
+
   const signalDate = Date.parse(record.signal_date);
   if (!Number.isNaN(signalDate)) {
     const ageDays = (Date.now() - signalDate) / 86_400_000;
     if (ageDays <= 90) {
       score += SCORE_WEIGHTS.freshSignal;
-      reasons.push('Signal is recent (under 90 days)');
-    } else if (ageDays <= 365) {
-      const decayed = Math.round(SCORE_WEIGHTS.freshSignal * (1 - (ageDays - 90) / 275));
-      score += decayed;
-      if (decayed > 0) reasons.push(`Signal ageing (${Math.round(ageDays)} days old)`);
-    } else {
-      reasons.push('Signal over a year old — verify they are still in-market');
+    } else if (ageDays > 365) {
+      reasons.push('Signal over a year old — confirm they are still trading');
     }
+  }
+
+  if (record.market && !TARGET_MARKETS.includes(record.market)) {
+    score -= SCORE_WEIGHTS.outOfMarketPenalty;
+    reasons.push(`Outside your target markets (${record.market})`);
   }
 
   return { score: Math.max(0, Math.min(100, score)), reasons };

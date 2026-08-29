@@ -6,6 +6,10 @@ import type { Prospect, ProspectStatusValue } from '@/lib/supabase/types';
 import { PROSPECT_STATUS_LABELS, PROSPECT_STATUSES } from '@/lib/supabase/types';
 import styles from '../admin.module.css';
 
+// One dense line per prospect. The previous card rendered seven meta blocks, a quote and a gap
+// list for every row, which made a 70-row list unscannable. Everything is still here - it now
+// lives behind the expand toggle, so the default view is a list you can run your eye down.
+
 function flagFor(country: string): string {
   const code = country.trim().toUpperCase();
   if (code.length !== 2) return '';
@@ -31,9 +35,9 @@ function scoreTier(score: number): string {
 export default function ProspectRow({ prospect }: { prospect: Prospect }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<ProspectStatusValue>(prospect.status);
   const [notes, setNotes] = useState(prospect.notes ?? '');
-  const [notesOpen, setNotesOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -51,6 +55,7 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
       onOk();
       setSaved(true);
       router.refresh();
+      window.setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
@@ -64,138 +69,59 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
     patch({ status: next }, () => {}).catch(() => setStatus(previous));
   };
 
-  const flag = flagFor(prospect.country);
-  const contactHref =
+  const igUrl = prospect.instagram
+    ? `https://instagram.com/${prospect.instagram.replace(/^@/, '')}`
+    : null;
+  const emailHref =
     prospect.contact_route === 'email' && prospect.contact_value
       ? `mailto:${prospect.contact_value}`
-      : prospect.contact_value.startsWith('http')
-        ? prospect.contact_value
-        : null;
+      : null;
 
   return (
-    <article className={`${styles.card} ${styles.leadCard} ${styles.prospectCard}`}>
-      <div className={styles.leadCardHeader}>
-        <div className={styles.leadIdentity}>
-          <div className={styles.leadHeaderMeta}>
-            <span className={`${styles.scoreBadge} ${scoreTier(prospect.score)}`} title={prospect.score_reasons.join(' · ')}>
-              {prospect.score}
-            </span>
-            <span className={styles.badge}>{PROSPECT_STATUS_LABELS[status]}</span>
-            {prospect.needs_manufacturing === 'yes' ? (
-              <span className={`${styles.badge} ${styles.badgeManufacturing}`}>Needs manufacturing</span>
-            ) : null}
-            {prospect.verified ? (
-              <span className={`${styles.badge} ${styles.badgeRead}`}>Verified</span>
-            ) : (
-              <span className={`${styles.badge} ${styles.badgeUnverified}`}>Unverified</span>
-            )}
-          </div>
-          <h2 className={styles.leadName}>
-            {prospect.brand}
-            {prospect.name ? <span className={styles.prospectPerson}> — {prospect.name}</span> : null}
-          </h2>
-          <p className={styles.prospectRole}>
-            {[prospect.role, prospect.product_category, [flag, prospect.country].filter(Boolean).join(' ')]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
-        </div>
-      </div>
+    <div className={`${styles.rowItem} ${open ? styles.rowItemOpen : ''}`}>
+      <div className={styles.rowMain}>
+        <button
+          type="button"
+          className={styles.rowToggle}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={`${open ? 'Hide' : 'Show'} details for ${prospect.brand}`}
+        >
+          <span className={open ? styles.caretOpen : styles.caret} aria-hidden="true">›</span>
+        </button>
 
-      <div className={styles.prospectSignal}>
-        <span className={styles.leadMetaLabel}>Why they are a fit</span>
-        <p className={styles.prospectSignalText}>{prospect.signal_summary}</p>
-        {prospect.signal_quote ? (
-          <blockquote className={styles.prospectQuote}>“{prospect.signal_quote}”</blockquote>
-        ) : null}
-      </div>
+        <span className={`${styles.scoreChip} ${scoreTier(prospect.score)}`} title={prospect.score_reasons.join(' · ')}>
+          {prospect.score}
+        </span>
 
-      <div className={styles.leadMetaGrid}>
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Source</span>
-          <a className={styles.linkRow} href={prospect.source_url} target="_blank" rel="noreferrer noopener">
-            {prospect.source_platform || 'View source'} ↗
-          </a>
-        </div>
+        <span className={styles.rowName}>
+          <strong>{prospect.brand}</strong>
+          {prospect.name ? <span className={styles.rowPerson}>{prospect.name}</span> : null}
+        </span>
 
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Website</span>
+        <span className={styles.rowMeta}>
+          {prospect.product_category}
+          {prospect.country ? ` · ${flagFor(prospect.country)} ${prospect.country}` : ''}
+          {prospect.founded_year ? ` · ${prospect.founded_year}` : ''}
+        </span>
+
+        <span className={styles.rowLinks}>
+          {igUrl ? (
+            <a href={igUrl} target="_blank" rel="noreferrer noopener" title={prospect.instagram} className={styles.iconLink}>IG</a>
+          ) : null}
+          {prospect.linkedin ? (
+            <a href={prospect.linkedin} target="_blank" rel="noreferrer noopener" title="LinkedIn" className={styles.iconLink}>Li</a>
+          ) : null}
+          {emailHref ? (
+            <a href={emailHref} title={prospect.contact_value} className={styles.iconLink}>@</a>
+          ) : null}
           {prospect.website ? (
-            <a className={styles.linkRow} href={prospect.website} target="_blank" rel="noreferrer noopener">
-              {prospect.website.replace(/^https?:\/\//, '')} ↗
-            </a>
-          ) : (
-            <span className={styles.muted}>None found</span>
-          )}
-        </div>
+            <a href={prospect.website} target="_blank" rel="noreferrer noopener" title={prospect.website} className={styles.iconLink}>↗</a>
+          ) : null}
+        </span>
 
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Contact ({prospect.contact_route || 'unknown'})</span>
-          {contactHref ? (
-            <a className={styles.linkRow} href={contactHref} target="_blank" rel="noreferrer noopener">
-              {prospect.contact_value}
-            </a>
-          ) : (
-            <span className={styles.leadMetaValue}>{prospect.contact_value || '—'}</span>
-          )}
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Started</span>
-          <span className={styles.leadMetaValue}>
-            {prospect.founded_year || <span className={styles.muted}>Unknown</span>}
-          </span>
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Social</span>
-          {prospect.instagram || prospect.linkedin ? (
-            <span className={styles.prospectSocials}>
-              {prospect.instagram ? (
-                <a
-                  className={styles.linkRow}
-                  href={`https://instagram.com/${prospect.instagram.replace(/^@/, '')}`}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {prospect.instagram}
-                </a>
-              ) : null}
-              {prospect.linkedin ? (
-                <a className={styles.linkRow} href={prospect.linkedin} target="_blank" rel="noreferrer noopener">
-                  LinkedIn ↗
-                </a>
-              ) : null}
-            </span>
-          ) : (
-            <span className={styles.muted}>None found</span>
-          )}
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Phone</span>
-          {prospect.phone ? (
-            <a className={styles.linkRow} href={`tel:${prospect.phone}`}>{prospect.phone}</a>
-          ) : (
-            <span className={styles.muted}>Not published</span>
-          )}
-        </div>
-
-        {prospect.tech_gaps.length > 0 ? (
-          <div className={`${styles.leadMetaItem} ${styles.leadMessageCard}`}>
-            <span className={styles.leadMetaLabel}>Openings to lead with</span>
-            <ul className={styles.prospectGaps}>
-              {prospect.tech_gaps.map((gap) => (
-                <li key={gap}>{gap}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </div>
-
-      <div className={styles.leadActions}>
         <select
-          className={styles.prospectSelect}
+          className={styles.rowSelect}
           value={status}
           onChange={(e) => changeStatus(e.target.value as ProspectStatusValue)}
           disabled={busy}
@@ -206,44 +132,46 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
           ))}
         </select>
 
-        <button
-          type="button"
-          className={`${styles.button} ${styles.buttonGhost} ${styles.buttonSmall}`}
-          onClick={() => setNotesOpen((open) => !open)}
-        >
-          {notesOpen ? 'Hide notes' : prospect.notes ? 'Edit notes' : 'Add notes'}
-        </button>
-
-        {prospect.last_contacted_at ? (
-          <span className={styles.metaText}>
-            Contacted {new Date(prospect.last_contacted_at).toLocaleDateString()}
-          </span>
-        ) : null}
-        {saved ? <span className={styles.success}>Saved</span> : null}
+        {saved ? <span className={styles.rowSaved}>✓</span> : null}
       </div>
 
-      {notesOpen ? (
-        <div className={styles.prospectNotes}>
+      {open ? (
+        <div className={styles.rowDetail}>
+          <p className={styles.rowDetailText}>{prospect.signal_summary}</p>
+
+          {prospect.signal_quote ? (
+            <blockquote className={styles.prospectQuote}>“{prospect.signal_quote}”</blockquote>
+          ) : null}
+
+          {prospect.tech_gaps.length > 0 ? (
+            <ul className={styles.prospectGaps}>
+              {prospect.tech_gaps.map((gap) => <li key={gap}>{gap}</li>)}
+            </ul>
+          ) : null}
+
+          <div className={styles.rowDetailLinks}>
+            <a href={prospect.source_url} target="_blank" rel="noreferrer noopener">Source ↗</a>
+            {prospect.phone ? <a href={`tel:${prospect.phone}`}>{prospect.phone}</a> : null}
+            {!prospect.verified ? <span className={styles.rowUnverified}>Unverified</span> : null}
+            {prospect.needs_manufacturing === 'yes' ? <span className={styles.rowTag}>Needs manufacturing</span> : null}
+            {prospect.last_contacted_at ? (
+              <span className={styles.muted}>Contacted {new Date(prospect.last_contacted_at).toLocaleDateString()}</span>
+            ) : null}
+          </div>
+
           <textarea
-            className={styles.prospectTextarea}
+            className={styles.rowNotes}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-            placeholder="What you sent, what they said, what to do next…"
+            onBlur={() => { if (notes !== (prospect.notes ?? '')) patch({ notes }, () => {}); }}
+            rows={2}
+            placeholder="Notes — saved when you click away"
             aria-label={`Notes for ${prospect.brand}`}
           />
-          <button
-            type="button"
-            className={`${styles.button} ${styles.buttonSmall}`}
-            onClick={() => patch({ notes }, () => setNotesOpen(false))}
-            disabled={busy}
-          >
-            {busy ? 'Saving…' : 'Save notes'}
-          </button>
+
+          {error ? <div className={styles.inlineError}>{error}</div> : null}
         </div>
       ) : null}
-
-      {error ? <div className={styles.inlineError}>{error}</div> : null}
-    </article>
+    </div>
   );
 }

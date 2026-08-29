@@ -23,15 +23,14 @@ export default async function AdminProspectsPage() {
   ).length;
   const hot = prospects.filter((p) => p.score >= 70).length;
   const replied = prospects.filter((p) => ['replied', 'call_booked', 'won'].includes(p.status)).length;
+  const withSocial = prospects.filter((p) => p.instagram || p.linkedin).length;
 
   return (
     <>
       <div className={styles.pageHeader}>
         <div>
           <h1>Prospects</h1>
-          <p>
-            {prospects.length} sourced · {hot} high-fit · {contacted} contacted
-          </p>
+
         </div>
         <ProspectsExportButton />
       </div>
@@ -52,23 +51,12 @@ export default async function AdminProspectsPage() {
 
       {prospects.length > 0 ? (
         <>
-          <div className={styles.leadSummaryGrid}>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{prospects.length}</div>
-              <div className={styles.leadSummaryLabel}>Total sourced</div>
-            </div>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{hot}</div>
-              <div className={styles.leadSummaryLabel}>High fit (70+)</div>
-            </div>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{contacted}</div>
-              <div className={styles.leadSummaryLabel}>Contacted</div>
-            </div>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{replied}</div>
-              <div className={styles.leadSummaryLabel}>Replied or better</div>
-            </div>
+          <div className={styles.statStrip}>
+            <span><strong>{prospects.length}</strong> sourced</span>
+            <span><strong>{hot}</strong> high fit</span>
+            <span><strong>{withSocial}</strong> with socials</span>
+            <span><strong>{contacted}</strong> contacted</span>
+            <span><strong>{replied}</strong> replied+</span>
           </div>
 
           <ProspectsBoard prospects={prospects} />

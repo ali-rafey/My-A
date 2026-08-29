@@ -1216,3 +1216,226 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+/* ---------------------------------------------------------------------------
+   Compact prospect list
+   One line per prospect. Replaces the tall card layout - at 70+ rows the card
+   version was a wall of text you could not scan. Detail moves behind a toggle.
+   --------------------------------------------------------------------------- */
+
+.rowList {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+  background: var(--admin-surface);
+}
+
+.rowItem {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.rowItem:last-child {
+  border-bottom: none;
+}
+
+.rowItem:hover {
+  background: var(--admin-surface-2);
+}
+
+.rowItemOpen {
+  background: var(--admin-surface-2);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
+}
+
+.rowToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--admin-text-soft);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.caret,
+.caretOpen {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 120ms ease;
+}
+
+.caretOpen {
+  transform: rotate(90deg);
+}
+
+.scoreChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.875rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.rowName {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 40%;
+  font-size: 0.8125rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rowPerson {
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+}
+
+.rowMeta {
+  flex: 1 1 30%;
+  min-width: 0;
+  color: var(--admin-text-soft);
+  font-size: 0.75rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rowLinks {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Fixed-width square link chips so the columns stay aligned down the list even
+   when a prospect is missing one of the four. */
+.iconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.iconLink:hover {
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+}
+
+.rowSelect {
+  flex-shrink: 0;
+  padding: 0.25rem 0.375rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.rowSaved {
+  color: var(--admin-success);
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.rowDetail {
+  padding: 0 0.75rem 0.75rem 2.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rowDetailText {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.rowDetailLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.rowDetailLinks a {
+  color: var(--admin-accent);
+}
+
+.rowUnverified {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.rowTag {
+  padding: 0.0625rem 0.375rem;
+  background: #EFF6FF;
+  border-radius: var(--admin-radius-sm);
+  color: #1D4ED8;
+  font-weight: 600;
+}
+
+.rowNotes {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  resize: vertical;
+}
+
+@media (max-width: 768px) {
+  .rowMeta { display: none; }
+  .rowDetail { padding-left: 0.75rem; }
+}
+
+/* Single-line stat strip. Replaces four large stat cards - at this density the
+   numbers are context, not the point of the page. */
+.statStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 0.875rem;
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  font-size: 0.8125rem;
+}
+
+.statStrip strong {
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+}
