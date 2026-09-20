@@ -39,24 +39,20 @@ export default async function AdminLeadsPage() {
         <div className={styles.empty}>No leads yet. Submissions from the contact form will appear here.</div>
       ) : (
         <>
-          <div className={styles.leadSummaryGrid}>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{leads.length}</div>
-              <div className={styles.leadSummaryLabel}>Total leads</div>
-            </div>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{unread}</div>
-              <div className={styles.leadSummaryLabel}>Unread leads</div>
-            </div>
-            <div className={`${styles.card} ${styles.leadSummaryCard}`}>
-              <div className={styles.leadSummaryValue}>{readCount}</div>
-              <div className={styles.leadSummaryLabel}>Read leads</div>
-            </div>
+          <div className={styles.statStrip}>
+            <span><strong>{leads.length}</strong> total</span>
+            <span><strong>{unread}</strong> unread</span>
+            <span><strong>{readCount}</strong> read</span>
           </div>
 
-          <div className={styles.leadList}>
-            {leads.map((lead) => (
-              <LeadRow key={lead.id} lead={lead} formattedDate={formatDateTime(lead.created_at)} />
+          <div className={styles.rowList}>
+            {leads.map((lead, index) => (
+              <LeadRow
+                key={lead.id}
+                lead={lead}
+                formattedDate={formatDateTime(lead.created_at)}
+                rank={index + 1}
+              />
             ))}
           </div>
         </>

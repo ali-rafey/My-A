@@ -1,145 +1,280 @@
+'use client';
+
+import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { services } from '@/lib/content/static';
-import EyesAnimation from './EyesAnimation';
-import DataChartAnimation from './DataChartAnimation';
-import ReachAnimation from './ReachAnimation';
+import { serviceSlug } from '@/lib/content/service-slug';
+import CardFilm from './film/CardFilm';
 import styles from './Services.module.css';
 
 // =============================================================================
-// Services — three corner-tab cards in a row.
+// Services — four numbered cards, one open at a time.
 // =============================================================================
-// Each card carries a navy "corner tab" label at the top-left (sharing the
-// card's outer top-left curve and tapering with a smaller inner radius on
-// the bottom-right). Beneath the tab area: a poster-style headline, a
-// description, a hairline divider, and a list of concrete capabilities.
-// Footer CTA points at /contact.
+// A quiet grey page with a faint grid, a two-line headline, and the four
+// services as a row of white cards. The open card is wider and taller and
+// plays its scene (ServiceScenes): a small product UI that shows, part by
+// part, what the service does for a client. The others show only their number
+// and name. Hovering (with a short intent delay), clicking or focusing a card
+// opens it. Scenes only run while the page is on screen and visible.
 //
-// Each card also carries a context-specific animation in the .cardArt slot
-// above the body. Maps by service id:
-//   1  Digital Presence       → EyesAnimation (eyes that fall in love)
-//   2  Data Analytics         → DataChartAnimation (bars + trendline + arrow)
-//   3  Advertising & Marketing → ReachAnimation (signals propagating through a network)
+// Below 900px the row becomes a swipeable carousel of open cards, with round
+// arrows and a pill for the current slide.
 // =============================================================================
 
-const CARD_ANIMATIONS: Record<number, React.ReactNode> = {
-  1: <EyesAnimation />,
-  2: <DataChartAnimation />,
-  3: <ReachAnimation />,
-};
+const pad = (n: number) => String(n).padStart(2, '0');
 
-// Small line icons for each capability, rendered inside an accent chip so the
-// capability list reads as a set of tidy "feature" rows instead of a plain
-// numbered list. All share one set of stroke props; `currentColor` picks up the
-// chip's accent colour. A neutral checkmark is the fallback for any unmapped
-// capability name.
-const ICON_PROPS = {
-  width: 15,
-  height: 15,
-  viewBox: '0 0 16 16',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.5,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-};
-
-const CAPABILITY_ICONS: Record<string, React.ReactNode> = {
-  'Web Development': (
-    <svg {...ICON_PROPS}><path d="M6 4.5 2.5 8 6 11.5" /><path d="M10 4.5 13.5 8 10 11.5" /></svg>
+const ICONS: Record<number, JSX.Element> = {
+  1: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 5 5M8 12.5v-1.5M10.5 12.5V8.5M13 12.5V10" />
+    </svg>
   ),
-  'Brand Identity': (
-    <svg {...ICON_PROPS}><path d="M8 2.5 13.5 8 8 13.5 2.5 8Z" /></svg>
+  2: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+      <path d="M3 9h18M6.5 6.8h.01M9 6.8h.01" />
+    </svg>
   ),
-  'UX & Design': (
-    <svg {...ICON_PROPS}><rect x="2.5" y="3" width="11" height="10" rx="1.5" /><path d="M2.5 6.5h11" /></svg>
+  3: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1Z" />
+      <path d="M16 9.5a3.5 3.5 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10" />
+    </svg>
   ),
-  'Performance & SEO': (
-    <svg {...ICON_PROPS}><path d="M3 12a5 5 0 0 1 10 0" /><path d="M8 12 10.5 8" /></svg>
-  ),
-  'Analytics Dashboards': (
-    <svg {...ICON_PROPS}><path d="M3 13h10" /><path d="M5 13V9.5M8 13V6M11 13V8.5" /></svg>
-  ),
-  'Attribution Modeling': (
-    <svg {...ICON_PROPS}><circle cx="4" cy="4" r="1.5" /><circle cx="12" cy="8" r="1.5" /><circle cx="4" cy="12" r="1.5" /><path d="M5.4 4.8 10.6 7.2M5.4 11.2 10.6 8.8" /></svg>
-  ),
-  'Conversion Tracking': (
-    <svg {...ICON_PROPS}><path d="M3 4h10l-3.5 4.5v3l-3 1.5V8.5z" /></svg>
-  ),
-  'Reporting Systems': (
-    <svg {...ICON_PROPS}><path d="M4 2.5h5l3 3v8H4z" /><path d="M9 2.5v3h3" /><path d="M6.2 9h3.6M6.2 11h3.6" /></svg>
-  ),
-  'Performance Media': (
-    <svg {...ICON_PROPS}><path d="M3 6.5v3l6 2.5V4z" /><path d="M9 5.6c1.5.3 1.5 4.5 0 4.8" /></svg>
-  ),
-  'SEO Strategy': (
-    <svg {...ICON_PROPS}><circle cx="7" cy="7" r="3.5" /><path d="M9.6 9.6 13 13" /></svg>
-  ),
-  'Content & Brand': (
-    <svg {...ICON_PROPS}><path d="M10.3 3 13 5.7 6 12.7H3.3V10z" /></svg>
-  ),
-  'Growth Engineering': (
-    <svg {...ICON_PROPS}><path d="M3 11 7 7l2.5 2.5L13 6" /><path d="M10.5 6H13v2.5" /></svg>
+  4: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="9.5" width="5" height="5" rx="1.2" />
+      <rect x="16" y="3.5" width="5" height="5" rx="1.2" />
+      <rect x="16" y="15.5" width="5" height="5" rx="1.2" />
+      <path d="M8 12h3.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 1 14.5 6H16M13 12v4.5a1.5 1.5 0 0 0 1.5 1.5H16" />
+    </svg>
   ),
 };
 
-const FALLBACK_ICON = (
-  <svg {...ICON_PROPS}><path d="M4 8.5 7 11l5-6" /></svg>
+const Arrow = () => (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M3 8h9.5M8.5 4l4 4-4 4" />
+  </svg>
 );
 
 export default function Services() {
+  const [active, setActive] = useState(0);
+  // Under 900px the cards are a carousel and every card is shown open.
+  const [carousel, setCarousel] = useState(false);
+  // Scenes play only while they can be seen, and never under reduced motion.
+  const [canPlay, setCanPlay] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const rowRef = useRef<HTMLUListElement>(null);
+  const intent = useRef<number>();
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let onScreen = true;
+    const sync = () => setCanPlay(onScreen && !still.matches && document.visibilityState === 'visible');
+    const io = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      sync();
+    }, { threshold: 0.2 });
+    io.observe(section);
+    still.addEventListener('change', sync);
+    document.addEventListener('visibilitychange', sync);
+    sync();
+    return () => {
+      io.disconnect();
+      still.removeEventListener('change', sync);
+      document.removeEventListener('visibilitychange', sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 899px)');
+    const sync = () => setCarousel(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(intent.current), []);
+
+  // Carousel: the slide nearest the middle is the current one.
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!carousel || !row) return;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const mid = row.scrollLeft + row.clientWidth / 2;
+        let best = 0;
+        let bestGap = Infinity;
+        Array.from(row.children).forEach((child, i) => {
+          const el = child as HTMLElement;
+          const gap = Math.abs(el.offsetLeft + el.offsetWidth / 2 - mid);
+          if (gap < bestGap) {
+            bestGap = gap;
+            best = i;
+          }
+        });
+        setActive(best);
+      });
+    };
+    row.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      row.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [carousel]);
+
+  const open = (i: number) => {
+    const row = rowRef.current;
+    const target = row?.children[i] as HTMLElement | undefined;
+    if (carousel && row && target) {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      row.scrollTo({ left: target.offsetLeft - (row.clientWidth - target.offsetWidth) / 2, behavior: smooth ? 'smooth' : 'auto' });
+    }
+    setActive(i);
+  };
+
+  // Hover opens a card only once the pointer settles on it, so sweeping
+  // across the row does not flick every card open on the way.
+  const onEnter = (i: number) => (e: PointerEvent) => {
+    if (carousel || e.pointerType !== 'mouse') return;
+    window.clearTimeout(intent.current);
+    intent.current = window.setTimeout(() => setActive(i), 110);
+  };
+  const onLeave = () => window.clearTimeout(intent.current);
+
+  // Left and right arrows move between the cards, as in a tab list.
+  const onKey = (i: number) => (e: KeyboardEvent) => {
+    const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const next = (i + step + services.length) % services.length;
+    rowRef.current?.querySelectorAll<HTMLButtonElement>('[data-hit]')[next]?.focus();
+  };
+
   return (
-    <section className={`${styles.section} section`} id="services">
-      <div className={`container ${styles.container}`}>
-        <header className={styles.header}>
-          <span className={styles.eyebrow}>
-            <span className={styles.eyebrowDot} aria-hidden="true" />
-            <span>Services</span>
-          </span>
-          <h1 className={styles.title}>What We Build</h1>
-          <p className={styles.subtitle}>Three disciplines, built to compound.</p>
+    <section ref={sectionRef} className={styles.section} id="services" aria-labelledby="services-title">
+      <div className={styles.wrap}>
+        <header className={styles.head}>
+          <div>
+            <p className={styles.label}>
+              <Image src="/logo-icon.png" alt="" width={22} height={22} />
+              Our services
+            </p>
+            <h1 id="services-title" className={styles.title}>
+              Four ways we escalate <em>your business.</em>
+            </h1>
+          </div>
+          <div className={styles.intro}>
+            <p>
+              Research, design, ads and automation, run as one plan: we find your buyers, build what they
+              trust, put you in front of them, and let the busywork run itself.
+            </p>
+            <Link href="/contact" className={styles.cta}>
+              Start a project
+              <Arrow />
+            </Link>
+          </div>
         </header>
 
-        <div className={styles.grid}>
-          {services.map((service) => {
-            const art = CARD_ANIMATIONS[service.id];
+        <ul ref={rowRef} className={styles.row}>
+          {services.map((service, i) => {
+            const isOpen = carousel || active === i;
+            const panel = `service-${service.id}-more`;
             return (
-              <article key={service.id} className={styles.card}>
-                <div className={styles.tag}>
-                  <span>{service.title}</span>
+              <li
+                key={service.id}
+                className={styles.card}
+                data-active={active === i}
+                onPointerEnter={onEnter(i)}
+                onPointerLeave={onLeave}
+              >
+                <span className={styles.num} aria-hidden="true">{pad(i + 1)}.</span>
+
+                <div className={styles.visual}>
+                  <CardFilm id={service.id} running={canPlay && active === i} />
                 </div>
 
-                {/* Per-card SVG animation. Absolutely-positioned slot at the
-                    top-centre of the card so the corner tag at top-left and
-                    the card body below both keep their layout. */}
-                {art ? <div className={styles.cardArt}>{art}</div> : null}
+                <div className={styles.body}>
+                  <span className={styles.icon} aria-hidden="true">{ICONS[service.id]}</span>
+                  <h2 className={styles.name}>
+                    <button
+                      type="button"
+                      className={styles.hit}
+                      data-hit
+                      aria-expanded={isOpen}
+                      aria-controls={panel}
+                      onClick={() => open(i)}
+                      onFocus={() => {
+                        if (!carousel) setActive(i);
+                      }}
+                      onKeyDown={onKey(i)}
+                    >
+                      {service.title}
+                    </button>
+                  </h2>
 
-                <div className={styles.cardBody}>
-                  <h3 className={styles.cardHeadline}>{service.headline}</h3>
-                  <p className={styles.cardDescription}>{service.description}</p>
-
-                  <ol className={styles.capabilities}>
-                    {service.capabilities.map((capability) => (
-                      <li key={capability} className={styles.capability}>
-                        <span className={styles.capabilityIcon} aria-hidden="true">
-                          {CAPABILITY_ICONS[capability] ?? FALLBACK_ICON}
-                        </span>
-                        <span className={styles.capabilityName}>{capability}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className={styles.more} id={panel}>
+                    <p className={styles.srOnly}>{service.headline}</p>
+                    <ul className={styles.srOnly} aria-label={`${service.title} includes`}>
+                      {service.capabilities.map((part) => (
+                        <li key={part}>{part}</li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/contact?service=${serviceSlug(service.title)}`}
+                      className={styles.discuss}
+                      aria-label={`Discuss ${service.title}`}
+                    >
+                      Discuss
+                      <span aria-hidden="true"><Arrow /></span>
+                    </Link>
+                  </div>
                 </div>
-              </article>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
-        <footer className={styles.footer}>
-          <span className={styles.footerLead}>Have something specific in mind?</span>
-          <Link href="/contact" className={styles.footerCta}>
-            <span>Start a Conversation</span>
-            <span className={styles.footerArrow} aria-hidden="true">→</span>
-          </Link>
-        </footer>
+        <div className={styles.pager}>
+          <button
+            type="button"
+            className={styles.arrow}
+            aria-label="Previous service"
+            disabled={active === 0}
+            onClick={() => open(active - 1)}
+          >
+            <Arrow />
+          </button>
+          <div className={styles.dots}>
+            {services.map((service, i) => (
+              <button
+                key={service.id}
+                type="button"
+                className={styles.dot}
+                aria-label={`Show ${service.title}`}
+                aria-current={active === i}
+                onClick={() => open(i)}
+              >
+                <span />
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.arrow}
+            aria-label="Next service"
+            disabled={active === services.length - 1}
+            onClick={() => open(active + 1)}
+          >
+            <Arrow />
+          </button>
+        </div>
       </div>
     </section>
   );

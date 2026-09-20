@@ -2,25 +2,81 @@
    Bottom-anchored expand-on-click navbar.
    =============================================================================
    - Collapsed: only the logo — no glass pill, no border, no shadow. The
-     logo floats freely on the page.
-   - Expanded: full glass pill appears around the logo, nav items slide in
-     to its left. Glass identity is preserved from the original top navbar
-     (`--color-white-glass` + blur(30px) saturate(190%)).
+     logo floats freely on the page, centred on the viewport.
+   - Expanded: the glass pill fades in around the logo and the icon strip
+     sweeps out to its left.
 
-   All transitions use one slow, soft curve. cubic-bezier(0.16, 1, 0.3, 1)
-   is Apple's "ease-out-expo": starts gently, glides to a stop. 1 s duration
-   gives the morph a single deliberate, premium feel.
+   THEMING. This file contains no theme colour of its own — every surface,
+   text and accent value reads a `--surface-*` token from styles/tokens.css,
+   so light and dark are one component, not two. See that file for the
+   `data-theme` contract.
+
+   PERFORMANCE CONTRACT — read before touching anything below.
+   -----------------------------------------------------------------------------
+   The ONLY properties transitioned in this file are `transform` and `opacity`
+   (plus a zero-length `visibility` step). Both are handled by the compositor,
+   so the whole morph runs off the main thread at display refresh rate.
+
+   That is enforced by two structural rules:
+
+   1. THE BAR IS ALWAYS LAID OUT AT ITS EXPANDED SIZE. `gap`, `padding`,
+      `height` and the item strip's width never change, so the browser never
+      re-runs layout mid-animation. The collapsed *look* is produced purely by
+      translating two children in opposite directions.
+
+   2. THE GLASS IS ITS OWN LAYER (`.pill`) WITH A CONSTANT `backdrop-filter`;
+      only its `opacity` is faded. Interpolating a blur RADIUS forces the
+      browser to rebuild the blur pyramid on every single frame — that was the
+      single most expensive thing the old version did.
+
+   Do not reintroduce a transition on width / max-width / gap / padding /
+   height / backdrop-filter / box-shadow here. Each of those reopens the
+   "sluggish + icons shake" class of bug described below.
    ============================================================================= */
+
 .navbar {
-  /* ease-out-quart — softer, more linear in the middle than the previous
-     ease-out-expo. The motion no longer "lands hard" in the first 250 ms. */
-  --nav-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --nav-duration: 1.5s;
+  --nav-cta: #0E1422;
+  --nav-cta-text: #FFFFFF;
+  /* ---- motion ------------------------------------------------------------
+     Two durations, selected by which state we are moving TO: a transition
+     reads its timing from the destination style, so the values below apply
+     while COLLAPSING and the ones in `.expanded` apply while EXPANDING.
+     Opening slower than closing is the standard asymmetry — the reveal wants
+     to be admired, the dismissal wants to get out of the way.
+
+     The curve is deliberately NOT an ease-out-expo/quart. Those spend nearly
+     half their travel in the first tenth of the duration, which reads as a
+     lurch — the bar snaps and then coasts. This one distributes the motion
+     evenly (~24% / 78% / 96% at a quarter, half and three quarters of the
+     way through), so the expansion is felt as one continuous glide.
+
+     `--nav-fade` is deliberately shorter than `--nav-duration`: content
+     becomes legible early and then settles into place, instead of ghosting
+     at half-opacity for the entire travel. */
+  --nav-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --nav-duration: 0.44s;
+  --nav-fade: 0.26s;
+
+  /* ---- geometry ----------------------------------------------------------
+     Single source of truth. The collapse transforms below are derived from
+     these algebraically, so changing a padding here keeps the logo perfectly
+     centred without any other edit. */
+  --nav-pad-l: 0.75rem;
+  --nav-pad-r: 0.6rem;
+  --nav-gap: 0.75rem;
+  --logo-pad: 0.25rem;
+  /* Layout size of the logo = its EXPANDED size. The collapsed state scales
+     it up rather than laying it out bigger, so the pill's proportions are
+     defined by the state that actually shows the pill. */
+  --logo-size: 60px;
+  --logo-collapsed-scale: 1.3333; /* 80px / 60px */
+  /* Half the logo button's border box — it has symmetric padding, so this is
+     also the distance from the button's edge to the logo's optical centre. */
+  --logo-half: calc(var(--logo-pad) + var(--logo-size) / 2);
 
   position: fixed;
   bottom: 1.5rem;
   left: 50%;
-  transform: translateX(-50%);
   z-index: 1000;
 
   /* Size to the true content width. A fixed element at left:50% with no
@@ -28,93 +84,160 @@
      the 50% mark to the viewport's right edge — so once the content (menu +
      Get a Quote pill + logo) grew past that cap, the logo overflowed past
      the navbar's right edge. width:max-content sizes the bar to its real
-     content and translateX(-50%) keeps it centred. The max-width guard stops
-     it exceeding the viewport on narrow screens. */
+     content. The max-width guard stops it exceeding the viewport on narrow
+     screens. */
   width: max-content;
   max-width: calc(100vw - 2rem);
 
   display: flex;
   align-items: center;
-  /* Gap is 0 when collapsed (so the logo sits at the navbar's centre with
-     no phantom space for an invisible menu-items wrapper). It grows to
-     1.25rem on expand. */
-  gap: 0;
+  gap: var(--nav-gap);
 
   height: 76px;
-  padding: 0 0.4rem;
+  padding: 0 var(--nav-pad-r) 0 var(--nav-pad-l);
   border-radius: 24px;
 
-  /* Collapsed defaults — fully invisible chrome. Every property has an
-     explicit start value so the transition has something to interpolate
-     from when the .expanded class is added. */
-  background: rgba(255, 255, 255, 0);
-  border: 1px solid transparent;
-  backdrop-filter: blur(0) saturate(100%);
-  -webkit-backdrop-filter: blur(0) saturate(100%);
-  box-shadow: none;
+  /* COLLAPSED POSITION.
+     `-100%` parks the bar's RIGHT edge on the viewport's centre line; adding
+     the right padding plus half the logo button walks the logo's centre back
+     onto that line. Anchoring from the right edge — rather than measuring the
+     bar — means the strip's width drops out of the equation entirely, so the
+     collapsed logo stays pixel-exact even though the strip is a different
+     width on every route (the active item's label is only shown for the page
+     you are on). No JS measurement, correct before hydration. */
+  transform: translateX(calc(-100% + var(--nav-pad-r) + var(--logo-half)));
+  transition: transform var(--nav-duration) var(--nav-ease);
 
-  transition:
-    gap             var(--nav-duration) var(--nav-ease),
-    padding         var(--nav-duration) var(--nav-ease),
-    background      var(--nav-duration) var(--nav-ease),
-    border-color    var(--nav-duration) var(--nav-ease),
-    box-shadow      var(--nav-duration) var(--nav-ease),
-    backdrop-filter var(--nav-duration) var(--nav-ease),
-    -webkit-backdrop-filter var(--nav-duration) var(--nav-ease);
-
-  isolation: isolate;
+  /* Collapsed, the bar is a ~540px-wide invisible box sitting over the page.
+     Let clicks through it; the logo re-enables itself below. */
+  pointer-events: none;
 }
 
 .expanded {
-  gap: 0.75rem;
-  padding: 0 0.6rem 0 0.75rem;
-  background: var(--color-white-glass);
-  border-color: var(--color-white-glass-border);
-  backdrop-filter: blur(30px) saturate(190%);
-  -webkit-backdrop-filter: blur(30px) saturate(190%);
-  box-shadow:
-    0 20px 48px var(--color-white-glass-shadow),
-    inset 0 1px 0 var(--color-white-glass-border);
+  --nav-duration: 0.62s;
+  --nav-fade: 0.36s;
+
+  /* EXPANDED POSITION — the bar itself is centred. Going from the collapsed
+     rule above to this one is a single translateX interpolation. */
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 
 /* =============================================================================
-   Menu items — horizontal flex strip that grows from max-width 0 → wide.
+   Glass pill — its own absolutely-positioned layer behind the bar's content.
+   Constant blur, faded by opacity. `visibility` is stepped (0s duration, delayed
+   by the fade on the way out) so the collapsed pill is not painted at all and
+   the backdrop blur costs nothing while the navbar is closed.
    ============================================================================= */
+.pill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  border-radius: inherit;
+  pointer-events: none;
+
+  background: var(--surface-glass);
+  background-image: linear-gradient(180deg, rgba(255, 250, 242, 0.5), rgba(255, 250, 242, 0.3));
+  border: 1px solid var(--surface-glass-rim);
+  backdrop-filter: var(--surface-glass-filter);
+  -webkit-backdrop-filter: var(--surface-glass-filter);
+  box-shadow:
+    0 20px 48px var(--surface-glass-shadow),
+    inset 0 1px 0 var(--surface-glass-highlight);
+
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--nav-duration) var(--nav-ease),
+    visibility 0s linear var(--nav-duration);
+}
+
+.expanded .pill {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--nav-duration) var(--nav-ease),
+    visibility 0s linear 0s;
+}
+
+/* =============================================================================
+   Menu items — a fixed-size WINDOW (.menuClip) that the icon strip
+   (.menuItems) slides into from behind the logo.
+
+   The window is a plain flex item, so it sits `--nav-gap` to the left of the
+   logo BY LAYOUT — and it therefore keeps that exact clearance at every instant
+   of the morph, for free, with nothing to keep in sync. Its right edge sweeping
+   rightward is the entire reveal: icons are uncovered in place as the logo
+   moves off them, never slid into position.
+
+   That is what the original was reaching for with overflow:hidden on a
+   max-width-animated box. The clip was right; paying a full layout pass per
+   frame to move it was not.
+   ============================================================================= */
+.menuClip {
+  position: relative;
+  z-index: 1;
+  /* Never let the bar's flex layout squeeze the strip — the Get a Quote pill
+     is the first thing to get clipped when it does. */
+  flex-shrink: 0;
+
+  /* Clip horizontally, but with slack. `overflow` cuts at the PADDING box, so
+     the padding opens the clip up and the matching negative margin hands the
+     space straight back — the bar's layout is byte-for-byte unchanged.
+     Vertically that leaves room for the Get a Quote pill's drop glow; on the
+     right it leaves room for its focus ring (outline + 3px offset), which
+     would otherwise be shaved off flush against the last item. 4px keeps the
+     window's right edge clear of the logo at every point in the morph. */
+  overflow: hidden;
+  padding: 1.5rem 4px 1.5rem 0;
+  margin: -1.5rem -4px -1.5rem 0;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: opacity;
+  transition:
+    opacity var(--nav-fade) var(--nav-ease),
+    visibility 0s linear var(--nav-duration);
+}
+
+.expanded .menuClip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--nav-fade) var(--nav-ease),
+    visibility 0s linear 0s;
+}
+
 .menuItems {
   display: flex;
   align-items: center;
   gap: 0.35rem;
 
-  max-width: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  /* Don't let the navbar's flex layout shrink the strip below its content
-     width — otherwise the rightmost item (the Get a Quote pill) gets clipped
-     by overflow:hidden. max-width:0 still collapses it for the animation. */
-  flex-shrink: 0;
+  /* THE ICONS DO NOT MOVE. Not a short move, not a subtle one — none.
 
-  /* Both max-width and opacity run on the full duration so visible motion
-     fills the whole window — no front-loaded snap, no end-of-animation
-     "dead zone". */
-  transition:
-    max-width var(--nav-duration) var(--nav-ease),
-    opacity   var(--nav-duration) var(--nav-ease);
+     The window above rides the bar, so it travels right by the bar's collapse
+     offset when expanding. This transform is exactly that offset in the
+     opposite direction, so the two cancel and every icon stays pinned to the
+     screen position it will hold when the bar is open. All the eye sees is the
+     window's right edge sweeping off them, which is why they can never be
+     caught mid-slide or land on a shifting sub-pixel boundary.
+
+     The offset is (padL + stripWidth + gap - padR) / 2 — the distance from the
+     bar's centre to the logo's centre, which is how far the bar itself travels.
+     `100%` is the strip's own width, so this re-derives itself if the item
+     list or the paddings ever change. */
+  transform: translateX(
+    calc((100% + var(--nav-pad-l) + var(--nav-gap) - var(--nav-pad-r)) / 2)
+  );
+  will-change: transform;
+  transition: transform var(--nav-duration) var(--nav-ease);
 }
 
 .expanded .menuItems {
-  /* Now that the items are icons, the real content is far narrower than the
-     old text layout — the widest case (six icons + gaps + the "How It Works"
-     active label + the Get a Quote pill) measures ~487px. Target 500px: just
-     clears it (flex-shrink:0 guarantees the pill is never clipped) while
-     keeping the reveal tight to the true width. An oversized target used to
-     let the strip snap fully open in the first ~200ms while gap/padding/logo
-     kept animating for the full duration — that mismatch made the icons
-     visibly drift back (the "shake"). Matching the target to the content
-     keeps the whole expand monotonic. */
-  max-width: 500px;
-  opacity: 1;
-  pointer-events: auto;
+  transform: translateX(0);
 }
 
 /* Each item is an icon by default. The ACTIVE item expands into an
@@ -127,7 +250,7 @@
   white-space: nowrap;
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--color-text-dark);
+  color: var(--surface-ink);
   text-decoration: none;
   letter-spacing: -0.005em;
   padding: 0.4rem 0.5rem;
@@ -140,10 +263,17 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* A half-step lift on hover — the only motion the icons have of their own. */
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Collapsed label: zero width so only the icon shows. It animates open
-   (max-width + opacity + margin) when the item's own page is active. */
+.link:hover .linkIcon { transform: translateY(-1.5px); }
+
+/* Collapsed label: zero width so only the icon shows. Its width is NOT
+   transitioned — the active item changes on navigation, and animating the
+   width there would animate the bar's layout width, which is exactly the
+   layout-per-frame work this file exists to avoid. The swap happens while
+   the strip is hidden, so it is never seen. */
 .linkLabel {
   display: inline-block;
   max-width: 0;
@@ -151,20 +281,17 @@
   overflow: hidden;
   white-space: nowrap;
   margin-left: 0;
-  transition:
-    max-width var(--nav-duration) var(--nav-ease),
-    opacity 0.35s ease,
-    margin-left var(--nav-duration) var(--nav-ease);
+  transition: opacity 0.3s ease;
 }
 
 .link:hover {
-  color: #0877DE;
+  color: var(--surface-accent);
 }
 
 .link.active {
-  color: #0877DE;
+  color: var(--surface-accent);
   font-weight: 600;
-  background: rgba(8, 119, 222, 0.1);
+  background: var(--surface-accent-wash);
 }
 
 .link.active .linkLabel {
@@ -174,9 +301,64 @@
 }
 
 /* =============================================================================
+   Theme toggle — visually a `.link`, structurally a <button>. It repeats the
+   link's box rather than sharing a class so that `.link`'s :hover/.active
+   colour rules, which are scoped to anchors in the strip, stay untouched.
+   ============================================================================= */
+.themeToggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.4rem 0.5rem;
+  margin-left: 0.15rem;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  color: var(--surface-ink);
+  cursor: pointer;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+.themeToggle:hover {
+  color: var(--surface-accent);
+  background: var(--surface-accent-wash);
+}
+
+.themeToggle:focus-visible {
+  outline: 2px solid var(--surface-accent);
+  outline-offset: 2px;
+}
+
+/* Labelled variant — used in the mobile drawer, where the toggle is a row in
+   a list rather than an icon in a strip, so it needs a name and a full-width
+   tap target. Lives here beside the base class (ThemeToggle reads this
+   stylesheet) rather than in MobileNav.module.css. */
+.themeToggleLabelled {
+  width: 100%;
+  min-height: 48px;
+  gap: 0.7rem;
+  padding: 0.7rem 0;
+  margin-left: 0;
+  justify-content: flex-start;
+  border-radius: 10px;
+  color: var(--surface-body);
+}
+
+.themeToggleLabelled:hover {
+  background: none;
+  color: var(--surface-accent);
+}
+
+.themeToggleText {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+/* =============================================================================
    Get a Quote — primary CTA pill. Elegant gradient ground, soft glow, inner
-   highlight, and an arrow that slides on hover. Reads as THE action against
-   the plain text links beside it.
+   highlight. Reads as THE action against the plain icon links beside it.
    ============================================================================= */
 .quoteBtn {
   display: inline-flex;
@@ -186,16 +368,17 @@
   margin-left: 0.4rem;
   flex-shrink: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, #0E84EC 0%, #0877DE 45%, #044B89 100%);
-  color: #FFFFFF;
+  /* The ink pill the hero, services and contact pages all use. */
+  background: var(--nav-cta);
+  color: var(--nav-cta-text);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: -0.005em;
   white-space: nowrap;
   text-decoration: none;
   box-shadow:
-    0 8px 20px -8px rgba(8, 119, 222, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 14px 28px -16px rgba(14, 20, 34, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   transition:
     transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.3s ease,
@@ -204,65 +387,100 @@
 
 .quoteBtn:hover {
   transform: translateY(-1px);
-  filter: saturate(1.08) brightness(1.04);
   box-shadow:
-    0 14px 28px -8px rgba(8, 119, 222, 0.72),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    0 18px 32px -16px rgba(14, 20, 34, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .quoteBtn:focus-visible {
-  outline: 2px solid #0877DE;
+  outline: 2px solid var(--surface-accent);
   outline-offset: 3px;
 }
 
 /* =============================================================================
-   Logo button — always visible. Acts as the expand/collapse trigger.
-   No background of its own. Larger when collapsed so it reads as the hero
-   element; shrinks slightly on expand to fit into the glass pill.
+   Logo button — always visible, always clickable, the expand/collapse trigger.
+   Laid out at its expanded size and scaled UP when collapsed (never down from
+   a larger layout box) so the bar's expanded proportions are exact and the
+   bitmap is only ever downsampled, never stretched.
    ============================================================================= */
 .logoButton {
+  position: relative;
+  z-index: 1;
   background: none;
   border: none;
-  padding: 0.25rem;
+  padding: var(--logo-pad);
   cursor: pointer;
   display: flex;
   align-items: center;
   flex-shrink: 0;
   border-radius: 18px;
+  /* Re-enables hit-testing inside the collapsed (click-through) bar. */
+  pointer-events: auto;
+
+  /* The collapse scale lives HERE rather than on the image so that the dark
+     theme's logo plate below scales with the mark as one object. Scaling a
+     flex item does not affect layout, and it is centred, so the collapse
+     math in `.navbar` — which is all layout values — is untouched. */
+  transform: scale(var(--logo-collapsed-scale));
+  will-change: transform;
   transition: transform var(--nav-duration) var(--nav-ease);
 }
 
+.expanded .logoButton {
+  transform: scale(1);
+}
+
+/* Logo plate — dark theme only; `--surface-logo-plate` is `none` in light, so
+   this paints nothing there. The brand mark is dark navy and would sink into a
+   dark panel, so on dark it gets a light chip to sit on. Sized to the MARK, not
+   to the asset: the PNG carries ~30% transparent margin per side, so a plate at
+   the image's own bounds would read as a big empty tile. 70% of the box lands a
+   comfortable ring around the glyph, and the 3.2% nudge upward compensates for
+   the mark sitting slightly high inside its own canvas. */
+.logoButton::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: calc(50% - var(--logo-size) * 0.032);
+  width: calc(var(--logo-size) * 0.7);
+  height: calc(var(--logo-size) * 0.7);
+  transform: translate(-50%, -50%);
+  border-radius: 30%;
+  background: var(--surface-logo-plate);
+  box-shadow: var(--surface-logo-plate-shadow);
+  pointer-events: none;
+}
+
 .logoButton:focus-visible {
-  outline: 2px solid #0877DE;
+  outline: 2px solid var(--surface-accent);
   outline-offset: 4px;
 }
 
 .logoImage {
-  height: 80px;
+  height: var(--logo-size);
   width: auto;
   display: block;
-  transition: height var(--nav-duration) var(--nav-ease);
-}
-
-.expanded .logoImage {
-  height: 60px;
 }
 
 /* =============================================================================
    Scrim — dim layer behind the expanded navbar, click anywhere to close.
+   Constant blur, opacity-only fade, stepped visibility — same contract as the
+   pill. Its own durations are hardcoded because it is a SIBLING of the navbar
+   and so cannot inherit the --nav-* vars that flip between open and close.
    ============================================================================= */
 .scrim {
   position: fixed;
   inset: 0;
-  background: rgba(13, 27, 62, 0.18);
+  background: var(--surface-scrim);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition:
-    opacity var(--nav-duration) var(--nav-ease),
-    visibility var(--nav-duration) var(--nav-ease);
+    opacity 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 0.36s;
   z-index: 999;
 }
 
@@ -270,103 +488,46 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  transition:
+    opacity 0.48s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 0s;
 }
 
 /* =============================================================================
-   Mobile (≤ 768px) — items pop up vertically above the navbar.
-   The popup is HORIZONTALLY CENTRED above the (also centred) navbar.
+   Mobile (≤ 768px) — this bar stands down entirely.
+   =============================================================================
+   Below the breakpoint the site uses MobileNav instead: a top-anchored pill
+   with a drop-down drawer (see MobileNav.module.css). Both components are
+   rendered; each hides itself outside its own range, so exactly one is ever
+   interactive and neither needs a JS media query.
+
+   The stacked-drawer rules that used to live here are gone rather than left
+   dormant — they styled a drawer that no longer renders at any width.
    ============================================================================= */
 @media (max-width: 768px) {
-  .navbar {
-    bottom: 1rem;
-    height: 70px;
-    padding: 0 0.35rem;
-    border-radius: 20px;
-  }
-
-  .expanded {
-    padding: 0 0.35rem;
-  }
-
-  .menuItems {
-    position: absolute;
-    bottom: calc(100% + 0.75rem);
-    /* Centre the popup horizontally above the navbar. translateY handles
-       the slide-up reveal; translateX(-50%) handles the centring. Both
-       transforms must be specified on every state to avoid jumps. */
-    left: 50%;
-    transform: translateX(-50%) translateY(8px);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-
-    width: 220px;
-    max-width: 220px;
-    max-height: 0;
-    padding: 0;
-
-    background: var(--color-white-glass);
-    border: 1px solid var(--color-white-glass-border);
-    border-radius: 16px;
-    backdrop-filter: blur(30px) saturate(190%);
-    -webkit-backdrop-filter: blur(30px) saturate(190%);
-    box-shadow:
-      0 20px 48px var(--color-white-glass-shadow),
-      inset 0 1px 0 var(--color-white-glass-border);
-
-    opacity: 0;
-    overflow: hidden;
-    transition:
-      max-height var(--nav-duration) var(--nav-ease),
-      opacity var(--nav-duration) var(--nav-ease),
-      transform var(--nav-duration) var(--nav-ease),
-      padding var(--nav-duration) var(--nav-ease);
-  }
-
-  .expanded .menuItems {
-    /* Target height sized to the content: six stacked links + the Get a Quote
-       pill + padding. Bumped from 320px to fit the added CTA. */
-    max-height: 400px;
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    padding: 0.4rem 0;
-  }
-
-  .link {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.95rem;
-    width: 100%;
-    border-radius: 0;
-    gap: 0.75rem;
-  }
-
-  .link.active {
-    background: rgba(8, 119, 222, 0.08);
-  }
-
-  /* In the stacked mobile drawer every item shows icon + label — an
-     icon-only vertical list would be unreadable. Override the desktop
-     collapse so all labels are visible regardless of active state. */
-  .linkLabel {
-    max-width: none;
-    opacity: 1;
-    margin-left: 0;
-    overflow: visible;
-  }
-
-  /* Quote CTA in the stacked drawer — full-width pill, centred, with a little
-     breathing room above it so it reads as the action below the links. */
-  .quoteBtn {
-    margin: 0.45rem 0.75rem 0.2rem;
-    justify-content: center;
-    padding: 0.7rem 1rem;
-  }
-
-  .logoImage {
-    height: 56px;
-  }
-
-  .expanded .logoImage {
-    height: 48px;
+  .navbar,
+  .scrim {
+    display: none;
   }
 }
+
+/* =============================================================================
+   Reduced motion — keep every position and every state, drop the travel.
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .navbar,
+  .pill,
+  .menuClip,
+  .menuItems,
+  .logoButton,
+  .scrim,
+  .linkIcon {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+:global([data-theme='dark']) .navbar { --nav-cta: #E8EDF7; --nav-cta-text: #0B1120; }
+:global([data-theme='dark']) .pill { background-image: none; }
+:global([data-theme='dark']) .quoteBtn { box-shadow: 0 14px 28px -16px rgba(0, 0, 0, 0.9); }
+:global([data-theme='dark']) .quoteBtn:hover { box-shadow: 0 18px 32px -16px rgba(0, 0, 0, 1); }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPublishedBlogBySlug, listPublishedBlogs } from '@/lib/content/blogs';
 import { sanitizeRichHtml } from '@/lib/sanitize-html';
-import { formatDate } from '@/lib/format';
+import { formatDate, readingMinutes } from '@/lib/format';
 import styles from '../blogs.module.css';
 
 // Node runtime explicit — sanitize-html and the Supabase server client both depend on Node APIs.
@@ -118,6 +118,8 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
         <div className={styles.articleMeta}>
           <time dateTime={blog.created_at}>{formatDate(blog.created_at)}</time>
+          <span className={styles.metaDot} aria-hidden="true" />
+          <span>{readingMinutes(blog.content)} min read</span>
           {blog.tags && blog.tags.length > 0 ? (
             <div className={styles.tags}>
               {blog.tags.map((tag) => (

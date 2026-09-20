@@ -39,8 +39,8 @@
   --pastel-periwinkle: #DEE2F4;
 
   --ink-dark:  #0A2036;
-  --ink-mid:   rgba(10, 32, 54, 0.72);
-  --ink-muted: rgba(10, 32, 54, 0.5);
+  --ink-mid:   rgba(var(--surface-ink-rgb), 0.72);
+  --ink-muted: rgba(var(--surface-ink-rgb), 0.5);
 
   position: relative;
   min-height: calc(100vh - 7rem);
@@ -48,7 +48,7 @@
   flex-direction: column;
   justify-content: center;
   padding: var(--space-8) 0;
-  background: var(--color-white);
+  background: var(--surface-card);
   isolation: isolate;
   overflow: hidden;
 }
@@ -117,7 +117,7 @@
   pointer-events: none;
   background: radial-gradient(
     340px circle at var(--halo-x, 50%) var(--halo-y, 50%),
-    rgba(255, 255, 255, 0.55),
+    rgba(var(--surface-paper-rgb), 0.55),
     transparent 60%);
   mix-blend-mode: soft-light;
   opacity: 0;
@@ -301,8 +301,8 @@
   border-radius: inherit;
   background: radial-gradient(
     220px circle at var(--bento-mx, 50%) var(--bento-my, 50%),
-    rgba(255, 255, 255, 0.62),
-    rgba(255, 255, 255, 0) 65%);
+    rgba(var(--surface-paper-rgb), 0.62),
+    rgba(var(--surface-paper-rgb), 0) 65%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -323,7 +323,7 @@
 /* Hover lift + shadow. */
 .card:hover {
   --bento-hover-y: -8px;
-  box-shadow: 0 22px 56px -16px rgba(10, 32, 54, 0.3);
+  box-shadow: 0 22px 56px -16px rgba(var(--surface-ink-rgb), 0.3);
 }
 
 /* Per-card placement + pastel surface */
@@ -375,7 +375,7 @@
 }
 
 .card:hover .statNumber {
-  text-shadow: 0 0 28px rgba(10, 32, 54, 0.22);
+  text-shadow: 0 0 28px rgba(var(--surface-ink-rgb), 0.22);
 }
 
 .statLabel {
@@ -588,4 +588,28 @@
     align-items: center;
     text-align: center;
   }
+}
+
+/* =============================================================================
+   Dark theme — re-points the scoped palette at the top of this file.
+   Written here, not in styles/theme.css, because CSS Modules hashes `.section`
+   so a global stylesheet cannot address it.
+   ============================================================================= */
+:global([data-theme='dark']) .section {
+  /* The bento tiles keep their five distinct hues — that colour-coding is the
+     point of the layout — but drop to deep, low-chroma versions so they read
+     as tinted panels instead of five glowing rectangles on a dark page. The
+     copy on them rides --ink-*, which inverts with them. */
+  --pastel-blue:       #16263C;
+  --pastel-pink:       #2C1E26;
+  --pastel-peach:      #2D2419;
+  --pastel-mint:       #16291F;
+  --pastel-periwinkle: #1E2038;
+  --ink-dark:  #E8EDF7;
+  /* The 10px stat labels ride --ink-muted, which is the ink at 0.5 alpha. On
+     the light pastels that was fine; on these deep tiles it measured
+     4.34-4.44:1 — just under AA. 0.62 puts every tile at 5.9-6.1:1 while
+     staying visibly secondary to --ink-dark above it. */
+  --ink-muted: rgba(var(--surface-ink-rgb), 0.62);
+  --ink-mid:   rgba(var(--surface-ink-rgb), 0.80);
 }

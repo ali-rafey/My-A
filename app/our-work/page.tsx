@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import WorkShowcase from '@/sections/our-work/WorkShowcase';
 
+// The portfolio is admin-managed, so the page refreshes on the same cadence
+// as the blog listing. Saving a project also revalidates this path directly.
+export const revalidate = 60;
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {

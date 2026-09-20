@@ -1,5 +1,5 @@
 .section {
-  background: var(--color-white);
+  background: var(--surface-card);
 }
 
 .header {
@@ -18,7 +18,7 @@
 .card {
   padding: var(--space-8);
   border-radius: var(--radius-lg);
-  background: var(--color-blue-light);
+  background: var(--surface-page-tint);
   display: grid;
   gap: var(--space-4);
 }
@@ -31,13 +31,13 @@
 }
 
 .title {
-  color: var(--color-text-dark);
+  color: var(--surface-heading);
   font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
 }
 
 .text {
-  color: var(--color-text-body);
+  color: var(--surface-body);
   line-height: 1.7;
 }
 

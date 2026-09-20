@@ -1,0 +1,105 @@
+/* =============================================================================
+   CardFilm — stage and the 640×500 canvas scaled to fill a card.
+   Palette matches the home film: warm paper, brand navy, electric blue.
+   ============================================================================= */
+.film {
+  --cv-bg: #F2EFE9;
+  --cv-ink: #0D1B3E;
+  --cv-muted: #5F6B7D;
+  --cv-line: rgba(13, 27, 62, 0.13);
+  --cv-blue: #1F6FE5;
+  --cv-lav: #8E7BFF;
+  --cv-peach: #FF8F5E;
+  --cv-mint: #22B38E;
+  --cv-dark: #0F131B;
+  --cv-card: #FFFFFF;
+  --cv-sky: linear-gradient(180deg, #F2EFE9 0%, #F7E5D8 54%, #D2E2EE 100%);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-sans);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--cv-bg);
+  transition: background-color 0.28s ease;
+}
+.stage[data-tone='sky'] { background: var(--cv-sky); }
+.stage[data-tone='dark'] { background: var(--cv-dark); }
+/* Paper grain, as on the home film. */
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.42  0 0 0 0 0.38  0 0 0 .18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.stage[data-tone='dark']::after { mix-blend-mode: screen; opacity: 0.12; }
+
+.canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 640px;
+  height: 500px;
+  transform: translate(-50%, -50%) scale(var(--k, 1));
+  transform-origin: center center;
+  color: var(--cv-ink);
+}
+
+.shot {
+  position: absolute;
+  inset: 0;
+  animation: shotIn 220ms ease both, shotOut 260ms ease var(--exit) forwards;
+}
+/* Cuts vary, so the film does not feel like a slideshow. */
+.shot[data-enter='up'] { animation: shotUp 480ms var(--ease) both, shotOut 260ms ease var(--exit) forwards; }
+.shot[data-enter='zoom'] { animation: shotZoom 620ms var(--ease) both, shotOut 260ms ease var(--exit) forwards; }
+.shot[data-enter='wipe'] { animation: shotWipe 620ms cubic-bezier(0.6, 0, 0.2, 1) both, shotOut 260ms ease var(--exit) forwards; }
+@keyframes shotIn { from { opacity: 0; } }
+@keyframes shotOut { to { opacity: 0; } }
+@keyframes shotUp { from { opacity: 0; transform: translateY(26px); } }
+@keyframes shotZoom { from { opacity: 0; transform: scale(1.06); } }
+@keyframes shotWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* A still: every animation jumps to its end, so the shot shows its finished
+   frame; pointers and taps are left out. */
+.film[data-still] .canvas *,
+.film[data-still] .canvas *::before,
+.film[data-still] .canvas *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+.film[data-still] .shot { animation: none !important; }
+.film[data-still] [data-transient] { display: none; }
+
+
+/* Small cards: the stage sizes itself from the canvas's shape. */
+@media (max-width: 899px) {
+  .film { position: relative; inset: auto; }
+  .stage { position: relative; inset: auto; aspect-ratio: 640 / 500; }
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+:global([data-theme='dark']) .film {
+  --cv-bg: #0E1422;
+  --cv-ink: #E8EDF7;
+  --cv-muted: #9AA7BD;
+  --cv-line: rgba(255, 255, 255, 0.12);
+  --cv-blue: #5AA2FF;
+  --cv-card: #161E30;
+  --cv-sky: linear-gradient(180deg, #0E1422 0%, #1B1A2E 55%, #102338 100%);
+}
+:global([data-theme='dark']) .stage::after { mix-blend-mode: screen; opacity: 0.16; }
+@media (max-width: 899px) {
+      }

@@ -6,14 +6,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 export const metadata: Metadata = {
   title: 'Services',
   description:
-    'High-performance web apps, mobile experiences, and AI automations engineered for growth.',
+    'Market research, websites and Shopify stores, Meta and Google ads, and n8n automation: the four ways EscaLeads grows a business.',
   alternates: { canonical: '/services' },
   openGraph: {
     type: 'website',
     url: `${siteUrl}/services`,
     title: 'EscaLeads Services',
     description:
-      'High-performance web apps, mobile experiences, and AI automations engineered for growth.',
+      'Market research, websites and Shopify stores, Meta and Google ads, and n8n automation: the four ways EscaLeads grows a business.',
   },
 };
 

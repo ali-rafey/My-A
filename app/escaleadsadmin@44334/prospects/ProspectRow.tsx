@@ -32,7 +32,7 @@ function scoreTier(score: number): string {
   return styles.scoreLow;
 }
 
-export default function ProspectRow({ prospect }: { prospect: Prospect }) {
+export default function ProspectRow({ prospect, rank }: { prospect: Prospect; rank: number }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -90,6 +90,8 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
           <span className={open ? styles.caretOpen : styles.caret} aria-hidden="true">›</span>
         </button>
 
+        <span className={styles.rowRank}>{rank}</span>
+
         <span className={`${styles.scoreChip} ${scoreTier(prospect.score)}`} title={prospect.score_reasons.join(' · ')}>
           {prospect.score}
         </span>
@@ -111,6 +113,9 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
           ) : null}
           {prospect.linkedin ? (
             <a href={prospect.linkedin} target="_blank" rel="noreferrer noopener" title="LinkedIn" className={styles.iconLink}>Li</a>
+          ) : null}
+          {prospect.facebook ? (
+            <a href={prospect.facebook} target="_blank" rel="noreferrer noopener" title="Facebook page — DM route" className={styles.iconLink}>f</a>
           ) : null}
           {emailHref ? (
             <a href={emailHref} title={prospect.contact_value} className={styles.iconLink}>@</a>
@@ -153,6 +158,7 @@ export default function ProspectRow({ prospect }: { prospect: Prospect }) {
             <a href={prospect.source_url} target="_blank" rel="noreferrer noopener">Source ↗</a>
             {prospect.phone ? <a href={`tel:${prospect.phone}`}>{prospect.phone}</a> : null}
             {!prospect.verified ? <span className={styles.rowUnverified}>Unverified</span> : null}
+            {prospect.ad_active ? <span className={styles.rowTagAd}>Running ads now</span> : null}
             {prospect.needs_manufacturing === 'yes' ? <span className={styles.rowTag}>Needs manufacturing</span> : null}
             {prospect.last_contacted_at ? (
               <span className={styles.muted}>Contacted {new Date(prospect.last_contacted_at).toLocaleDateString()}</span>

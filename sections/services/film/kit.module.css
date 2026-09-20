@@ -1,0 +1,255 @@
+/* =============================================================================
+   Kit — shared pieces of the service films. Coordinates are on the 640×500
+   canvas (CardFilm). --d = start, ms from the start of the shot.
+   Safe area: the canvas can be cropped a little to fill its card, and the
+   story bar sits over the top, so anything that must be read stays inside
+   x 36–604, y 64–476.
+   ============================================================================= */
+.fill { position: absolute; inset: 0; overflow: hidden; }
+
+/* Dotted grid, the home film's device for "evidence on a board". */
+.dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--cv-line) 1.1px, transparent 1.3px);
+  background-size: 22px 22px;
+  background-position: 11px 11px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 40%, transparent 85%);
+  mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 40%, transparent 85%);
+}
+
+/* ── Entrances ────────────────────────────────────────────────────────────── */
+.rise { opacity: 0; animation: rise 560ms var(--ease) var(--d, 0ms) both; }
+.pop { opacity: 0; animation: pop 440ms var(--spring) var(--d, 0ms) both; }
+.fadeIn { opacity: 0; animation: fade 420ms ease var(--d, 0ms) both; }
+.slideUp { transform: translateY(110%); animation: slideUp 560ms var(--ease) var(--d, 0ms) forwards; }
+.frameIn { opacity: 0; animation: frameIn 640ms var(--ease) var(--d, 0ms) both; }
+.press { animation: press 300ms ease var(--d, 0ms) both; }
+.dim { animation: dim 420ms ease var(--d, 0ms) forwards; }
+.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1300ms cubic-bezier(0.45, 0, 0.2, 1) var(--d, 0ms) forwards; }
+.growX { transform: scaleX(0); transform-origin: left center; animation: growX 760ms var(--ease) var(--d, 0ms) forwards; }
+.growY { transform: scaleY(0); transform-origin: center bottom; animation: growY 560ms var(--ease) var(--d, 0ms) forwards; }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes slideUp { to { transform: none; } }
+@keyframes frameIn { from { opacity: 0; transform: translateY(26px) scale(0.95); } to { opacity: 1; transform: none; } }
+@keyframes press { 45% { transform: scale(0.93); } 100% { transform: none; } }
+@keyframes dim { to { opacity: 0.38; filter: saturate(0.4); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes growX { to { transform: scaleX(1); } }
+@keyframes growY { to { transform: scaleY(1); } }
+
+/* ── Headline, typed ──────────────────────────────────────────────────────── */
+.title {
+  position: absolute;
+  z-index: 2;
+  max-width: 560px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: var(--cv-ink);
+}
+.word { white-space: nowrap; }
+.ch { position: relative; opacity: 0; animation: chOn 1ms linear var(--d) forwards; }
+@keyframes chOn { to { opacity: 1; } }
+/* The caret rides the newest glyph. No fill: a forwards-filled step animation
+   can land on the wrong side of its last step and strand a caret mid-word. */
+.ch::after {
+  content: '';
+  position: absolute;
+  right: -0.07em;
+  top: 0.1em;
+  bottom: 0.04em;
+  width: max(2px, 0.06em);
+  border-radius: 2px;
+  background: var(--cv-blue);
+  opacity: 0;
+  animation: caretOn var(--step) linear var(--d);
+}
+.chLast::after { animation: caretBlink 1s steps(1, end) var(--d) var(--blinks, 2); }
+@keyframes caretOn { from, to { opacity: 1; } }
+@keyframes caretBlink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 0; } }
+
+/* ── Opening beat ─────────────────────────────────────────────────────────── */
+.beat {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 48px;
+  text-align: center;
+  animation: beatOut 420ms ease var(--o) forwards;
+}
+@keyframes beatOut { to { opacity: 0; transform: translate(var(--ex, 0px), var(--ey, -16px)) scale(var(--es, 0.97)); } }
+.beatLead {
+  max-width: 400px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--cv-muted);
+  opacity: 0;
+  animation: fade 420ms ease 100ms both;
+}
+.beatText { font-weight: 600; letter-spacing: -0.035em; line-height: 1.08; color: var(--cv-ink); }
+.wordIn { display: inline-block; opacity: 0; animation: rise 520ms var(--ease) var(--d, 0ms) both; }
+
+/* ── Cursor and taps ──────────────────────────────────────────────────────── */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  opacity: 0;
+  transform: translate(var(--x0), var(--y0));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+  animation:
+    fade 160ms ease var(--d) forwards,
+    cursorMove var(--mv) cubic-bezier(0.45, 0, 0.2, 1) var(--d) forwards;
+}
+.cursor svg { display: block; transform-origin: 20% 15%; animation: click 240ms ease var(--c) both; }
+.cursor2 {
+  animation:
+    fade 160ms ease var(--d) forwards,
+    cursorMove var(--mv) cubic-bezier(0.45, 0, 0.2, 1) var(--d) forwards,
+    cursorMove2 var(--mv2) cubic-bezier(0.45, 0, 0.2, 1) var(--d2) forwards;
+}
+.cursor2 svg { animation: click 240ms ease var(--c) both, click 240ms ease var(--c2) forwards; }
+@keyframes cursorMove { to { transform: translate(var(--x1), var(--y1)); } }
+@keyframes cursorMove2 { from { transform: translate(var(--x1), var(--y1)); } to { transform: translate(var(--x2), var(--y2)); } }
+@keyframes click { 0%, 100% { transform: scale(1); } 45% { transform: scale(0.8); } }
+
+.tap {
+  position: absolute;
+  z-index: 25;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(13, 27, 62, 0.15);
+  opacity: 0;
+  animation: tap 560ms ease var(--d) both;
+}
+@keyframes tap { 0% { opacity: 0.95; transform: scale(0.25); } 100% { opacity: 0; transform: scale(1.35); } }
+
+/* ── Odometer ─────────────────────────────────────────────────────────────── */
+.odoNum { display: inline-flex; font-variant-numeric: tabular-nums; }
+.odo { display: inline-block; height: 1em; overflow: hidden; line-height: 1; }
+.odoCol {
+  display: flex;
+  flex-direction: column;
+  animation: odo var(--od) cubic-bezier(0.2, 0.7, 0.1, 1) var(--d) both;
+}
+.odoCol span { height: 1em; line-height: 1; }
+@keyframes odo { from { transform: translateY(0); } to { transform: translateY(calc((10 + var(--n)) * -5%)); } }
+
+/* ── App window ───────────────────────────────────────────────────────────── */
+.win {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #1F2430;
+  box-shadow: 0 0 0 1px rgba(13, 27, 62, 0.08), 0 30px 60px -32px rgba(13, 27, 62, 0.55);
+}
+.winBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-bottom: 1px solid #ECEEF2;
+  background: #F7F8FA;
+  font-size: 11px;
+  color: #5F6B7D;
+}
+.winBar > i { width: 8px; height: 8px; border-radius: 50%; background: #D9DDE4; }
+.winBody { position: relative; flex: 1; min-height: 0; }
+
+/* ── Small pieces ─────────────────────────────────────────────────────────── */
+.badge {
+  position: absolute;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #111827;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(13, 27, 62, 0.06), 0 14px 30px -14px rgba(13, 27, 62, 0.45);
+}
+.badgeDark { background: #111827; color: #FFFFFF; }
+.liveDot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #16A34A; }
+.liveDot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #16A34A;
+  opacity: 0;
+  animation: ping 1.6s ease-out 400ms infinite;
+}
+@keyframes ping { 0% { opacity: 0.7; transform: scale(0.5); } 100% { opacity: 0; transform: scale(1.6); } }
+
+.fanaar { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-playfair), Georgia, serif; font-weight: 600; letter-spacing: 0.14em; }
+.fanaar img { display: block; }
+
+/* A phone: dark frame, white screen. */
+.phone {
+  position: absolute;
+  padding: 7px;
+  border-radius: 34px;
+  background: #0F131B;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 34px 60px -30px rgba(13, 27, 62, 0.7);
+}
+.phoneScreen { position: relative; height: 100%; overflow: hidden; border-radius: 27px; background: #FFFFFF; color: #111827; }
+.phoneScreen::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 20;
+  width: 66px;
+  height: 18px;
+  margin-left: -33px;
+  border-radius: 999px;
+  background: #0F131B;
+}
+
+/* A white panel on the paper. */
+.panel {
+  position: absolute;
+  border-radius: 16px;
+  background: #FFFFFF;
+  color: #1F2430;
+  box-shadow: 0 0 0 1px rgba(13, 27, 62, 0.06), 0 24px 50px -30px rgba(13, 27, 62, 0.5);
+}
+.pill {
+  position: absolute;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--cv-blue);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: 0 12px 26px -12px rgba(31, 111, 229, 0.7);
+}
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF; }
+.up { display: inline-flex; align-items: center; gap: 3px; color: #12A150; font-style: normal; font-weight: 650; }

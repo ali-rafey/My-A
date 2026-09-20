@@ -1,0 +1,372 @@
+/* =============================================================================
+   Mobile navbar (≤ 768px) — top floating pill + drop-down drawer.
+   =============================================================================
+   Reference: the Technobiz LTD bar. Rebuilt here in CSS Modules against this
+   project's --surface-* tokens, so it themes light/dark with the rest of the
+   site instead of carrying another brand's cream/ink palette.
+
+   Same motion contract as the desktop bar: the ONLY animated properties are
+   `transform` and `opacity`, plus a zero-length stepped `visibility`. Nothing
+   that triggers layout or re-blurs a backdrop is transitioned.
+
+   The whole component is display:none above the breakpoint, and the desktop
+   bar is display:none below it — see the media query at the bottom of
+   Navbar.module.css. Exactly one of the two is ever in play.
+   ============================================================================= */
+.root {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .root {
+    display: block;
+    --mn-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --mn-duration: 0.42s;
+    --mn-inset: 0.75rem;
+    --mn-pill-h: 58px;
+    --mn-control: 42px;
+  }
+
+  /* ---------------------------------------------------------------- scrim */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    border: none;
+    padding: 0;
+    cursor: default;
+    background: var(--surface-scrim);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--mn-duration) var(--mn-ease),
+      visibility 0s linear var(--mn-duration);
+  }
+
+  .root[data-open] .scrim {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity var(--mn-duration) var(--mn-ease),
+      visibility 0s linear 0s;
+  }
+
+  /* ----------------------------------------------------------------- pill */
+  .pill {
+    position: fixed;
+    top: var(--mn-inset);
+    left: var(--mn-inset);
+    right: var(--mn-inset);
+    z-index: 1002;
+
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    height: var(--mn-pill-h);
+    padding: 0 0.35rem;
+    border-radius: 999px;
+
+    background: var(--surface-glass);
+    border: 1px solid var(--surface-glass-rim);
+    backdrop-filter: var(--surface-glass-filter);
+    -webkit-backdrop-filter: var(--surface-glass-filter);
+    box-shadow:
+      0 14px 34px -18px var(--surface-glass-shadow),
+      inset 0 1px 0 var(--surface-glass-highlight);
+  }
+
+  /* --------------------------------------------------------------- burger */
+  .burger {
+    display: grid;
+    place-items: center;
+    width: var(--mn-control);
+    height: var(--mn-control);
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    border-radius: 999px;
+    color: var(--surface-ink);
+    cursor: pointer;
+  }
+
+  .burger:focus-visible {
+    outline: 2px solid var(--surface-accent);
+    outline-offset: 2px;
+  }
+
+  .burgerBars {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .burgerBar {
+    display: block;
+    height: 1.5px;
+    border-radius: 999px;
+    background: currentColor;
+    /* Width is NOT transitioned — that is a layout property. The short bar
+       simply grows to full width at the moment it starts rotating, which the
+       rotation hides completely. */
+    transition: transform var(--mn-duration) var(--mn-ease);
+  }
+
+  .burgerBar:first-child { width: 20px; }
+  .burgerBar:last-child  { width: 14px; }
+
+  .root[data-open] .burgerBar { width: 20px; }
+  .root[data-open] .burgerBar:first-child { transform: translateY(3.25px) rotate(45deg); }
+  .root[data-open] .burgerBar:last-child  { transform: translateY(-3.25px) rotate(-45deg); }
+
+  /* ---------------------------------------------------------- inline links */
+  .pillLinks {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Below ~360px the two inline links crowd the icon buttons, so they drop
+     out and live only in the drawer. */
+  @media (max-width: 359px) {
+    .pillLinks { display: none; }
+  }
+
+  .pillLink {
+    display: block;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    color: var(--surface-ink);
+    text-decoration: none;
+    border-radius: 999px;
+    transition: color 0.25s ease;
+  }
+
+  .pillLinkActive { color: var(--surface-accent); font-weight: 600; }
+  .pillLink:focus-visible { outline: 2px solid var(--surface-accent); outline-offset: 1px; }
+
+  .spacer { flex: 1; }
+
+  /* --------------------------------------------------- home + primary CTA */
+  .homeBtn,
+  .ctaBtn {
+    display: grid;
+    place-items: center;
+    width: var(--mn-control);
+    height: var(--mn-control);
+    flex-shrink: 0;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.22s var(--mn-ease);
+  }
+
+  .homeBtn:active,
+  .ctaBtn:active { transform: scale(0.94); }
+
+  .homeBtn {
+    /* A filled chip rather than a bare icon: the brand mark is dark navy and
+       would disappear against the dark panel, so it always gets a light
+       ground. --surface-logo-chip is white in light, a soft plate in dark. */
+    background: var(--surface-logo-chip);
+    border: 1px solid var(--surface-border);
+    overflow: hidden;
+  }
+
+  /* The PNG carries ~30% transparent margin on every side, so an image sized
+     to the chip leaves a ~10px mark inside a 42px button. It is deliberately
+     drawn LARGER than the chip and clipped by the button's overflow, which
+     lands the mark at ~18px. The 1.5px nudge compensates for the mark sitting
+     slightly high inside its own canvas. */
+  .homeLogo {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    display: block;
+    transform: translateY(1.5px);
+  }
+
+  .ctaBtn {
+    background: var(--mn-cta, #0E1422);
+    color: var(--mn-cta-text, #FFFFFF);
+    box-shadow: 0 12px 24px -14px rgba(14, 20, 34, 0.8);
+  }
+
+  .ctaIcon { width: 17px; height: 17px; }
+
+  .homeBtn:focus-visible,
+  .ctaBtn:focus-visible {
+    outline: 2px solid var(--surface-accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------------------------------------------------------------- panel */
+  .panel {
+    position: fixed;
+    top: var(--mn-inset);
+    left: var(--mn-inset);
+    right: var(--mn-inset);
+    z-index: 1001;
+
+    /* Clears the pill, which floats above the panel so its close button stays
+       reachable the whole time the drawer is open. */
+    padding: calc(var(--mn-pill-h) + 1.5rem) 1.25rem 1.25rem;
+    border-radius: 28px;
+
+    background: var(--surface-card-raised);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 40px 80px -40px var(--surface-glass-shadow);
+
+    max-height: calc(100dvh - var(--mn-inset) * 2);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    transform: translateY(-12px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform var(--mn-duration) var(--mn-ease),
+      opacity var(--mn-duration) var(--mn-ease),
+      visibility 0s linear var(--mn-duration);
+  }
+
+  .root[data-open] .panel {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      transform var(--mn-duration) var(--mn-ease),
+      opacity var(--mn-duration) var(--mn-ease),
+      visibility 0s linear 0s;
+  }
+
+  /* Same trick as the home button: the chip is the wrapper, the mark is drawn
+     oversized inside it and clipped, so the glyph fills the tile properly
+     instead of floating in the asset's own padding. */
+  .panelLogoChip {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    margin-bottom: 1.25rem;
+    border-radius: 20px;
+    background: var(--surface-logo-chip);
+    overflow: hidden;
+  }
+
+  .panelLogo {
+    width: 112px;
+    height: 112px;
+    object-fit: contain;
+    display: block;
+    transform: translateY(3.6px);
+  }
+
+  /* ------------------------------------------------------------ link list */
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--surface-border);
+  }
+
+  .list > li { border-bottom: 1px solid var(--surface-border); }
+
+  .listLink {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    text-decoration: none;
+    color: var(--surface-heading);
+    font-family: var(--font-playfair), Georgia, 'Times New Roman', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .listLinkActive { color: var(--surface-accent); }
+
+  .listArrow {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--surface-muted);
+    transition: transform 0.28s var(--mn-ease), color 0.28s ease;
+  }
+
+  .listLink:active .listArrow,
+  .listLinkActive .listArrow {
+    transform: translateX(4px);
+    color: var(--surface-accent);
+  }
+
+  .listLink:focus-visible {
+    outline: 2px solid var(--surface-accent);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* --------------------------------------------------------- panel footer */
+  .panelFooter {
+    display: flex;
+    align-items: center;
+    padding-top: 0.35rem;
+    border-bottom: 1px solid var(--surface-border);
+    margin-bottom: 0.9rem;
+  }
+
+  .panelCta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 54px;
+    margin-top: 0.5rem;
+    border-radius: 999px;
+    background: var(--mn-cta, #0E1422);
+    color: var(--mn-cta-text, #FFFFFF);
+    font-size: 0.95rem;
+    font-weight: 650;
+    letter-spacing: -0.005em;
+    text-decoration: none;
+    box-shadow: 0 14px 28px -16px rgba(14, 20, 34, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transition: transform 0.22s var(--mn-ease);
+  }
+
+  .panelCta:active { transform: scale(0.985); }
+  .panelCta:focus-visible { outline: 2px solid var(--surface-accent); outline-offset: 3px; }
+
+  .ctaChevron { width: 14px; height: 14px; }
+}
+
+/* =============================================================================
+   Reduced motion — keep every position and state, drop the travel.
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .panel,
+  .burgerBar,
+  .listArrow,
+  .homeBtn,
+  .ctaBtn,
+  .panelCta {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+:global([data-theme='dark']) .ctaBtn,
+:global([data-theme='dark']) .panelCta { --mn-cta: #E8EDF7; --mn-cta-text: #0B1120; }

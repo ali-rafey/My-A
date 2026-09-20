@@ -31,7 +31,7 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
       if (market !== 'all' && p.market !== market) return false;
       // Contactability filter. Socials are now a hard requirement for outreach, so this hides
       // every prospect there is no way to open a conversation with.
-      if (socialOnly && !p.instagram && !p.linkedin) return false;
+      if (socialOnly && !p.instagram && !p.linkedin && !p.facebook) return false;
       if (needle) {
         const haystack = [p.name, p.brand, p.product_category, p.signal_summary, p.country]
           .join(' ')
@@ -121,8 +121,8 @@ export default function ProspectsBoard({ prospects }: { prospects: Prospect[] })
         <div className={styles.empty}>No prospects match these filters.</div>
       ) : (
         <div className={styles.rowList}>
-          {visible.map((prospect) => (
-            <ProspectRow key={prospect.id} prospect={prospect} />
+          {visible.map((prospect, index) => (
+            <ProspectRow key={prospect.id} prospect={prospect} rank={index + 1} />
           ))}
         </div>
       )}

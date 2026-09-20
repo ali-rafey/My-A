@@ -1,5 +1,5 @@
 .section {
-  background: var(--color-silver-light);
+  background: var(--surface-page-alt);
 }
 
 .header {
@@ -17,7 +17,7 @@
 
 .card {
   padding: var(--space-8);
-  background: var(--color-white);
+  background: var(--surface-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   display: grid;
@@ -33,19 +33,19 @@
 }
 
 .date {
-  color: var(--color-silver-dark);
+  color: var(--surface-muted);
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);
 }
 
 .title {
-  color: var(--color-text-dark);
+  color: var(--surface-heading);
   font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
 }
 
 .text {
-  color: var(--color-text-body);
+  color: var(--surface-body);
   line-height: 1.7;
 }
 
@@ -53,8 +53,8 @@
   margin-top: var(--space-12);
   padding: var(--space-6);
   border-radius: var(--radius-lg);
-  background: var(--color-white);
-  color: var(--color-text-body);
+  background: var(--surface-card);
+  color: var(--surface-body);
   box-shadow: var(--shadow-sm);
 }
 

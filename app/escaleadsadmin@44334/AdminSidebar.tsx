@@ -16,9 +16,11 @@ type NavItem = { href: string; label: string; exact?: boolean };
 const PRIMARY_LINKS: NavItem[] = [
   { href: `${ADMIN_BASE}`, label: 'Dashboard', exact: true },
   { href: `${ADMIN_BASE}/blogs`, label: 'Blogs' },
+  { href: `${ADMIN_BASE}/projects`, label: 'Work' },
   { href: `${ADMIN_BASE}/leads`, label: 'Inbound' },
   { href: `${ADMIN_BASE}/prospects`, label: 'Prospects' },
   { href: `${ADMIN_BASE}/diagnostics`, label: 'Diagnostics' },
+  { href: `${ADMIN_BASE}/guide`, label: 'Admin Guide' },
 ];
 
 export default function AdminSidebar() {

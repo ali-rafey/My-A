@@ -75,7 +75,7 @@
 .outerNode {
   transform-box: fill-box;
   transform-origin: center;
-  fill: rgba(10, 32, 54, 0.55);
+  fill: rgba(var(--surface-ink-rgb), 0.55);
   animation: outerNode 2.4s ease-out infinite;
   /* The signal travels 0→30 % of the loop, so the outer node lights up
      exactly when the signal arrives by waiting 30 % of the loop (0.72 s)
@@ -84,10 +84,10 @@
 }
 
 @keyframes outerNode {
-  0%, 100% { fill: rgba(10, 32, 54, 0.55); transform: scale(1); }
+  0%, 100% { fill: rgba(var(--surface-ink-rgb), 0.55); transform: scale(1); }
   8%       { fill: #0877DE;                transform: scale(1.5); }
   20%      { fill: #0877DE;                transform: scale(1.1); }
-  50%      { fill: rgba(10, 32, 54, 0.55); transform: scale(1); }
+  50%      { fill: rgba(var(--surface-ink-rgb), 0.55); transform: scale(1); }
 }
 
 /* Halo that bursts outward from the outer node when the signal arrives.

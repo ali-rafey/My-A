@@ -6,8 +6,8 @@ import styles from './ProcessCurve.module.css';
 // Canvas-drawn exponential growth curve with a soft accent glow, drifting
 // particles tracking the curve, and four labelled milestones
 // (Discover → Design → Build → Launch). Renders only a <canvas>; the host
-// section provides the surrounding layout. White-theme colors: navy labels,
-// muted-steel descriptions, white rings around dots.
+// section provides the surrounding layout. Colours are sampled from the
+// --surface-* tokens on <html> and re-sampled when the theme changes.
 
 const STEPS = [
   { t: 'Discover', d: 'Map your goals to a\nmeasurable, lean plan.',         pct: 0.06 },
@@ -16,20 +16,69 @@ const STEPS = [
   { t: 'Launch',   d: 'Deploy, measure, and\ncompound real-user growth.', pct: 0.88 },
 ] as const;
 
-const C1: [number, number, number] = [125, 169, 251];
-const C2: [number, number, number] = [ 46, 110, 247];
-const C3: [number, number, number] = [  8, 119, 222];
-const C4: [number, number, number] = [  4,  75, 137];
+type RGB = [number, number, number];
 
-function lerp(a: [number, number, number], b: [number, number, number], t: number) {
+// A <canvas> cannot read CSS custom properties, so the palette is sampled off
+// <html> instead. Kept behind a ref and refreshed by a data-theme observer
+// rather than by re-running the draw effect: re-running would restart the
+// intro animation (and re-fire onIntroDone, which drives the navbar showcase)
+// every time someone flips the theme.
+type CurvePalette = {
+  inkLabel: string;
+  inkMuted: string;
+  lineSoft: string;
+  dotRing: string;
+  stops: [RGB, RGB, RGB, RGB];
+};
+
+const FALLBACK_STOPS: [RGB, RGB, RGB, RGB] = [
+  [125, 169, 251],
+  [46, 110, 247],
+  [8, 119, 222],
+  [4, 75, 137],
+];
+
+function hexToRgb(hex: string): RGB | null {
+  const m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(hex.trim());
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+function readPalette(): CurvePalette {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) =>
+    cs.getPropertyValue(name).trim() || fallback;
+  const ink = v('--surface-ink-rgb', '10, 32, 54');
+  const parsed = v('--surface-curve-stops', '')
+    .split(',')
+    .map((c) => hexToRgb(c))
+    .filter((c): c is RGB => c !== null);
+  return {
+    inkLabel: v('--surface-heading', '#0A2036'),
+    inkMuted: `rgba(${ink}, 0.55)`,
+    lineSoft: `rgba(${ink}, 0.12)`,
+    // Matches the page ground so each dot reads as punched out of the curve.
+    dotRing: v('--surface-page', '#FFFFFF'),
+    stops: parsed.length === 4 ? (parsed as [RGB, RGB, RGB, RGB]) : FALLBACK_STOPS,
+  };
+}
+
+function lerp(a: RGB, b: RGB, t: number) {
   return `rgb(${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(
     a[1] + (b[1] - a[1]) * t,
   )},${Math.round(a[2] + (b[2] - a[2]) * t)})`;
 }
-function gradColor(t: number) {
-  if (t < 0.5) return lerp(C1, C2, t / 0.5);
-  return lerp(C2, C4, (t - 0.5) / 0.5);
+function gradColor(stops: [RGB, RGB, RGB, RGB], t: number) {
+  if (t < 0.5) return lerp(stops[0], stops[1], t / 0.5);
+  return lerp(stops[1], stops[3], (t - 0.5) / 0.5);
 }
+const rgbCss = (c: RGB) => `rgb(${c[0]},${c[1]},${c[2]})`;
 
 type ProcessCurveProps = {
   className?: string;
@@ -62,6 +111,26 @@ export default function ProcessCurve({
   const introDoneRef = useRef(false);
   const onIntroDoneRef = useRef(onIntroDone);
   useEffect(() => { onIntroDoneRef.current = onIntroDone; }, [onIntroDone]);
+
+  const paletteRef = useRef<CurvePalette>({
+    inkLabel: '#0A2036',
+    inkMuted: 'rgba(10, 32, 54, 0.55)',
+    lineSoft: 'rgba(10, 32, 54, 0.12)',
+    dotRing: '#FFFFFF',
+    stops: FALLBACK_STOPS,
+  });
+
+  // Re-sample on theme change. Mutating the ref is enough — the rAF loop picks
+  // the new palette up on its very next frame, with no re-render and without
+  // disturbing the intro animation's progress.
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => { paletteRef.current = readPalette(); };
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -100,11 +169,8 @@ export default function ProcessCurve({
       opacity: 0.3 + Math.random() * 0.5,
     }));
 
-    // White-canvas theme.
-    const inkLabel = '#0A2036';
-    const inkMuted = 'rgba(10, 32, 54, 0.55)';
-    const lineSoft = 'rgba(10, 32, 54, 0.12)';
-    const dotRing = '#FFFFFF';
+    // Seed the palette for this mount; the observer below keeps it current.
+    paletteRef.current = readPalette();
 
     // Mark the intro start the first time draw() runs while intro is on.
     if (intro && introStartRef.current === null) {
@@ -114,6 +180,8 @@ export default function ProcessCurve({
     }
 
     function draw() {
+      // One property read per frame — no getComputedStyle in the hot path.
+      const { inkLabel, inkMuted, lineSoft, dotRing, stops } = paletteRef.current;
       const w = canvas.width / dpr;
       const h = canvas.height / dpr;
       ctx.clearRect(0, 0, w, h);
@@ -140,10 +208,10 @@ export default function ProcessCurve({
       const cw = w - padL - padR;
 
       const gradient = ctx.createLinearGradient(padL, 0, padL + cw, 0);
-      gradient.addColorStop(0, '#7DA9FB');
-      gradient.addColorStop(0.45, '#2E6EF7');
-      gradient.addColorStop(0.75, '#0877DE');
-      gradient.addColorStop(1, '#044B89');
+      gradient.addColorStop(0, rgbCss(stops[0]));
+      gradient.addColorStop(0.45, rgbCss(stops[1]));
+      gradient.addColorStop(0.75, rgbCss(stops[2]));
+      gradient.addColorStop(1, rgbCss(stops[3]));
 
       // Partial-draw window — only render up to progress * cw across.
       const p = Math.max(0, Math.min(1, progressRef.current));
@@ -180,7 +248,7 @@ export default function ProcessCurve({
         const py = curveY(px, cw, h) + part.offsetY + Math.sin(time * 0.03 + part.pct * 10) * 6;
         ctx.beginPath();
         ctx.arc(padL + px, py, part.size, 0, Math.PI * 2);
-        ctx.fillStyle = gradColor(part.pct);
+        ctx.fillStyle = gradColor(stops, part.pct);
         ctx.globalAlpha = part.opacity * (0.6 + 0.4 * Math.sin(time * 0.04 + part.pct * 8));
         ctx.fill();
         ctx.globalAlpha = 1;
@@ -196,12 +264,12 @@ export default function ProcessCurve({
       ctx.stroke();
 
       // Milestones — each only appears once the curve has drawn past it.
-      const stepColors = [C1, C2, C3, C4];
+      const stepColors = stops;
       STEPS.forEach((s, si) => {
         if (s.pct > p) return;
         const mx = s.pct * cw;
         const my = curveY(mx, cw, h);
-        const col = `rgb(${stepColors[si].join(',')})`;
+        const col = rgbCss(stepColors[si]);
 
         ctx.beginPath();
         ctx.moveTo(padL + mx, my + 12);

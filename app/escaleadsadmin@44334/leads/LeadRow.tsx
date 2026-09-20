@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import type { Lead } from '@/lib/supabase/types';
 import styles from '../admin.module.css';
 
-// Render a flag emoji for a 2-letter country code (purely cosmetic; falls back to empty string).
+// Compact one-line row, matching the Prospects list. The previous card rendered a five-cell meta
+// grid plus the full message body for every lead, so a screen held about three of them.
+
 function flagFor(country: string | null): string {
   if (!country || country.length !== 2) return '';
   const A = 0x1f1e6;
@@ -25,13 +27,21 @@ async function readError(response: Response): Promise<string> {
   }
 }
 
-export default function LeadRow({ lead, formattedDate }: { lead: Lead; formattedDate: string }) {
+export default function LeadRow({
+  lead,
+  formattedDate,
+  rank,
+}: {
+  lead: Lead;
+  formattedDate: string;
+  rank: number;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
   const [read, setRead] = useState(lead.read);
   const [error, setError] = useState<string | null>(null);
   const location = formatLocation(lead);
-  const flag = flagFor(lead.country);
 
   const toggleRead = async () => {
     setBusy(true);
@@ -64,82 +74,71 @@ export default function LeadRow({ lead, formattedDate }: { lead: Lead; formatted
       setError(err instanceof Error ? err.message : 'Delete failed');
       setBusy(false);
     }
-    // On success the row will be removed by router.refresh(), so no setBusy(false) is needed.
   };
 
   return (
-    <article className={`${styles.card} ${styles.leadCard} ${read ? styles.leadCardRead : styles.leadCardUnread}`}>
-      <div className={styles.leadCardHeader}>
-        <div className={styles.leadIdentity}>
-          <div className={styles.leadHeaderMeta}>
-            <span className={`${styles.badge} ${read ? styles.badgeRead : styles.badgeUnread}`}>
-              {read ? 'Read' : 'Unread'}
-            </span>
-            <span className={styles.leadTimestampValue}>Received {formattedDate}</span>
-          </div>
-          <h2 className={styles.leadName}>{lead.name}</h2>
-        </div>
-      </div>
-
-      <div className={styles.leadMetaGrid}>
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Email</span>
-          <a className={styles.linkRow} href={`mailto:${lead.email}`}>{lead.email}</a>
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Phone</span>
-          {lead.phone ? <a className={styles.linkRow} href={`tel:${lead.phone}`}>{lead.phone}</a> : <span className={styles.muted}>—</span>}
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>Location</span>
-          {location ? (
-            <span className={styles.leadMetaValue} title={location}>
-              {flag ? `${flag} ${location}` : location}
-            </span>
-          ) : (
-            <span className={styles.muted}>—</span>
-          )}
-        </div>
-
-        <div className={styles.leadMetaItem}>
-          <span className={styles.leadMetaLabel}>IP address</span>
-          {lead.ip_address ? (
-            <code className={`${styles.mono} ${styles.leadCode}`}>{lead.ip_address}</code>
-          ) : (
-            <span className={styles.muted}>—</span>
-          )}
-        </div>
-
-        <div className={`${styles.leadMetaItem} ${styles.leadMessageCard}`}>
-          <span className={styles.leadMetaLabel}>Message</span>
-          <div className={styles.leadDetails}>{lead.message}</div>
-        </div>
-      </div>
-
-      <div className={styles.leadActions}>
+    <div className={`${styles.rowItem} ${open ? styles.rowItemOpen : ''}`}>
+      <div className={styles.rowMain}>
         <button
           type="button"
-          className={`${styles.button} ${styles.buttonGhost} ${styles.buttonSmall}`}
+          className={styles.rowToggle}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={`${open ? 'Hide' : 'Show'} message from ${lead.name}`}
+        >
+          <span className={open ? styles.caretOpen : styles.caret} aria-hidden="true">›</span>
+        </button>
+
+        <span className={styles.rowRank}>{rank}</span>
+
+        <span className={read ? styles.dotRead : styles.dotUnread} aria-hidden="true" />
+
+        <span className={styles.rowName}>
+          <strong>{lead.name}</strong>
+        </span>
+
+        <span className={styles.rowMeta}>
+          {lead.email}
+          {location ? ` · ${flagFor(lead.country)} ${location}` : ''}
+        </span>
+
+        <span className={styles.rowDate}>{formattedDate}</span>
+
+        <span className={styles.rowLinks}>
+          <a href={`mailto:${lead.email}`} className={styles.iconLink} title={lead.email}>@</a>
+          {lead.phone ? (
+            <a href={`tel:${lead.phone}`} className={styles.iconLink} title={lead.phone}>T</a>
+          ) : null}
+        </span>
+
+        <button
+          type="button"
+          className={styles.rowAction}
           onClick={toggleRead}
           disabled={busy}
         >
-          {read ? 'Mark unread' : 'Mark read'}
-        </button>
-        <button
-          type="button"
-          className={`${styles.button} ${styles.buttonDanger} ${styles.buttonSmall}`}
-          onClick={remove}
-          disabled={busy}
-        >
-          {busy ? 'Deleting…' : 'Delete'}
+          {read ? 'Unread' : 'Read'}
         </button>
       </div>
 
-      {error ? (
-        <div className={`${styles.error} ${styles.leadError}`} role="alert">{error}</div>
+      {open ? (
+        <div className={styles.rowDetail}>
+          <p className={styles.rowDetailText}>{lead.message}</p>
+          <div className={styles.rowDetailLinks}>
+            {lead.phone ? <span>{lead.phone}</span> : null}
+            {lead.ip_address ? <code className={styles.mono}>{lead.ip_address}</code> : null}
+            <button
+              type="button"
+              className={styles.rowDanger}
+              onClick={remove}
+              disabled={busy}
+            >
+              {busy ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+          {error ? <div className={styles.inlineError}>{error}</div> : null}
+        </div>
       ) : null}
-    </article>
+    </div>
   );
 }

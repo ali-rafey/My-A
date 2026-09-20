@@ -22,98 +22,62 @@ export type Step = {
   description: string;
 };
 
-// Richer portfolio entries for the dedicated /our-work page (card + carousel
-// showcase). Kept separate from `workProjects` so the homepage #our-work
-// section is unaffected. `accent` tints the demo thumbnail; `mockup` selects
-// which UI illustration to render (stand-in until real screenshots exist).
-export type CaseStudyMockup = 'dashboard' | 'mobile' | 'analytics' | 'editor';
-
-export type CaseStudy = {
-  id: number;
-  title: string;
-  description: string;
-  tags: string[];
-  accent: string;
-  mockup: CaseStudyMockup;
-};
-
-export const caseStudies: CaseStudy[] = [
+export const services: Service[] = [
+  // The four moves of the home film, in the order a business lives them.
+  // Titles double as the contact form's service choices and, slugged, as the
+  // /contact?service= hand-off from the Services page. `capabilities` are
+  // each service's four parts — the numbered labels in its illustration on
+  // /services — so keep them short and keep exactly four.
   {
     id: 1,
-    title: 'MedHealix',
+    title: 'Research & Data',
+    headline: 'Know the market before you spend.',
     description:
-      'MedHealix is a live enterprise HealthTech platform we built from the ground up — a HIPAA-compliant, co-branded health experience connecting patients with providers across a secure, scalable cloud backend.',
-    tags: ['HIPAA Compliance', 'Azure', 'HealthTech', 'Enterprise'],
-    accent: '#2563EB',
-    mockup: 'dashboard',
+      'Audience and market research, competitor analysis and clean analytics, so every build and every campaign starts from evidence, not guesswork.',
+    capabilities: [
+      'Audience research',
+      'Market & competitors',
+      'GA4 & analytics',
+      'Attribution & reporting',
+    ],
   },
   {
     id: 2,
-    title: 'Earthly Insight',
+    title: 'Digital Presence',
+    headline: 'A storefront people trust on sight.',
     description:
-      'Earthly Insight is a live, scaling AI platform we built from scratch on Web, iOS, and Android — now with 6,500+ users and 1,000+ daily active sessions, all powered by a multi-model AI engine.',
-    tags: ['Multi-AI', 'Cross-Platform', 'GreenTech', 'Mobile'],
-    accent: '#16A34A',
-    mockup: 'mobile',
+      'Websites and Shopify stores designed around your buyer: fast, findable and built to convert, with the brand to match.',
+    capabilities: [
+      'Website',
+      'Shopify store',
+      'Brand & UX',
+      'Speed & SEO',
+    ],
   },
   {
     id: 3,
-    title: 'Altruva',
+    title: 'Advertising',
+    headline: 'Ads that pay for themselves.',
     description:
-      'Altruva is a live nonprofit FinAI platform backed by $100,000 in Microsoft Azure credits. We built it entirely from scratch — producing financial insights and guidance for mission-driven organizations.',
-    tags: ['Azure AI Foundry', 'RAG', 'MCP', 'NonProfit Tech'],
-    accent: '#7C3AED',
-    mockup: 'analytics',
+      'Meta and Google campaigns with the pixel, conversions and creative set up properly. Launched, measured, and scaled only when the numbers say so.',
+    capabilities: [
+      'Meta Ads',
+      'Google Ads',
+      'Pixel & tracking',
+      'Creative & scaling',
+    ],
   },
   {
     id: 4,
-    title: 'Syncom AI',
+    title: 'Automation',
+    headline: 'Busywork that runs itself.',
     description:
-      'Syncom AI is a live AI copywriting platform we built end-to-end — trained on Gary Halbert, Dan Kennedy, Eugene Schwartz, and other legendary direct-response copywriters to generate high-converting copy on demand.',
-    tags: ['AI Copywriting', 'Direct Response', 'MarTech', 'SaaS'],
-    accent: '#0F172A',
-    mockup: 'editor',
-  },
-];
-
-export const services: Service[] = [
-  {
-    id: 1,
-    title: 'Digital Presence',
-    headline: 'Built to be seen.',
-    description:
-      'Your digital storefront, performance-tuned. Websites, brand, and product experiences that turn visitors into customers.',
+      'n8n workflows that log orders, route leads, reply on WhatsApp and send the follow-up, so your team spends its time on customers, not copy-paste.',
     capabilities: [
-      'Web Development',
-      'Brand Identity',
-      'UX & Design',
-      'Performance & SEO',
-    ],
-  },
-  {
-    id: 2,
-    title: 'Data Analytics',
-    headline: 'Insight that compounds.',
-    description:
-      'Turn raw signal into clear decisions. Dashboards, attribution models, and insights that compound over time.',
-    capabilities: [
-      'Analytics Dashboards',
-      'Attribution Modeling',
-      'Conversion Tracking',
-      'Reporting Systems',
-    ],
-  },
-  {
-    id: 3,
-    title: 'Advertising & Marketing',
-    headline: 'Reach that converts.',
-    description:
-      'Stop wasting budget. Performance ads, organic strategy, and growth campaigns engineered for ROI.',
-    capabilities: [
-      'Performance Media',
-      'SEO Strategy',
-      'Content & Brand',
-      'Growth Engineering',
+      'n8n workflows',
+      'Order & lead routing',
+      'WhatsApp & email',
+      'CRM',
     ],
   },
 ];

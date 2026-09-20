@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import Navbar from '@/components/navbar/Navbar';
+import { THEME_BOOT_SCRIPT } from '@/lib/theme';
 import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
 import StylesPreloader from './StylesPreloader';
 import '@/styles/index.css';
@@ -112,13 +113,14 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
     <html
       lang="en"
       className={`${inter.variable} ${playfair.variable}`}
-      // Inline background on the root element guarantees an opaque white at
-      // the VERY FIRST paint — before any external/JS-injected CSS loads.
-      // Without this, the brief window before the stylesheet applies leaves
-      // <html> transparent, and the browser fills it (overscroll area, 100vh
-      // gap, etc.) with the user's profile THEME colour for 1-2s. The matching
-      // rule in global.css then keeps it white once CSS is in.
-      style={{ backgroundColor: '#FFFFFF', colorScheme: 'light' }}
+      // No inline background here any more — it cannot be theme-aware, because
+      // the server has no idea whether this visitor is in dark mode. The
+      // first-paint guarantee it used to provide now comes from the critical
+      // <style> + boot script below, which run in the same blocking pass and DO
+      // know. `suppressHydrationWarning` is required and narrow in scope: the
+      // boot script mutates exactly these two attributes before React
+      // hydrates, so the server HTML and the live DOM legitimately differ here.
+      suppressHydrationWarning
     >
       <head>
         {/* Critical inline CSS — render-blocking, applied before the external
@@ -127,9 +129,22 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
         <style
           dangerouslySetInnerHTML={{
             __html:
-              'html,body{background:#fff;overscroll-behavior:none}',
+              'html{color-scheme:light;background:#fff}' +
+              'html[data-theme="dark"]{color-scheme:dark;background:#0B1120}' +
+              'body{background:inherit;overscroll-behavior:none}' +
+              '#theme-backdrop{background:#fff}' +
+              'html[data-theme="dark"] #theme-backdrop{background:#0B1120}',
           }}
         />
+
+        {/* Resolves the theme onto <html> BEFORE the first paint. Must stay
+            here — inline, blocking, ahead of <body> — and must stay ahead of
+            any component that reads the attribute. Moving it into a component,
+            or adding `defer`/`async`, reintroduces a full-page white flash for
+            every dark-mode visitor on every cold load. The literal colours
+            above are the light/dark `--surface-page` values; they are repeated
+            rather than referenced because tokens.css has not loaded yet. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
 
         {/* GA4 — server-rendered into the response body so Search Console can verify the property. */}
         {gaMeasurementId ? (
@@ -152,11 +167,13 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body style={{ backgroundColor: '#FFFFFF' }}>
+      <body>
         {/* Viewport backdrop — a real painted element fixed to the full visual
             viewport, behind all content (z-index: -1). This is the definitive
             guard against the browser's profile THEME colour ever showing
-            through. Unlike an html/body background (which the browser stops
+            through. Its colour now comes from the critical CSS above (keyed on
+            data-theme) rather than an inline style, so it flips with the theme
+            while keeping the same first-paint guarantee. Unlike an html/body background (which the browser stops
             propagating to the canvas when the root has overflow:hidden +
             height:100vh, as the Services scroll-lock sets — leaving a strip of
             raw browser canvas below the short html box), a position:fixed +
@@ -165,11 +182,11 @@ gtag('config', '${gaMeasurementId}', { send_page_view: false });`;
             load timing. Inline-styled + server-rendered so it's present at the
             very first paint with no stylesheet dependency. */}
         <div
+          id="theme-backdrop"
           aria-hidden="true"
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: '#FFFFFF',
             zIndex: -1,
             pointerEvents: 'none',
           }}

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Blog } from '@/lib/supabase/types';
 import { textToHtml } from '@/lib/text-to-html';
+import ImageUploader from '../ImageUploader';
 import styles from '../admin.module.css';
 
 type Mode = 'create' | 'edit';
@@ -139,15 +140,12 @@ export default function BlogEditor({ mode, initial }: Props) {
         <span className={styles.hint}>{metaDescription.length}/300 characters</span>
       </div>
 
-      <div className={styles.formRow}>
-        <label htmlFor="coverImage">Cover image URL</label>
-        <input
-          id="coverImage"
-          type="url"
+      <div className={`${styles.formRow} ${styles.formRowFull}`}>
+        <ImageUploader
+          label="Cover image"
           value={coverImage}
-          onChange={(e) => setCoverImage(e.target.value)}
-          maxLength={500}
-          placeholder="https://images.example.com/cover.jpg"
+          onChange={setCoverImage}
+          hint="Appears on the post and on its card in /blogs. Landscape reads best. JPEG, PNG, GIF or WebP, up to 6MB."
         />
       </div>
 

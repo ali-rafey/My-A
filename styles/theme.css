@@ -1,0 +1,284 @@
+/* =============================================================================
+   THEME LAYER
+   =============================================================================
+   Lives here rather than in tokens.css on purpose: CLAUDE.md §4.2 freezes
+   reset.css / tokens.css / global.css, and a dark theme is not a reason to
+   thaw them. Nothing in this file renames, removes or overrides an existing
+   --color-* token; it only ADDS a --surface-* layer on top and re-points two
+   backgrounds by cascade. tokens.css is untouched and still the source of
+   truth for the raw palette.
+
+   Imported from styles/index.css AFTER global.css — that order is load-bearing
+   for the html/body rules at the bottom of this file.
+
+   HOW IT FITS TOGETHER
+     tokens.css   raw palette      --color-blue-primary, --color-text-dark, ...
+     theme.css    semantic layer   --surface-glass, --surface-heading, ...
+     components   read ONLY --surface-* for anything that changes with theme
+
+   ACTIVATION — on <html>, set by the boot script in app/layout.tsx:
+     data-theme="dark"   force dark      data-theme="light"  force light
+     data-theme="auto"   follow the OS   (absent)            light
+   ============================================================================= */
+
+:root {
+  /* ===========================================================================
+     SOFT-DARK ("ink") PALETTE
+     ===========================================================================
+     Raw values only — nothing consumes these directly. Built on the brand navy
+     (--color-text-dark, #0D1B3E) lifted and desaturated rather than on black:
+     pure #000 makes glass look like a hole and turns every shadow into a hard
+     edge. These stay a touch blue so the theme reads as the same brand at
+     night. */
+  --color-ink-900: #0B1120;
+  --color-ink-800: #121A2B;
+  --color-ink-700: #182033;
+  --color-ink-glass: rgba(24, 32, 51, 0.66);
+  --color-ink-glass-strong: rgba(24, 32, 51, 0.82);
+  --color-ink-rim: rgba(255, 255, 255, 0.10);
+  --color-ink-highlight: rgba(255, 255, 255, 0.14);
+  --color-ink-shadow: rgba(3, 8, 20, 0.55);
+  --color-ink-scrim: rgba(6, 11, 24, 0.50);
+  /* Not #FFF. Pure white on a dark ground glares and smears; a hair of blue
+     at 91% lightness stays crisp and matches the palette. 14.6:1 on glass. */
+  --color-text-on-dark: #E8EDF7;
+  --color-text-on-dark-muted: #A7B2C7;
+  /* #0877DE only reaches 3.9:1 on a dark panel. This is the same hue lifted
+     to 7.1:1. */
+  --color-blue-on-dark: #62A9FF;
+
+  /* ===========================================================================
+     SEMANTIC SURFACE LAYER  (light values)
+     ===========================================================================
+     The theme-aware layer that components actually consume. Components must
+     never reference a raw --color-* for anything that changes between themes;
+     read a --surface-* and it themes itself for free.
+
+     ACTIVATION
+       <html data-theme="dark">   force dark
+       <html data-theme="light">  force light  (or omit the attribute)
+       <html data-theme="auto">   follow the operating system
+
+     "auto" is opt-in rather than the default on purpose: app/layout.tsx
+     currently pins colorScheme:'light' and paints <html> white, so following
+     the OS today would drop a dark bar onto a white page. Switch that layout
+     line and the whole contract is already wired. */
+
+  /* Glass */
+  --surface-glass: var(--color-white-glass);
+  --surface-glass-rim: var(--color-white-glass-border);
+  --surface-glass-highlight: var(--color-white-glass-border);
+  --surface-glass-shadow: var(--color-white-glass-shadow);
+  --surface-glass-filter: blur(30px) saturate(190%);
+  --surface-scrim: rgba(13, 27, 62, 0.18);
+
+  /* Content */
+  --surface-ink: var(--color-text-dark);
+  --surface-accent: #0877DE;
+  --surface-accent-wash: rgba(8, 119, 222, 0.10);
+  --surface-accent-wash-soft: rgba(8, 119, 222, 0.08);
+
+  /* Primary CTA */
+  --surface-cta-gradient: linear-gradient(135deg, #0E84EC 0%, #0877DE 45%, #044B89 100%);
+  --surface-cta-glow: 0 8px 20px -8px rgba(8, 119, 222, 0.6);
+  --surface-cta-glow-hover: 0 14px 28px -8px rgba(8, 119, 222, 0.72);
+  --surface-cta-inner: rgba(255, 255, 255, 0.22);
+  --surface-cta-inner-hover: rgba(255, 255, 255, 0.26);
+
+  /* Logo plate — light theme needs none, the mark sits on white already. */
+  --surface-logo-plate: none;
+  --surface-logo-plate-shadow: none;
+  /* A filled surface a DARK logo can sit on (circular home button, drawer
+     mark). Unlike --surface-logo-plate this is never `none`, because the
+     element it paints is a real button that needs a ground in both themes. */
+  --surface-logo-chip: var(--surface-card);
+
+  /* Page surfaces. --surface-page is the one the first-paint guards in
+     app/layout.tsx read; the others are the section grounds. */
+  --surface-page: #FFFFFF;
+  --surface-page-alt: var(--color-silver-light);
+  --surface-page-tint: var(--color-blue-light);
+  --surface-card: #FFFFFF;
+  --surface-card-raised: #FFFFFF;
+  --surface-border: rgba(13, 27, 62, 0.10);
+  --surface-border-strong: rgba(13, 27, 62, 0.18);
+  --surface-heading: var(--color-text-dark);
+  --surface-body: var(--color-text-body);
+  --surface-muted: var(--color-silver-dark);
+  --surface-shadow-sm: 0 1px 3px rgba(13, 27, 62, 0.08);
+  --surface-shadow-md: 0 4px 16px rgba(13, 27, 62, 0.12);
+  --surface-shadow-lg: 0 18px 48px rgba(13, 27, 62, 0.10);
+  /* The hero's <canvas> cannot read CSS, so ProcessCurve samples this off the
+     document and re-reads it whenever data-theme changes. Four gradient stops,
+     left to right along the curve, as one comma-separated list. */
+  --surface-curve-stops: #7DA9FB, #2E6EF7, #0877DE, #044B89;
+
+  /* RGB TRIPLETS.
+     Sections use one ink at a dozen different alphas (rgba(10,32,54,.35) for a
+     rule, .55 for muted copy, .05 for a hairline...). Tokenising each alpha
+     separately would mean thirty tokens; tokenising the triplet means the
+     alpha stays written at the call site where it is readable, and only the
+     colour flips. Use as rgba(var(--surface-ink-rgb), 0.35). */
+  --surface-ink-rgb: 10, 32, 54;
+  --surface-paper-rgb: 255, 255, 255;
+  --surface-accent-rgb: 8, 119, 222;
+}
+
+/* =============================================================================
+   DARK THEME
+   =============================================================================
+   Declared twice on purpose: once for the explicit opt-in and once for the
+   OS-following mode. CSS has no mixin, and a shared marker + color-mix()
+   indirection would be harder to read than fourteen duplicated lines.
+   Keep the two blocks in sync.
+   ============================================================================= */
+[data-theme='dark'] {
+  /* Glass */
+  --surface-glass: var(--color-ink-glass);
+  --surface-glass-rim: var(--color-ink-rim);
+  --surface-glass-highlight: var(--color-ink-highlight);
+  --surface-glass-shadow: var(--color-ink-shadow);
+  /* Less saturation than the light theme (dark backdrops go muddy when you
+     push chroma) and a brightness lift instead, so the panel reads as frosted
+     glass catching light rather than as a hole cut in the page. */
+  --surface-glass-filter: blur(30px) saturate(150%) brightness(1.18);
+  --surface-scrim: var(--color-ink-scrim);
+
+  /* Content */
+  --surface-ink: var(--color-text-on-dark);
+  --surface-accent: var(--color-blue-on-dark);
+  --surface-accent-wash: rgba(98, 169, 255, 0.16);
+  --surface-accent-wash-soft: rgba(98, 169, 255, 0.12);
+
+  /* Primary CTA. Deliberately NOT brighter than the light theme's — white
+     label on a lighter blue would drop below 4.5:1. This ramp measures
+     4.07:1 (light theme: 3.80:1) while the glow does the work of lifting the
+     pill off the panel. */
+  --surface-cta-gradient: linear-gradient(135deg, #1B7FE0 0%, #1268C4 45%, #0A4E96 100%);
+  --surface-cta-glow: 0 8px 22px -8px rgba(27, 127, 224, 0.75);
+  --surface-cta-glow-hover: 0 14px 30px -8px rgba(58, 155, 255, 0.85);
+  --surface-cta-inner: rgba(255, 255, 255, 0.28);
+  --surface-cta-inner-hover: rgba(255, 255, 255, 0.34);
+
+  /* Logo plate. The brand mark is dark — 64.5% of its pixels fall below the
+     legibility floor on a dark ground — so on dark it gets a light chip to
+     sit on rather than a filter, which would distort the brand colours. */
+  --surface-logo-plate: linear-gradient(160deg, #F6F9FE 0%, #DFE7F6 100%);
+  --surface-logo-plate-shadow:
+    0 2px 10px rgba(3, 8, 20, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  --surface-logo-chip: linear-gradient(160deg, #F6F9FE 0%, #DFE7F6 100%);
+
+  /* Page surfaces. Three separated steps rather than one flat black, so
+     sections still read as distinct planes the way they do in light. */
+  --surface-page: var(--color-ink-900);
+  --surface-page-alt: var(--color-ink-800);
+  --surface-page-tint: #131F38;
+  --surface-card: rgba(24, 32, 51, 0.55);
+  --surface-card-raised: var(--color-ink-700);
+  --surface-border: rgba(255, 255, 255, 0.09);
+  --surface-border-strong: rgba(255, 255, 255, 0.16);
+  --surface-heading: var(--color-text-on-dark);
+  --surface-body: #C3CDDF;
+  --surface-muted: var(--color-text-on-dark-muted);
+  /* Shadows go deeper AND softer on dark — a light-theme shadow over a dark
+     ground is invisible, so these lean on spread rather than opacity. */
+  --surface-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.40);
+  --surface-shadow-md: 0 4px 18px rgba(0, 0, 0, 0.45);
+  --surface-shadow-lg: 0 18px 52px rgba(0, 0, 0, 0.55);
+  /* Lifted: the light theme's #044B89 end point is invisible on a dark
+     ground, so the whole ramp shifts up while keeping its shape. */
+  --surface-curve-stops: #A9C9FF, #6FB0FF, #3A93F5, #1E6FC4;
+
+  /* See the light block for why these are triplets. The ink INVERTS on dark —
+     it is "the colour text and hairlines are drawn in", not "a dark colour" —
+     while paper darkens to the panel tone. */
+  --surface-ink-rgb: 232, 237, 247;
+  --surface-paper-rgb: 24, 32, 51;
+  --surface-accent-rgb: 98, 169, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='auto'] {
+    /* Glass */
+    --surface-glass: var(--color-ink-glass);
+    --surface-glass-rim: var(--color-ink-rim);
+    --surface-glass-highlight: var(--color-ink-highlight);
+    --surface-glass-shadow: var(--color-ink-shadow);
+    /* Less saturation than the light theme (dark backdrops go muddy when you
+       push chroma) and a brightness lift instead, so the panel reads as frosted
+       glass catching light rather than as a hole cut in the page. */
+    --surface-glass-filter: blur(30px) saturate(150%) brightness(1.18);
+    --surface-scrim: var(--color-ink-scrim);
+
+    /* Content */
+    --surface-ink: var(--color-text-on-dark);
+    --surface-accent: var(--color-blue-on-dark);
+    --surface-accent-wash: rgba(98, 169, 255, 0.16);
+    --surface-accent-wash-soft: rgba(98, 169, 255, 0.12);
+
+    /* Primary CTA. Deliberately NOT brighter than the light theme's — white
+       label on a lighter blue would drop below 4.5:1. This ramp measures
+       4.07:1 (light theme: 3.80:1) while the glow does the work of lifting the
+       pill off the panel. */
+    --surface-cta-gradient: linear-gradient(135deg, #1B7FE0 0%, #1268C4 45%, #0A4E96 100%);
+    --surface-cta-glow: 0 8px 22px -8px rgba(27, 127, 224, 0.75);
+    --surface-cta-glow-hover: 0 14px 30px -8px rgba(58, 155, 255, 0.85);
+    --surface-cta-inner: rgba(255, 255, 255, 0.28);
+    --surface-cta-inner-hover: rgba(255, 255, 255, 0.34);
+
+    /* Logo plate. The brand mark is dark — 64.5% of its pixels fall below the
+       legibility floor on a dark ground — so on dark it gets a light chip to
+       sit on rather than a filter, which would distort the brand colours. */
+    --surface-logo-plate: linear-gradient(160deg, #F6F9FE 0%, #DFE7F6 100%);
+    --surface-logo-plate-shadow:
+      0 2px 10px rgba(3, 8, 20, 0.45),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    --surface-logo-chip: linear-gradient(160deg, #F6F9FE 0%, #DFE7F6 100%);
+
+    /* Page surfaces. Three separated steps rather than one flat black, so
+       sections still read as distinct planes the way they do in light. */
+    --surface-page: var(--color-ink-900);
+    --surface-page-alt: var(--color-ink-800);
+    --surface-page-tint: #131F38;
+    --surface-card: rgba(24, 32, 51, 0.55);
+    --surface-card-raised: var(--color-ink-700);
+    --surface-border: rgba(255, 255, 255, 0.09);
+    --surface-border-strong: rgba(255, 255, 255, 0.16);
+    --surface-heading: var(--color-text-on-dark);
+    --surface-body: #C3CDDF;
+    --surface-muted: var(--color-text-on-dark-muted);
+    /* Shadows go deeper AND softer on dark — a light-theme shadow over a dark
+       ground is invisible, so these lean on spread rather than opacity. */
+    --surface-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.40);
+    --surface-shadow-md: 0 4px 18px rgba(0, 0, 0, 0.45);
+    --surface-shadow-lg: 0 18px 52px rgba(0, 0, 0, 0.55);
+    /* Lifted: the light theme's #044B89 end point is invisible on a dark
+       ground, so the whole ramp shifts up while keeping its shape. */
+    --surface-curve-stops: #A9C9FF, #6FB0FF, #3A93F5, #1E6FC4;
+
+    /* See the light block for why these are triplets. The ink INVERTS on dark —
+       it is "the colour text and hairlines are drawn in", not "a dark colour" —
+       while paper darkens to the panel tone. */
+    --surface-ink-rgb: 232, 237, 247;
+    --surface-paper-rgb: 24, 32, 51;
+    --surface-accent-rgb: 98, 169, 255;
+}
+}
+
+/* =============================================================================
+   Page ground.
+   =============================================================================
+   These two rules are why this file must be imported AFTER global.css. They
+   restate html/body backgrounds at identical specificity (0,0,1) so the later
+   source position wins the cascade — which lets the theme own the page ground
+   without editing the frozen stylesheet that sets it.
+   ============================================================================= */
+html {
+  background: var(--surface-page);
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--surface-body);
+}

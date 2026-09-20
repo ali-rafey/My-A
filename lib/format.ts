@@ -14,3 +14,10 @@ export function formatDateTime(input: string | Date): string {
   const date = typeof input === 'string' ? new Date(input) : input;
   return dateTimeFmt.format(date);
 }
+
+// Minutes to read a post, from its stored HTML. 200 wpm is the usual desk
+// estimate; the floor of 1 keeps a one-paragraph note from reading "0 min".
+export function readingMinutes(html: string): number {
+  const words = html.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}

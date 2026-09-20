@@ -12,6 +12,8 @@
 // from the layout chunk instead of fetching new chunks.
 
 import homeStyles            from '@/sections/home/Home.module.css';
+import filmStyles            from '@/sections/home/film/Film.module.css';
+import filmSceneStyles       from '@/sections/home/film/scenes.module.css';
 import servicesStyles        from '@/sections/services/Services.module.css';
 import howItWorksStyles      from '@/sections/how-it-works/HowItWorks.module.css';
 import whyBusinessesFailStyles from '@/sections/how-it-works/WhyBusinessesFail.module.css';
@@ -26,6 +28,8 @@ export default function StylesPreloader() {
   return (
     <div hidden aria-hidden="true" data-styles-preloader>
       <span className={homeStyles.section} />
+      <span className={filmStyles.film} />
+      <span className={filmSceneStyles.fill} />
       <span className={servicesStyles.section} />
       <span className={howItWorksStyles.section} />
       <span className={whyBusinessesFailStyles.section} />

@@ -1,282 +1,543 @@
 /* =============================================================================
-   Work Showcase — dedicated /our-work page.
+   Our Work — one screen, no page scroll.
    =============================================================================
-   Centred editorial header, then a paged carousel of project cards laid out
-   2×2 per page. Each card is a horizontal split: a placeholder "browser
-   screenshot" thumbnail on the left, the project title / description / tag
-   pills on the right. The track slides one full page at a time; circular
-   prev/next controls disable at the boundaries.
+   The section is exactly one viewport tall and hides its overflow, so the
+   browser has nothing to scroll. Every band inside is `flex: none` except the
+   deck, which takes whatever height is left — that is what keeps the plates on
+   screen at any window size without a media query per height.
+
+   Ground, type and colour are the home film's: warm paper with its grain and a
+   faint grid, navy ink, one electric blue.
    ============================================================================= */
 .section {
-  --w-navy:   #0A2036;
-  --w-accent: #0877DE;
-  --w-steel:  #5A6776;
-  --w-line:   #E6E9EF;
-  --w-ease:   cubic-bezier(0.22, 1, 0.36, 1);
+  --wk-paper: #F2EFE9;
+  --wk-ink: #0D1B3E;
+  --wk-body: #3B4658;
+  --wk-muted: #6C7789;
+  --wk-line: rgba(13, 27, 62, 0.1);
+  --wk-card: #FFFFFF;
+  --wk-tint: #F7F5F1;
+  --wk-blue: #1F6FE5;
+  --wk-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  background: #FFFFFF;
-  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
   display: flex;
-  align-items: center;
-  padding: 6rem 0;
+  flex-direction: column;
+  height: 100vh;
+  height: 100svh;
+  margin-bottom: -7rem;
+  /* The foot clears the floating navbar; nothing is laid out under it. */
+  padding: 2rem 0 7.1rem;
+  overflow: hidden;
+  background: var(--wk-paper);
+  color: var(--wk-ink);
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(13, 27, 62, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 27, 62, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 20%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 20%, transparent 78%);
+  pointer-events: none;
+}
+
+.section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.42  0 0 0 0 0.38  0 0 0 .18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 .container {
-  width: min(100%, var(--container-max));
-  margin: 0 auto;
-  padding: var(--container-padding);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  /* Wide: four square plates in a row want the page's full measure. */
+  width: min(100%, 1420px);
+  margin-inline: auto;
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
-.header {
-  text-align: center;
-  max-width: 44rem;
-  margin: 0 auto 3.5rem;
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+.masthead {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--wk-line);
+  animation: wkRise 0.6s var(--wk-ease) both;
 }
 
 .title {
-  margin: 0 0 1rem;
-  font-family: var(--font-sans);
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  color: var(--w-navy);
+  margin: 0;
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: var(--wk-ink);
 }
 
-.subtitle {
-  margin: 0 auto;
-  max-width: 38rem;
-  color: var(--w-steel);
-  font-size: clamp(1rem, 1.3vw, 1.125rem);
-  line-height: 1.6;
+.note {
+  max-width: 21rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--wk-muted);
 }
 
-/* ── Carousel viewport / track ───────────────────────────────────────────── */
-.viewport {
-  overflow: hidden;
-}
-
-.track {
+/* ── Counter and paging ───────────────────────────────────────────────────── */
+.bar {
   display: flex;
-  transition: transform 0.55s var(--w-ease);
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0 0.85rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wk-muted);
+  animation: wkRise 0.6s 0.06s var(--wk-ease) both;
 }
+
+.count b { color: var(--wk-ink); }
+
+.nav { display: flex; align-items: center; gap: 0.55rem; }
+
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wk-card);
+  box-shadow: 0 0 0 1px var(--wk-line);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--wk-ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s var(--wk-ease);
+}
+
+.arrow:hover:not(:disabled) { background: var(--wk-ink); color: var(--wk-paper); }
+.arrow:active:not(:disabled) { transform: scale(0.94); }
+.arrow:disabled { opacity: 0.35; cursor: default; }
+.arrow:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 2px; }
+
+.pageNum { min-width: 4.2rem; text-align: center; color: var(--wk-ink); }
+.pageNum i { font-style: normal; color: var(--wk-muted); }
+
+/* ── The deck ─────────────────────────────────────────────────────────────── */
+.viewport {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.viewport::-webkit-scrollbar { display: none; }
+.viewport:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 4px; border-radius: 12px; }
 
 .page {
+  display: grid;
   flex: 0 0 100%;
   min-width: 100%;
-  /* Small inner gutter so card hover-shadows aren't clipped by the viewport. */
-  padding: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-content: center;
+  /* A tight gutter side to side so the plates read as one spread, and room
+     between the rows so a caption never crowds the plate beneath it. */
+  gap: 1.5rem 0.8rem;
+  scroll-snap-align: start;
 }
 
-/* ── Grid ────────────────────────────────────────────────────────────────── */
-.grid {
+/* The grid follows the page size the deck chose, so the two never disagree.
+   One row: square plates in two rows do not fit a screen. */
+.page[data-per='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.page[data-per='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* A part-filled row centres and takes the space back, so three projects fill
+   the page instead of leaving a gap where a fourth would go. Each is capped so
+   a single project does not become a billboard. */
+.page[data-per='4'][data-fill='1'] { grid-template-columns: minmax(0, 32rem); justify-content: center; }
+.page[data-per='4'][data-fill='2'] { grid-template-columns: repeat(2, minmax(0, 28rem)); justify-content: center; }
+.page[data-per='4'][data-fill='3'] { grid-template-columns: repeat(3, minmax(0, 26rem)); justify-content: center; }
+.page[data-per='2'][data-fill='1'] { grid-template-columns: minmax(0, 28rem); justify-content: center; }
+
+/* Each cell measures itself so the card inside can be sized from BOTH the
+   column's width and the row's height — that is what lets the plate stay
+   square without ever overflowing the screen. */
+.cell {
+  container-type: size;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(1.5rem, 3vw, 3rem) clamp(2rem, 4vw, 4rem);
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
 }
 
-/* ── Card ────────────────────────────────────────────────────────────────── */
+/* ── A plate ──────────────────────────────────────────────────────────────── */
 .card {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-/* ── Placeholder thumbnail (faux browser window) ─────────────────────────── */
-.thumb {
-  --accent: #2563EB;
-
-  position: relative;
-  aspect-ratio: 4 / 3;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid var(--w-line);
-  background: #F4F6FA;
-  box-shadow: 0 14px 30px -18px rgba(10, 32, 54, 0.35);
-  transition:
-    transform 0.45s var(--w-ease),
-    box-shadow 0.45s var(--w-ease);
-}
-
-.card:hover .thumb {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 44px -20px rgba(10, 32, 54, 0.45);
-}
-
-.browserBar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-  padding: 0 12px;
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--w-line);
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #D5DBE5;
-}
-
-.dot:nth-child(1) { background: #FF6058; }
-.dot:nth-child(2) { background: #FFBE2F; }
-.dot:nth-child(3) { background: #2ACB42; }
-
-.thumbBody {
-  position: absolute;
-  inset: 26px 0 0;
-  background: #FFFFFF;
-}
-
-/* The inline SVG demo screenshot fills the browser frame. `color` carries the
-   project accent so the mockup's `currentColor` shapes are tinted per project. */
-.mockup {
-  display: block;
-  width: 100%;
-  height: 100%;
-  color: var(--accent);
-}
-
-/* ── Card content ────────────────────────────────────────────────────────── */
-.content {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  /* Square plate plus a caption of known height: whichever of the cell's two
+     dimensions runs out first decides the card's width. */
+  width: min(100cqw, calc(100cqh - var(--cap)));
+  --cap: 3.3rem;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Only the page you are on plays its entrance; the rest wait their turn. */
+.page[data-on='true'] .cell {
+  animation: wkCardIn 0.62s var(--wk-ease) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+.page[data-on='false'] .cell {
+  opacity: 0.3;
+  transform: scale(0.97);
+  transition: opacity 0.4s ease, transform 0.4s var(--wk-ease);
+}
+
+.media {
+  position: relative;
+  width: 100%;
+  /* Square. The image fills it — nothing framed inside, nothing beside it. */
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--wk-tint);
+  box-shadow: 0 0 0 1px var(--wk-line);
+  transition: box-shadow 0.35s ease, transform 0.45s var(--wk-ease);
+}
+
+.card:hover .media { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--wk-line), 0 26px 50px -28px rgba(13, 27, 62, 0.6); }
+.card:focus-visible .media { outline: 2px solid var(--wk-blue); outline-offset: 3px; }
+
+/* Anchored to the top: the plates are landscape and uploaded screenshots are
+   usually tall, so the crop should keep the head of the page, not its middle. */
+.shot { object-fit: cover; object-position: center top; }
+
+/* A project saved without an image still needs a card, so it gets its initial
+   set on paper rather than a broken frame. */
+.plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(3rem, 7vw, 5rem);
+  color: rgba(13, 27, 62, 0.16);
+}
+
+.chip {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  z-index: 2;
+  padding: 0.28rem 0.68rem;
+  border-radius: 999px;
+  background: rgba(13, 27, 62, 0.62);
+  /* A rim so the chip still reads when it lands on a dark image. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+/* A fixed height, because the card's width is derived from it. */
+.caption {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.14rem;
+  height: var(--cap);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--wk-line);
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wk-muted);
+}
+
+.kicker i {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: #12A150;
+  box-shadow: 0 0 0 0.18rem rgba(18, 161, 80, 0.16);
 }
 
 .cardTitle {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: clamp(1.25rem, 1.8vw, 1.5rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--w-navy);
-}
-
-.cardText {
-  margin: 0;
-  color: var(--w-steel);
-  font-size: 0.95rem;
-  line-height: 1.6;
-
-  /* Clamp to four lines so cards stay balanced regardless of copy length. */
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.95rem, 1.3vw, 1.2rem);
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--wk-ink);
+  transition: color 0.25s ease;
 }
 
-/* ── Tag pills ───────────────────────────────────────────────────────────── */
-.tags {
-  list-style: none;
-  margin: 0.15rem 0 0;
+.card:hover .cardTitle { color: var(--wk-blue); }
+
+/* ── Dots ─────────────────────────────────────────────────────────────────── */
+.dots { display: flex; flex: none; justify-content: center; gap: 0.4rem; padding-top: 0.9rem; }
+
+.dot {
+  width: 1.5rem;
+  height: 0.22rem;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(13, 27, 62, 0.18);
+  cursor: pointer;
+  transition: background-color 0.3s ease, width 0.3s var(--wk-ease);
 }
+
+.dot[data-on='true'] { width: 2.6rem; background: var(--wk-ink); }
+.dot:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 3px; }
+
+/* ── The write-up ─────────────────────────────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  padding-bottom: 6rem;
+  animation: wkFade 0.28s ease both;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(242, 239, 233, 0.82);
+  backdrop-filter: blur(7px);
+  cursor: pointer;
+}
+
+.sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
+  gap: clamp(1.2rem, 3vw, 2.4rem);
+  width: min(100%, 60rem);
+  max-height: 100%;
+  padding: clamp(1.1rem, 2.4vw, 1.8rem);
+  border-radius: 24px;
+  background: var(--wk-card);
+  box-shadow: 0 0 0 1px var(--wk-line), 0 40px 80px -40px rgba(13, 27, 62, 0.6);
+  animation: wkSheetIn 0.42s var(--wk-ease) both;
+}
+
+.sheetScreen {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--wk-tint);
+  box-shadow: 0 0 0 1px var(--wk-line);
+}
+
+.sheetText { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; color: var(--wk-ink); }
+
+.sheetTitle {
+  margin: 0.6rem 0 0;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 550;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.sheetBody { margin: 0.8rem 0 0; font-size: 0.98rem; line-height: 1.6; color: var(--wk-body); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1.2rem 0 0; padding: 0; list-style: none; }
 
 .tag {
-  padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
-  background: rgba(8, 119, 222, 0.08);
-  color: var(--w-accent);
-  font-size: 0.75rem;
+  padding: 0.3rem 0.68rem;
+  border-radius: 999px;
+  background: var(--wk-tint);
+  box-shadow: 0 0 0 1px var(--wk-line);
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
+  color: var(--wk-body);
 }
 
-/* ── Carousel controls ───────────────────────────────────────────────────── */
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2.75rem;
+.close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wk-tint);
+  box-shadow: 0 0 0 1px var(--wk-line);
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--wk-ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.navButton {
+.close:hover { background: var(--wk-ink); color: var(--wk-paper); }
+.close:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 2px; }
+
+.visit {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.3rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--wk-blue);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.visit:hover { border-bottom-color: currentColor; }
+.visit:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 3px; border-radius: 3px; }
+
+/* Nothing published yet. */
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 9999px;
-  border: 1px solid var(--w-line);
-  background: #FFFFFF;
-  color: var(--w-navy);
-  cursor: pointer;
-  box-shadow: 0 8px 20px -12px rgba(10, 32, 54, 0.35);
-  transition:
-    background 0.3s var(--w-ease),
-    color 0.3s var(--w-ease),
-    border-color 0.3s var(--w-ease),
-    transform 0.3s var(--w-ease),
-    box-shadow 0.3s var(--w-ease);
-}
-
-.navButton:hover:not(:disabled) {
-  background: var(--w-navy);
-  color: #FFFFFF;
-  border-color: var(--w-navy);
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px -14px rgba(10, 32, 54, 0.5);
-}
-
-.navButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.pageStatus {
-  min-width: 3rem;
+  gap: 0.4rem;
+  min-height: 0;
   text-align: center;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--w-steel);
-  font-variant-numeric: tabular-nums;
 }
 
-/* ── Reduced motion ──────────────────────────────────────────────────────── */
+.empty p { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: -0.02em; color: var(--wk-ink); }
+.emptyNote { font-size: 0.95rem !important; font-weight: 400 !important; color: var(--wk-muted) !important; }
+
+/* The portfolio in plain markup, for screen readers and crawlers. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────────── */
+@keyframes wkRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes wkCardIn { from { opacity: 0; transform: translateY(26px) scale(0.975); } to { opacity: 1; transform: none; } }
+@keyframes wkFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wkSheetIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .track {
-    transition: none;
-  }
-  .card:hover .thumb,
-  .navButton:hover:not(:disabled) {
-    transform: none;
-  }
+  .masthead, .bar, .overlay, .sheet { animation: none; }
+  .page[data-on='true'] .cell { animation: none; }
+  .page[data-on='false'] .cell { transition: none; }
+  .media, .arrow, .dot, .cardTitle { transition-duration: 0.01ms !important; }
 }
 
-/* ── Tablet (≤ 980px): cards go full width, one column ───────────────────── */
-@media (max-width: 980px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
+/* ── Short and narrow windows ─────────────────────────────────────────────── */
+/* Two rows still have to fit, so the chrome around them gives up its height
+   first and the plates keep as much as possible. */
+@media (max-height: 820px) {
+  .section { padding-top: 1.5rem; }
+  .title { font-size: clamp(1.8rem, 3.6vw, 2.7rem); }
+  .note { font-size: 0.78rem; }
+  .bar { padding: 0.55rem 0 0.7rem; }
+  .card { --cap: 3rem; }
+  .cardTitle { font-size: clamp(0.9rem, 1.2vw, 1.05rem); }
 }
 
-/* ── Mobile (≤ 600px): stack thumbnail above content ─────────────────────── */
-@media (max-width: 600px) {
-  .section {
-    min-height: auto;
-    padding: 4.5rem 0;
-  }
-  .header {
-    margin-bottom: 2.5rem;
-  }
-  .card {
-    grid-template-columns: 1fr;
-    gap: 1.1rem;
-  }
-  .thumb {
-    aspect-ratio: 16 / 10;
-  }
+@media (max-width: 1099px) {
+  .title { font-size: clamp(1.9rem, 4.6vw, 3rem); }
+  .note { max-width: 17rem; font-size: 0.8rem; }
 }
+
+@media (max-width: 767px) {
+  .section { height: auto; min-height: 100svh; margin-bottom: -5.5rem; padding: 5.5rem 0 6.5rem; }
+  .masthead { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+  .note { max-width: none; margin-bottom: 0; }
+  /* One per page, swiped through. Mirrors pageSizeFor() in WorkDeck.tsx. */
+  .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .viewport { min-height: 20rem; }
+  .sheet { grid-template-columns: minmax(0, 1fr); max-height: 100%; overflow-y: auto; }
+  .overlay { padding-bottom: 5rem; }
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+:global([data-theme='dark']) .section {
+  --wk-paper: #0E1422;
+  --wk-ink: #E8EDF7;
+  --wk-body: #B5C0D3;
+  --wk-muted: #9AA7BD;
+  --wk-line: rgba(255, 255, 255, 0.1);
+  --wk-card: #161E30;
+  --wk-tint: #141B2B;
+  --wk-blue: #5AA2FF;
+}
+
+:global([data-theme='dark']) .section::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+:global([data-theme='dark']) .section::after { mix-blend-mode: screen; opacity: 0.16; }
+
+:global([data-theme='dark']) .card:hover .media { box-shadow: 0 0 0 1px var(--wk-line), 0 26px 50px -28px rgba(0, 0, 0, 0.85); }
+:global([data-theme='dark']) .chip { background: rgba(6, 10, 18, 0.72); }
+:global([data-theme='dark']) .dot { background: rgba(255, 255, 255, 0.2); }
+:global([data-theme='dark']) .plate { color: rgba(255, 255, 255, 0.16); }
+:global([data-theme='dark']) .scrim { background: rgba(14, 20, 34, 0.84); }
+:global([data-theme='dark']) .sheet { box-shadow: 0 0 0 1px var(--wk-line), 0 40px 80px -40px rgba(0, 0, 0, 0.9); }

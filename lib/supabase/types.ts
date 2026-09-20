@@ -11,6 +11,35 @@ export type Blog = {
   updated_at: string;
 };
 
+export type Project = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  category: string | null;
+  image_url: string | null;
+  tags: string[];
+  live_url: string | null;
+  status_label: string;
+  sort_order: number;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectInput = {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  category?: string | null;
+  image_url?: string | null;
+  tags?: string[];
+  live_url?: string | null;
+  status_label?: string;
+  sort_order?: number;
+  published: boolean;
+};
+
 export type Lead = {
   id: string;
   name: string;
@@ -99,10 +128,14 @@ export type ProspectRecord = {
   // very rarely a phone number. Empty strings mean "not published", never "not looked for".
   instagram: string;
   linkedin: string;
+  facebook: string;
   phone: string;
   // Year the brand started trading. The single most important filter for this list - an operator
   // six years in already has a supplier and a developer; someone who started last year has neither.
   founded_year: string;
+  // True when a live paid campaign was confirmed in the Meta Ad Library. The single strongest
+  // buying signal available: money is already leaving their account every month.
+  ad_active: boolean;
   verified: boolean;
   verified_on: string;
   opt_out: boolean;

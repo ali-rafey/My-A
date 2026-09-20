@@ -14,10 +14,12 @@
   --w-steel:  #5A6776;
   --w-line:   #E2E6EC;
   --w-muted:  #C2CAD6;
+  --w-solid:    var(--w-navy);
+  --w-on-solid: #FFFFFF;
 
   --w-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  background: #FFFFFF;
+  background: var(--surface-card);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -41,9 +43,9 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.4rem 0.95rem 0.4rem 0.55rem;
-  border: 1px solid rgba(10, 32, 54, 0.1);
+  border: 1px solid rgba(var(--surface-ink-rgb), 0.1);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(var(--surface-paper-rgb), 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--w-steel);
@@ -63,17 +65,17 @@
   height: 6px;
   border-radius: 50%;
   background: var(--w-accent);
-  box-shadow: 0 0 10px rgba(8, 119, 222, 0.5);
+  box-shadow: 0 0 10px rgba(var(--surface-accent-rgb), 0.5);
   animation: dotPulse 2.6s ease-in-out infinite;
 }
 
 @keyframes dotPulse {
   0%, 100% {
-    box-shadow: 0 0 8px rgba(8, 119, 222, 0.4);
+    box-shadow: 0 0 8px rgba(var(--surface-accent-rgb), 0.4);
     scale: 1;
   }
   50% {
-    box-shadow: 0 0 18px rgba(8, 119, 222, 0.8);
+    box-shadow: 0 0 18px rgba(var(--surface-accent-rgb), 0.8);
     scale: 1.18;
   }
 }
@@ -136,8 +138,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg,
-    rgba(8, 119, 222, 0.05) 0%,
-    rgba(8, 119, 222, 0.015) 55%,
+    rgba(var(--surface-accent-rgb), 0.05) 0%,
+    rgba(var(--surface-accent-rgb), 0.015) 55%,
     transparent 100%);
   opacity: 0;
   transition: opacity 0.4s var(--w-ease);
@@ -271,11 +273,11 @@
 }
 
 .footerCta:hover {
-  background: var(--w-navy);
-  color: #FFFFFF;
-  border-color: var(--w-navy);
+  background: var(--w-solid);
+  color: var(--w-on-solid);
+  border-color: var(--w-solid);
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px -10px rgba(10, 32, 54, 0.35);
+  box-shadow: 0 12px 28px -10px rgba(var(--surface-ink-rgb), 0.35);
 }
 
 .footerArrow {
@@ -354,4 +356,19 @@
   .footer {
     margin-top: 2.25rem;
   }
+}
+
+/* =============================================================================
+   Dark theme — re-points the scoped palette at the top of this file.
+   Written here, not in styles/theme.css, because CSS Modules hashes `.section`
+   so a global stylesheet cannot address it.
+   ============================================================================= */
+:global([data-theme='dark']) .section {
+  --w-navy:   #E8EDF7;
+  --w-accent: #62A9FF;
+  --w-steel:  #A7B2C7;
+  --w-line:   rgba(255, 255, 255, 0.10);
+  --w-muted:  #6B7A8C;
+  --w-solid:    #E8EDF7;
+  --w-on-solid: #0A2036;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { listPublishedBlogs } from '@/lib/content/blogs';
-import { formatDate } from '@/lib/format';
+import { formatDate, readingMinutes } from '@/lib/format';
+import BlogDeck, { type DeckPost } from './BlogDeck';
 import styles from './blogs.module.css';
 
 export const revalidate = 60; // ISR: refresh once a minute
@@ -22,64 +22,60 @@ export const metadata: Metadata = {
   },
 };
 
+// The listing is one screen: a centred masthead over a deck that pages rather
+// than a page that grows. This file stays a server component so the fetch, the
+// copy and the crawlable index below all render on the server; only the deck's
+// paging is client-side.
+
+const tagOf = (tags: unknown): string =>
+  Array.isArray(tags) && tags.length > 0 && typeof tags[0] === 'string' ? tags[0] : 'Article';
+
 export default async function BlogsPage() {
   const blogs = await listPublishedBlogs();
+
+  const posts: DeckPost[] = blogs.map((blog) => ({
+    id: blog.id,
+    slug: blog.slug,
+    title: blog.title,
+    excerpt: blog.meta_description ?? '',
+    tag: tagOf(blog.tags),
+    date: formatDate(blog.created_at),
+    minutes: readingMinutes(blog.content),
+    cover: blog.cover_image,
+  }));
 
   return (
     <section className={`${styles.section} section`}>
       <div className={`container ${styles.container}`}>
-        <header className={styles.header}>
+        <header className={styles.masthead}>
           <span className={styles.eyebrow}>
             <span className={styles.eyebrowDot} aria-hidden="true" />
-            <span>Blog</span>
+            <span>Our blog</span>
           </span>
-          <h1 className={styles.title}>Ideas, systems, and growth insights.</h1>
+          <h1 className={styles.title}>Latest thinking from the <em>team</em>.</h1>
           <p className={styles.subtitle}>
-            Practical thinking from the work we do every day.
+            Practical notes on design, engineering and growth &mdash; from the work
+            we do every day.
           </p>
         </header>
 
-        {blogs.length === 0 ? (
-          <div className={styles.empty}>New posts are on the way — check back soon.</div>
+        {posts.length === 0 ? (
+          <div className={styles.empty}>New posts are on the way &mdash; check back soon.</div>
         ) : (
-          <div className={styles.grid}>
-            {blogs.map((blog) => {
-              // Tab label: first tag if present, else "Article" fallback.
-              // CSS uppercases it so authored case doesn't matter.
-              const tabLabel =
-                Array.isArray(blog.tags) && blog.tags.length > 0
-                  ? blog.tags[0]
-                  : 'Article';
-
-              return (
-                <Link
-                  key={blog.id}
-                  href={`/blogs/${blog.slug}`}
-                  className={styles.card}
-                >
-                  <div className={styles.cornerTab}>
-                    <span>{tabLabel}</span>
-                  </div>
-
-                  <div className={styles.cardBody}>
-                    <h2 className={styles.cardHeadline}>{blog.title}</h2>
-                    {blog.meta_description ? (
-                      <p className={styles.cardDescription}>{blog.meta_description}</p>
-                    ) : null}
-
-                    <span className={styles.divider} aria-hidden="true" />
-
-                    <div className={styles.cardFooter}>
-                      <span className={styles.cardDate}>{formatDate(blog.created_at)}</span>
-                      <span className={styles.cardArrow} aria-hidden="true">→</span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <BlogDeck posts={posts} />
         )}
       </div>
+
+      {/* The full index in plain markup. The deck's off-screen pages are
+          aria-hidden, so this is what a screen reader and a crawler read. */}
+      <ul className={styles.srOnly}>
+        {posts.map((post) => (
+          <li key={post.id}>
+            <a href={`/blogs/${post.slug}`}>{post.title}</a>
+            <p>{post.excerpt}</p>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

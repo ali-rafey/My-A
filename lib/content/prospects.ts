@@ -96,14 +96,15 @@ function splitList(value: string | undefined): string[] {
 // socialPresence carries the single heaviest weight because it is now a hard requirement, not a
 // bonus - a lead he cannot open a conversation with is worth nothing to him regardless of fit.
 const SCORE_WEIGHTS = {
-  socialPresence: 22,
-  needsTech: 18,
-  mature: 16,
-  verified: 14,
-  directContact: 12,
+  socialPresence: 20,
+  adActive: 18,
+  needsTech: 15,
+  mature: 12,
+  verified: 12,
+  directContact: 10,
   techGapDepth: 8,
-  needsManufacturing: 5,
-  freshSignal: 5,
+  needsManufacturing: 3,
+  freshSignal: 2,
   outOfMarketPenalty: 15,
   tooNewPenalty: 10,
 } as const;
@@ -124,9 +125,13 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
   let score = 0;
 
   // Contactability first - it is the gating factor.
-  if (record.instagram || record.linkedin) {
+  if (record.instagram || record.linkedin || record.facebook) {
     score += SCORE_WEIGHTS.socialPresence;
-    const channels = [record.instagram ? 'Instagram' : '', record.linkedin ? 'LinkedIn' : '']
+    const channels = [
+      record.instagram ? 'Instagram' : '',
+      record.linkedin ? 'LinkedIn' : '',
+      record.facebook ? 'Facebook' : '',
+    ]
       .filter(Boolean)
       .join(' + ');
     reasons.push(`Reachable on ${channels}`);
@@ -137,6 +142,13 @@ export function scoreProspect(record: ProspectRecord): { score: number; reasons:
   if (record.contact_route === 'email' || record.phone) {
     score += SCORE_WEIGHTS.directContact;
     reasons.push(record.phone ? 'Phone number available' : 'Direct email available');
+  }
+
+  // Proven spend beats inferred need. A business with a live campaign has already decided
+  // marketing is worth paying for - the only question left is who runs the machinery behind it.
+  if (record.ad_active) {
+    score += SCORE_WEIGHTS.adActive;
+    reasons.push('Running paid ads right now — budget already committed');
   }
 
   if (record.needs_tech) {
@@ -266,8 +278,10 @@ export function loadProspectRecords(): ProspectRecord[] {
       contact_value: get('contact_value'),
       instagram: get('instagram'),
       linkedin: get('linkedin'),
+      facebook: get('facebook'),
       phone: get('phone'),
       founded_year: get('founded_year'),
+      ad_active: toBool(get('ad_active')),
       verified: toBool(get('verified')),
       verified_on: get('verified_on'),
       opt_out: toBool(get('opt_out')),

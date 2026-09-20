@@ -1,595 +1,400 @@
 /* =============================================================================
-   Services — corner-tab card design.
+   Services — four numbered cards, one open at a time.
    =============================================================================
-   - Section fits a single laptop viewport (min-height calc(100vh − 7rem)).
-   - Each card has a navy "corner tab" at top-left. The tab inherits the
-     card's outer top-left radius and tapers with a smaller inner curve on
-     its bottom-right, so it reads as a label clipped into the card corner.
-   - Pure-CSS reveal cascade via nth-child animation-delay.
+   A light grey ground with a faint grid, a two-line headline whose second line
+   takes the accent, and a row of white cards. Closed cards show a big pale
+   number and their name; the open card grows wider and taller than the row
+   and plays its scene (ServiceScenes.module.css).
    ============================================================================= */
-
-/* Page-level scroll lock is applied via the ScrollLock client component (it
-   toggles document.documentElement / document.body styles on mount and
-   restores them on unmount). Doing it from JS sidesteps the CSS Modules
-   "pure selectors" rule that rejects rules made entirely of :global. */
-
 .section {
-  --srv-navy:        #0A2036;
-  --srv-navy-light:  #1B3858;
-  --srv-royal:       #044B89;
-  --srv-accent:      #0877DE;
-  --srv-steel:       #73838F;
-  --srv-silver:      #C6D3DE;
-  --srv-card-bg:     #F4F4F5;
-  --srv-card-bg-hover: #EFF0F2;
-
-  --srv-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sv-page: #F3F5F8;
+  --sv-card: #FFFFFF;
+  --sv-ink: var(--surface-heading);
+  --sv-muted: #5B6677;               /* 5.1:1 on white */
+  --sv-num: #DFE4EA;
+  --sv-line: rgba(13, 27, 62, 0.08);
+  --sv-grid: rgba(13, 27, 62, 0.05);
+  --sv-accent: var(--surface-accent);
+  --sv-btn: #0E1422;
+  --sv-btn-text: #FFFFFF;
+  --sv-dot: #CBD2DC;
+  --sv-stage-1: #F7FAFE;
+  --sv-stage-2: #E6EFFA;
+  --sv-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: relative;
-  /* Fill at least the viewport (minus the fixed bottom navbar clearance) and
-     centre the content, but GROW past it if the cards need more room — the
-     cards size to their content and never get squeezed to fit the screen. */
-  min-height: calc(100vh - 7rem);
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: var(--color-white);
-  padding: var(--space-16) 0;
+  /* Fill the screen, including the strip main keeps clear for the navbar. */
+  min-height: 100vh;
+  min-height: 100svh;
+  margin-bottom: -7rem;
+  padding: 2.75rem 0 6.9rem;
   overflow: hidden;
+  background: var(--sv-page);
+  color: var(--sv-ink);
 }
 
-.container {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  /* Natural, content-driven flow — header, grid, and footer stack with a gap
-     instead of being stretched to fill a fixed viewport height. */
-  gap: var(--space-8);
-}
-
-/* =============================================================================
-   Header
-   ============================================================================= */
-.header {
-  text-align: center;
-  max-width: 640px;
-  margin: 0 auto;
-  flex-shrink: 0;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.4rem 0.95rem 0.4rem 0.55rem;
-  border: 1px solid rgba(10, 32, 54, 0.1);
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--srv-steel);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-
-  opacity: 0;
-  transform: translateY(10px);
-  animation: copyIn 0.9s var(--srv-ease) 0.1s forwards;
-}
-
-.eyebrowDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--srv-accent);
-  box-shadow: 0 0 10px rgba(8, 119, 222, 0.5);
-  animation: dotPulse 2.6s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(8, 119, 222, 0.4);
-    scale: 1;
-  }
-  50% {
-    box-shadow: 0 0 18px rgba(8, 119, 222, 0.8);
-    scale: 1.18;
-  }
-}
-
-.title {
-  margin: var(--space-4) 0 var(--space-3);
-  font-family: var(--font-playfair), 'Times New Roman', Georgia, serif;
-  font-style: italic;
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
-  font-weight: 700;
-  color: var(--srv-navy);
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-
-  opacity: 0;
-  transform: translateY(14px);
-  animation: copyIn 1s var(--srv-ease) 0.2s forwards;
-}
-
-.subtitle {
-  margin: 0 auto;
-  max-width: 32rem;
-  font-family: var(--font-sans);
-  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
-  font-weight: 400;
-  color: var(--srv-steel);
-  line-height: 1.55;
-
-  opacity: 0;
-  transform: translateY(10px);
-  animation: copyIn 1s var(--srv-ease) 0.32s forwards;
-}
-
-/* =============================================================================
-   Grid
-   ============================================================================= */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1.5rem;
-  max-width: 1380px;
-  margin: 0 auto;
-  width: 100%;
-  /* Content-driven height. Grid items still stretch to the tallest card in the
-     row (align-items defaults to stretch), so the three cards stay equal
-     height without being forced to fill the viewport. */
-}
-
-/* =============================================================================
-   Card
-   =============================================================================
-   Light-gray surface, gentle border, generous border-radius. The corner
-   tab is positioned absolutely so the card body padding-top can clear
-   the tab area without being tied to its width.
-   ============================================================================= */
-.card {
-  --card-radius: 24px;
-
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: var(--srv-card-bg);
-  border: 1px solid rgba(10, 32, 54, 0.05);
-  border-radius: var(--card-radius);
-  overflow: hidden;
-  isolation: isolate;
-  /* Card flexes vertically with the grid row — no fixed min-height. */
-  height: 100%;
-
-  opacity: 0;
-  transform: translateY(22px);
-  animation: cardIn 0.95s var(--srv-ease) forwards;
-
-  transition:
-    transform 0.5s var(--srv-ease),
-    background 0.5s var(--srv-ease),
-    border-color 0.5s var(--srv-ease),
-    box-shadow 0.5s var(--srv-ease);
-}
-
-.card:nth-child(1) { animation-delay: 0.42s; }
-.card:nth-child(2) { animation-delay: 0.52s; }
-.card:nth-child(3) { animation-delay: 0.62s; }
-
-.card:hover {
-  transform: translateY(-6px);
-  background: var(--srv-card-bg-hover);
-  border-color: rgba(10, 32, 54, 0.12);
-  box-shadow:
-    0 28px 64px -22px rgba(10, 32, 54, 0.32),
-    0 1px 0 rgba(255, 255, 255, 0.6) inset;
-}
-
-/* =============================================================================
-   The corner tab.
-   =============================================================================
-   Sits at the card's top-left, sharing its outer top-left curve. The
-   bottom-right is rounded with a smaller radius — that's what gives it
-   the "label clipped into the corner" silhouette. A vertical navy
-   gradient + a 1 px inset white highlight at the top create the lit-
-   from-above effect.
-   ============================================================================= */
-.tag {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
-
-  display: inline-flex;
-  align-items: center;
-  padding: 1.05rem 1.4rem 0.95rem;
-
-  background: linear-gradient(
-    180deg,
-    var(--srv-navy-light) 0%,
-    var(--srv-navy) 100%);
-  color: #F4F4F5;
-
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-
-  /* Corner-tab shape:
-       TL: matches card outer radius
-       TR: square (flush with card top edge)
-       BR: small inner curve — the "tab end"
-       BL: square (flush with card left edge) */
-  border-radius: var(--card-radius) 0 16px 0;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    4px 6px 16px -4px rgba(10, 32, 54, 0.28);
-
-  transition:
-    box-shadow 0.5s var(--srv-ease),
-    transform 0.5s var(--srv-ease);
-}
-
-.card:hover .tag {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    6px 10px 24px -4px rgba(10, 32, 54, 0.42);
-}
-
-/* Subtle gloss highlight along the tab's top edge — a faint white-to-
-   transparent line painted via a pseudo, scoped inside the tab. */
-.tag::before {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  right: 1px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.05) 60%,
-    transparent 100%);
-  pointer-events: none;
-}
-
-/* =============================================================================
-   Card art slot — host for the per-card SVG animation
-   (EyesAnimation / DataChartAnimation / ReachAnimation).
-   Centred horizontally near the top of the card; the cardBody padding-top
-   leaves enough headroom for both the corner tag (top-left) and the
-   ~102px-tall animation to sit comfortably without overlap.
-   ============================================================================= */
-.cardArt {
-  position: absolute;
-  top: 3.5rem;       /* below the corner tag */
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* =============================================================================
-   Card body
-   ============================================================================= */
-.cardBody {
-  /* padding-top clears the corner tab AND the absolutely-positioned art
-     slot on every card. The art is centred horizontally at top: 3.5rem with
-     a ~102px max height, so it ends at ~158px from the card top — leaving
-     10.5rem of headroom before the title. */
-  padding: 10.5rem 1.75rem 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  /* Lets the capability list push to the bottom of the card. */
-  flex: 1 1 0;
-}
-
-.cardHeadline {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: clamp(1.2rem, 1.55vw, 1.5rem);
-  font-weight: 700;
-  color: var(--srv-navy);
-  letter-spacing: -0.014em;
-  line-height: 1.2;
-}
-
-.cardDescription {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  font-weight: 400;
-  color: var(--srv-steel);
-  line-height: 1.6;
-}
-
-/* =============================================================================
-   Capabilities — dimensional badge rows
-   =============================================================================
-   After the description, each capability is a row with a premium gradient icon
-   badge (navy, echoing the corner tab — lit from above with an inner highlight
-   and a soft drop shadow) and the label in refined type. On hover a soft accent
-   wash sweeps in behind the row, the badge warms to a blue gradient and glows,
-   and the label eases to the accent. Depth + restraint. Sits at the bottom of
-   the card via margin-top: auto.
-   ============================================================================= */
-.capabilities {
-  list-style: none;
-  margin: auto 0 0;             /* pushes the list to the bottom of cardBody */
-  padding: 0.4rem 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  border-top: 1px solid rgba(10, 32, 54, 0.08);
-}
-
-.capability {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.95rem;
-  padding: 0.6rem 0.7rem;
-  border-radius: 12px;
-  overflow: hidden;
-  font-family: var(--font-sans);
-  isolation: isolate;
-}
-
-/* Soft accent wash that sweeps in from the left on hover. */
-.capability::before {
+/* The grid, strongest behind the headline and gone by the cards. */
+.section::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(
-    90deg,
-    rgba(8, 119, 222, 0.09) 0%,
-    rgba(8, 119, 222, 0.02) 65%,
-    transparent 100%);
-  opacity: 0;
-  transition: opacity 0.5s var(--srv-ease);
+  background-image:
+    linear-gradient(var(--sv-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sv-grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 75% 62% at 62% 0%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 75% 62% at 62% 0%, #000 25%, transparent 78%);
+  pointer-events: none;
 }
 
-.capability:hover::before {
-  opacity: 1;
+.wrap { width: min(100% - 3rem, 1360px); margin: 0 auto; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 25rem);
+  align-items: end;
+  gap: 1.5rem 4rem;
+  margin-bottom: clamp(1.75rem, 4.5vh, 2.75rem);
 }
 
-/* Premium gradient badge — navy, lit from above (inner highlight) with a soft
-   drop shadow so it reads as a raised object, not a flat chip. */
-.capabilityIcon {
+.label {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2.05rem;
-  height: 2.05rem;
-  border-radius: 10px;
-  color: #FFFFFF;
-  background: linear-gradient(145deg, var(--srv-navy-light) 0%, var(--srv-navy) 100%);
-  box-shadow:
-    0 4px 10px -3px rgba(10, 32, 54, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  transition:
-    background 0.5s var(--srv-ease),
-    box-shadow 0.5s var(--srv-ease),
-    transform 0.5s var(--srv-ease);
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 0.28rem 0.85rem 0.28rem 0.3rem;
+  border-radius: 999px;
+  background: var(--sv-card);
+  box-shadow: 0 0 0 1px var(--sv-line);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sv-accent);
 }
+.label img { border-radius: 50%; background: var(--surface-logo-chip); }
 
-.capability:hover .capabilityIcon {
-  background: linear-gradient(145deg, #0E84EC 0%, var(--srv-royal) 100%);
-  box-shadow:
-    0 7px 18px -4px rgba(8, 119, 222, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transform: translateY(-2px);
-}
-
-.capabilityName {
-  font-size: 0.9rem;
+.title {
+  margin: 0;
+  font-size: clamp(2.2rem, 3.7vw, 3.6rem);
   font-weight: 500;
-  color: var(--srv-navy);
-  line-height: 1.3;
-  letter-spacing: 0.005em;
-  transition: color 0.5s var(--srv-ease);
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  color: var(--sv-ink);
 }
+.title em { display: block; font-style: normal; color: var(--sv-accent); }
 
-.capability:hover .capabilityName {
-  color: var(--srv-royal);
+.intro { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; padding-bottom: 0.2rem; }
+.intro p { margin: 0; font-size: 0.93rem; line-height: 1.6; color: var(--sv-muted); }
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.8rem;
+  padding: 0 1.25rem 0 1.35rem;
+  border-radius: 999px;
+  background: var(--sv-btn);
+  color: var(--sv-btn-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 12px 26px -14px rgba(14, 20, 34, 0.7);
+  transition: transform 0.25s var(--sv-ease), box-shadow 0.25s ease;
 }
+.cta:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 16px 30px -14px rgba(14, 20, 34, 0.8); }
+.cta:focus-visible { outline: 2px solid var(--sv-accent); outline-offset: 3px; }
+.cta svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-/* =============================================================================
-   Footer CTA
-   ============================================================================= */
-.footer {
+/* ── The row ──────────────────────────────────────────────────────────────── */
+.row {
+  /* Row height = the open card; closed cards sit `--lift` shorter at each end. */
+  --h: clamp(26rem, calc(100svh - 21.75rem), 42rem);
+  --lift: 2.25rem;
+
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  flex-shrink: 0;
+  gap: 0.9rem;
+  height: var(--h);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  height: calc(var(--h) - 2 * var(--lift));
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--sv-card);
+  box-shadow: 0 1px 2px rgba(13, 27, 62, 0.04), 0 18px 40px -30px rgba(13, 27, 62, 0.35);
+  transition: flex-grow 0.6s var(--sv-ease), height 0.6s var(--sv-ease), box-shadow 0.4s ease;
+}
+.card[data-active='true'] {
+  flex-grow: 2.6;
+  height: var(--h);
+  box-shadow: 0 2px 4px rgba(13, 27, 62, 0.05), 0 40px 70px -42px rgba(13, 27, 62, 0.5);
+}
+
+.num {
+  position: absolute;
+  top: 1.05rem;
+  left: 1.3rem;
+  font-size: clamp(2.6rem, 4.2vw, 3.8rem);
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--sv-num);
+  transition: opacity 0.3s ease;
+}
+.card[data-active='true'] .num { opacity: 0; }
+
+/* The scene: no height while closed, all the free space once open. */
+.visual {
+  position: relative;
+  flex: 0 1 0;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 70% at 25% 0%, rgba(255, 255, 255, 0.95), transparent 65%),
+    linear-gradient(170deg, var(--sv-stage-1), var(--sv-stage-2));
   opacity: 0;
-  transform: translateY(12px);
-  animation: copyIn 1s var(--srv-ease) 0.95s forwards;
+  transition: flex-grow 0.6s var(--sv-ease), opacity 0.3s ease;
+}
+.card[data-active='true'] .visual {
+  flex-grow: 1;
+  opacity: 1;
+  transition: flex-grow 0.6s var(--sv-ease), opacity 0.45s ease 0.15s;
 }
 
-.footerLead {
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  color: var(--srv-steel);
-}
+.body { display: flex; flex-direction: column; margin-top: auto; padding: 1.05rem 1.3rem 1.2rem; }
 
-.footerCta {
+.icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.6rem;
+  background: var(--sv-page);
+  color: var(--sv-ink);
+}
+/* Open, the scene takes the room the icon used. */
+.icon { transition: height 0.45s var(--sv-ease), margin 0.45s var(--sv-ease), opacity 0.2s ease; }
+.card[data-active='true'] .icon { height: 0; margin-bottom: 0; overflow: hidden; opacity: 0; }
+.icon svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.name {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--sv-ink);
+  transition: font-size 0.5s var(--sv-ease);
+}
+.card[data-active='true'] .name { font-size: clamp(1.4rem, 2vw, 1.75rem); letter-spacing: -0.03em; }
+
+/* The whole card is the button's hit area. */
+.hit {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hit::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.hit:focus-visible { outline: none; }
+.hit:focus-visible::after { border-radius: 24px; box-shadow: inset 0 0 0 2px var(--sv-accent); }
+.card[data-active='true'] .hit { cursor: default; }
+
+/* Open-only: the Discuss pill (bottom right) and, for screen readers, what
+   the scene shows. */
+.more { visibility: hidden; transition: visibility 0s linear 0.3s; }
+.card[data-active='true'] .more { visibility: visible; transition: visibility 0s; }
+
+.discuss {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.7rem 1.25rem;
-  border: 1px solid var(--srv-navy);
-  border-radius: 9999px;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--srv-navy);
+  gap: 0.65rem;
+  height: 2.6rem;
+  padding: 0 0.35rem 0 1.15rem;
+  border-radius: 999px;
+  background: var(--sv-btn);
+  color: var(--sv-btn-text);
+  font-size: 0.88rem;
+  font-weight: 600;
   text-decoration: none;
-  transition:
-    background 0.4s var(--srv-ease),
-    color 0.4s var(--srv-ease),
-    border-color 0.4s var(--srv-ease),
-    transform 0.4s var(--srv-ease),
-    box-shadow 0.4s var(--srv-ease);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.4s var(--sv-ease), box-shadow 0.25s ease;
+}
+.card[data-active='true'] .discuss { opacity: 1; transform: none; transition-delay: 0.3s, 0.3s, 0s; }
+.discuss:hover { box-shadow: 0 12px 24px -12px rgba(14, 20, 34, 0.7); }
+.discuss:focus-visible { outline: 2px solid var(--sv-accent); outline-offset: 3px; }
+.discuss span {
+  display: grid;
+  place-items: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  border-radius: 50%;
+  background: var(--sv-btn-text);
+  color: var(--sv-btn);
+  transition: transform 0.25s var(--sv-ease);
+}
+.discuss:hover span { transform: translateX(2px); }
+.discuss svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.footerCta:hover {
-  background: var(--srv-navy);
-  color: var(--color-white);
-  border-color: var(--srv-navy);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -10px rgba(10, 32, 54, 0.35);
+/* ── Carousel controls (under 900px) ──────────────────────────────────────── */
+.pager { display: none; align-items: center; justify-content: center; gap: 0.9rem; margin-top: 1.1rem; }
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sv-btn);
+  color: var(--sv-btn-text);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s var(--sv-ease);
+}
+.arrow:first-child svg { transform: scaleX(-1); }
+.arrow:active { transform: scale(0.94); }
+.arrow:disabled { opacity: 0.25; cursor: default; }
+.arrow:focus-visible { outline: 2px solid var(--sv-accent); outline-offset: 3px; }
+.arrow svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.dots { display: flex; align-items: center; }
+.dot { padding: 0.75rem 0.2rem; border: 0; background: none; cursor: pointer; }
+.dot span {
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--sv-dot);
+  transition: width 0.35s var(--sv-ease), background-color 0.3s ease;
+}
+.dot[aria-current='true'] span { width: 1.9rem; background: linear-gradient(90deg, #7DB3FF, #B69CFF 55%, #FFB0C4); }
+.dot:focus-visible { outline: 2px solid var(--sv-accent); outline-offset: -2px; border-radius: 999px; }
+
+/* ── Short laptop screens ─────────────────────────────────────────────────── */
+@media (min-width: 900px) and (max-height: 820px) {
+  .section { padding-top: 2rem; }
+  .label { margin-bottom: 0.7rem; }
+  .title { font-size: clamp(2rem, min(3.2vw, 5.6vh), 3rem); }
+  .head { margin-bottom: 1.4rem; }
+  .row { --h: clamp(24rem, calc(100svh - 18.5rem), 42rem); --lift: 1.75rem; }
 }
 
-.footerArrow {
-  display: inline-block;
-  transition: transform 0.4s var(--srv-ease);
-}
+/* ── Under 900px: a carousel of open cards ────────────────────────────────── */
+@media (max-width: 899px) {
+  .section { justify-content: flex-start; padding: 2.75rem 0 8.5rem; }
+  .head { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.25rem; margin-bottom: 1.75rem; }
+  .intro p { max-width: 34rem; }
 
-.footerCta:hover .footerArrow {
-  transform: translateX(3px);
-}
-
-/* =============================================================================
-   Reveal keyframes
-   ============================================================================= */
-@keyframes cardIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .row {
+    height: auto;
+    align-items: stretch;
+    gap: 0.75rem;
+    /* Room below for the cards' shadow, which the scroller would clip. */
+    margin: 0 -1.5rem -1.75rem;
+    padding: 0.25rem 1.5rem 2.25rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 1.5rem;
+    scrollbar-width: none;
   }
-}
+  .row::-webkit-scrollbar { display: none; }
 
-@keyframes copyIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =============================================================================
-   Reduced motion
-   ============================================================================= */
-@media (prefers-reduced-motion: reduce) {
-  .eyebrow,
-  .title,
-  .subtitle,
   .card,
-  .footer {
-    opacity: 1;
-    transform: none;
-    animation: none !important;
+  .card[data-active='true'] {
+    flex: 0 0 min(88%, 28rem);
+    height: auto;
+    scroll-snap-align: center;
+    /* Shallow enough to fit the scroller's bottom padding. */
+    box-shadow: 0 1px 2px rgba(13, 27, 62, 0.04), 0 14px 28px -20px rgba(13, 27, 62, 0.32);
   }
-  .eyebrowDot {
-    animation: none;
-  }
-  .card:hover {
-    transform: none;
-  }
-  .card:hover .capabilityArrow {
-    transform: none;
-  }
-  .footerCta:hover {
-    transform: none;
-  }
+  .num { display: none; }
+  /* The film's canvas is 640×500. */
+  .visual,
+  .card[data-active='true'] .visual { flex: none; height: auto; aspect-ratio: 640 / 500; opacity: 1; }
+  .card[data-active='true'] .icon { height: 2rem; margin-bottom: 0.75rem; opacity: 1; }
+  .name,
+  .card[data-active='true'] .name { font-size: 1.4rem; }
+  .more,
+  .card[data-active='true'] .more { visibility: visible; }
+  .discuss,
+  .card[data-active='true'] .discuss { position: static; align-self: flex-start; margin-top: 0.9rem; opacity: 1; transform: none; }
+  .hit { cursor: default; }
+
+  .pager { display: flex; }
 }
 
-/* =============================================================================
-   Tablet (≤ 1024 px) — 2 columns; last card centred at half-width.
-   ============================================================================= */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .section {
-    /* Release the desktop viewport lock (`height: 100vh`) so stacked cards can
-       grow to their content height instead of being squished + clipped. */
-    height: auto;
-    min-height: auto;
-    padding: var(--space-16) 0;
-  }
-  .container {
-    height: auto;
-  }
-  .grid {
-    grid-template-columns: 1fr 1fr;
-    max-width: 900px;
-    flex: none;
-  }
-  .card:last-child {
-    grid-column: 1 / 3;
-    max-width: 55%;
-    margin: 0 auto;
-  }
-}
-
-/* =============================================================================
-   Mobile — single column.
-   ============================================================================= */
 @media (max-width: 768px) {
-  .section {
-    /* Release the desktop viewport lock (`height: 100vh`) so the three stacked
-       cards grow to fit their content instead of being crushed into one
-       viewport and clipped by `overflow: hidden`. */
-    height: auto;
-    min-height: auto;
-    padding: var(--space-14) 0;
-  }
-  .container {
-    height: auto;
-  }
-  .header {
-    margin-bottom: var(--space-8);
-  }
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    max-width: 520px;
-    flex: none;
-  }
-  .card {
-    --card-radius: 20px;
-    min-height: auto;
-  }
-  .tag {
-    padding: 0.9rem 1.2rem 0.85rem;
-    font-size: 0.65rem;
-  }
-  .cardBody {
-    /* No art-slot overlap to clear on mobile — tighter top padding. */
-    padding: 3.75rem 1.6rem 1.6rem;
-  }
-  .cardArt {
-    /* Scale the SVG down a touch and push the cardBody further down so
-       the animation and content don't overlap on narrow screens. */
-    padding-top: 1.5rem;
-  }
-  .cardArt + .cardBody {
-    /* Clear the art slot (top: 3.5rem + 1.5rem padding + ~6.4rem SVG) so the
-       headline doesn't overlap the animation on phones. */
-    padding-top: 11.5rem;
-  }
-  .card:last-child {
-    grid-column: auto;
-    max-width: none;
-    margin: 0;
-  }
-  .footer {
-    flex-direction: column;
-    gap: 0.65rem;
-    text-align: center;
-  }
+  /* The phone navbar sits at the top, main keeps 5.5rem clear at the foot,
+     and no section is forced to screen height. */
+  .section { min-height: 0; margin-bottom: -5.5rem; padding: 5.5rem 0 7rem; }
+  .wrap { width: calc(100% - 2rem); }
+  .row { margin-inline: -1rem; padding-inline: 1rem; scroll-padding: 0 1rem; }
+  .title { font-size: 2.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .visual, .num, .name, .more, .cta, .dot span, .discuss, .discuss span { transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────── */
+:global([data-theme='dark']) .section {
+  --sv-page: var(--surface-page);
+  --sv-card: #141C2E;
+  --sv-muted: #A7B2C7;
+  --sv-num: #28324A;
+  --sv-line: rgba(255, 255, 255, 0.09);
+  --sv-grid: rgba(255, 255, 255, 0.045);
+  --sv-btn: #E8EDF7;
+  --sv-btn-text: #0B1120;
+  --sv-dot: #334058;
+  --sv-stage-1: #17213A;
+  --sv-stage-2: #0F1729;
+}
+:global([data-theme='dark']) .card { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 40px -30px rgba(0, 0, 0, 0.7); }
+:global([data-theme='dark']) .card[data-active='true'] { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 40px 70px -40px rgba(0, 0, 0, 0.85); }
+:global([data-theme='dark']) .visual { background: radial-gradient(90% 70% at 25% 0%, rgba(98, 169, 255, 0.12), transparent 65%), linear-gradient(170deg, var(--sv-stage-1), var(--sv-stage-2)); }
+:global([data-theme='dark']) .cta { box-shadow: 0 12px 26px -14px rgba(0, 0, 0, 0.8); }
+@media (max-width: 899px) {
+  :global([data-theme='dark']) .card,
+  :global([data-theme='dark']) .card[data-active='true'] { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 14px 28px -20px rgba(0, 0, 0, 0.8); }
 }
