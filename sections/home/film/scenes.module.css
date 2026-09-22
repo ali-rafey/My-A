@@ -111,7 +111,9 @@
   background: rgba(255, 255, 255, 0.55);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
   opacity: 0;
-  animation: tap 560ms ease var(--d) both;
+  /* forwards, not both: a backwards fill would show the first keyframe (a
+     bright dot) from the start of the scene until the tap's own moment. */
+  animation: tap 560ms ease var(--d) forwards;
 }
 @keyframes tap { 0% { opacity: 0.95; transform: scale(0.25); } 100% { opacity: 0; transform: scale(1.35); } }
 
@@ -320,6 +322,21 @@
   font-weight: 600;
 }
 .siteCard em { margin-left: 6px; font-style: normal; font-weight: 500; color: #6E655C; }
+
+/* The store on a phone (portrait film only). */
+.mSite { font-size: 12px; }
+.mNav { display: flex; align-items: center; gap: 12px; flex-shrink: 0; height: 74px; padding: 26px 16px 0; border-bottom: 1px solid rgba(27, 24, 21, 0.08); }
+.mCart { margin-left: auto; color: #6E655C; }
+.mBurger { display: grid; gap: 5px; }
+.mBurger i { width: 20px; height: 2px; border-radius: 2px; background: var(--fn-ink); }
+.mHero { position: relative; flex-shrink: 0; height: 326px; overflow: hidden; }
+.mHero img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 58% 64%; }
+.mHero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(27, 24, 21, 0) 30%, rgba(27, 24, 21, 0.7)); }
+.mCopy { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 9px; color: var(--fn-ivory); }
+.mEyebrow { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #F2D6C6; }
+.mHeadline { font-family: Georgia, 'Times New Roman', serif; font-size: 31px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.04; white-space: nowrap; }
+.mShop { padding: 7px 15px; border-radius: 999px; background: var(--fn-ivory); color: var(--fn-ink); font-weight: 700; }
+.mCards { display: grid; flex: 1; min-height: 0; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; background: var(--fn-sand); }
 
 /* ── 1 · Hook ─────────────────────────────────────────────────────────────── */
 /* Centred by flexbox so the suck-in can own the transform. */
@@ -592,6 +609,7 @@
 .adsStrip { position: absolute; left: 0; top: 0; width: 2560px; height: 720px; animation: pan 1000ms cubic-bezier(0.65, 0, 0.3, 1) var(--d) forwards; }
 @keyframes pan { to { transform: translateX(-1280px); } }
 .adsWin { position: absolute; left: 90px; top: 90px; width: 1100px; height: 540px; }
+.adsWinNext { left: 1370px; }
 .frameEnter { animation: frameIn 560ms var(--ease) both; }
 
 .meta {
@@ -1121,6 +1139,125 @@
     fadeOut 500ms ease 3500ms forwards;
 }
 @keyframes ringIn { to { opacity: 1; transform: none; } }
+
+/* =============================================================================
+   Portrait — the 720×1280 canvas a phone gets (see Film.tsx).
+   Safe area x 50–670, y 150–1110: the navbar pill floats over the top band
+   and the CTA over the bottom one. Positions held in data (glyphs, collage
+   cards, market tiles, n8n nodes, taps) switch in scenes.tsx; the rest is
+   re-laid here. The story and its timing are the same as on a laptop.
+   ============================================================================= */
+
+/* 1 · Hook — the question on three lines, "go?" on its own. */
+:global([data-orient='portrait']) .hookLine { font-size: 82px; }
+:global([data-orient='portrait']) .suckBlob { left: 320px; top: 600px; }
+
+/* 2 · Logo, and the outro's lockup. */
+:global([data-orient='portrait']) .lockup { gap: 18px; }
+:global([data-orient='portrait']) .lockMark { width: 190px; height: 190px; margin: -58px; }
+:global([data-orient='portrait']) .lockWord { font-size: 64px; }
+
+/* 3 · Brief — a taller box with type sized for a phone. */
+:global([data-orient='portrait']) .prompt { left: 60px; top: 470px; width: 600px; min-height: 300px; padding: 30px 84px 64px 30px; }
+:global([data-orient='portrait']) .promptText { font-size: 27px; line-height: 1.45; }
+
+/* 5 · Market — the grid's columns move to x 85 + 110n (centred). */
+:global([data-orient='portrait']) .marketCam { transform-origin: 360px 635px; }
+:global([data-orient='portrait']) .gridField {
+  background:
+    radial-gradient(circle, var(--grid-dot) 0 3px, transparent 3.6px) 30px -25px / 110px 110px,
+    linear-gradient(90deg, var(--grid-line) 0 1.5px, transparent 1.5px) 85px 0 / 110px 110px,
+    linear-gradient(var(--grid-line) 0 1.5px, transparent 1.5px) 0 30px / 110px 110px;
+}
+:global([data-orient='portrait']) .marketTitle { left: 90px; top: 382px; font-size: 62px; }
+:global([data-orient='portrait']) .buyerTag { left: 195px; top: 814px; }
+
+/* 9 + 10 · The sale and the lock screen: the same phone, drawn larger. */
+:global([data-orient='portrait']) .phone { left: 222px; top: 351px; scale: 1.3; }
+:global([data-orient='portrait']) .phoneLeft { top: 452px; scale: 1.1; transform-origin: 50% 0; }
+:global([data-orient='portrait']) .salesToday { left: 0; right: 0; top: 196px; align-items: center; text-align: center; }
+:global([data-orient='portrait']) .salesToday > b { font-size: 100px; }
+
+/* 6 · Presence — the store on a phone instead of in a browser. */
+:global([data-orient='portrait']) .sitePhone {
+  left: 190px;
+  top: 246px;
+  width: 340px;
+  height: 724px;
+  scale: none;
+  animation: frameIn 620ms var(--ease) both;
+}
+
+/* 7 · Connect — the pills stack. */
+:global([data-orient='portrait']) .connect { flex-direction: column; gap: 22px; }
+:global([data-orient='portrait']) .pillLine { padding: 12px 30px; font-size: 38px; }
+:global([data-orient='portrait']) .linkDot { width: 66px; height: 66px; }
+:global([data-orient='portrait']) .linkDot svg { width: 28px; height: 28px; }
+
+/* 8 · Launch — narrow screens, and the camera scrolls down instead of across.
+   Each screen is laid out 500 wide and drawn 1.24x, so its type reads on a
+   phone and it still spans the safe area. */
+:global([data-orient='portrait']) .adsStrip { width: 720px; height: 2560px; animation-name: panDown; }
+@keyframes panDown { to { transform: translateY(-1280px); } }
+:global([data-orient='portrait']) .adsWin { left: 110px; top: 357px; width: 500px; height: 440px; scale: 1.24; transform-origin: 50% 0; }
+:global([data-orient='portrait']) .adsWinNext { top: 1570px; height: 560px; }
+:global([data-orient='portrait']) .metaRail,
+:global([data-orient='portrait']) .metaAcct { display: none; }
+:global([data-orient='portrait']) .metaPixel { padding: 6px 10px; font-size: 11px; }
+:global([data-orient='portrait']) .metaMain { padding: 14px 16px; }
+/* Keep the columns the story needs: switch, campaign, delivery, ROAS. */
+:global([data-orient='portrait']) .metaRow { grid-template-columns: 40px minmax(0, 1fr) 96px 46px; padding: 0 10px; }
+:global([data-orient='portrait']) .metaRow > span:nth-child(4),
+:global([data-orient='portrait']) .metaRow > span:nth-child(5),
+:global([data-orient='portrait']) .metaRow > span:nth-child(6),
+:global([data-orient='portrait']) .metaRow > span:nth-child(7) { display: none; }
+:global([data-orient='portrait']) .metaToast { left: 16px; }
+:global([data-orient='portrait']) .gRail,
+:global([data-orient='portrait']) .gSearch { display: none; }
+:global([data-orient='portrait']) .gTitle { flex-wrap: wrap; row-gap: 6px; }
+:global([data-orient='portrait']) .gTitle > b { font-size: 21px; }
+:global([data-orient='portrait']) .gTiles { grid-template-columns: 1fr 1fr; }
+:global([data-orient='portrait']) .gTile:nth-child(2) { border-right: none; }
+:global([data-orient='portrait']) .gTile:nth-child(-n + 2) { border-bottom: 1px solid #DADCE0; }
+:global([data-orient='portrait']) .gChartCard { grid-template-columns: 1fr; gap: 12px; }
+:global([data-orient='portrait']) .gChart { height: 120px; }
+:global([data-orient='portrait']) .gSide > :nth-child(n + 4) { display: none; }
+
+/* 11 · Scale — the headline wraps; the store's key numbers, then the cards. */
+:global([data-orient='portrait']) .scaleTitle { flex-wrap: wrap; align-content: center; row-gap: 0; padding: 0 60px; font-size: 96px; line-height: 1.04; }
+:global([data-orient='portrait']) .scaleShop { left: 110px; top: 176px; width: 500px; height: 490px; transform: none; scale: 1.24; transform-origin: 50% 0; }
+:global([data-orient='portrait']) .shopNav,
+:global([data-orient='portrait']) .shopSide,
+:global([data-orient='portrait']) .shopSearch { display: none; }
+:global([data-orient='portrait']) .shopGrid { grid-template-columns: 1fr; }
+:global([data-orient='portrait']) .shopMetrics { grid-template-columns: 1fr 1fr; }
+:global([data-orient='portrait']) .shopChart { height: 130px; }
+/* Inside the crop even at the end of the camera's 1.04 drift. */
+:global([data-orient='portrait']) .budgetCard { left: 56px; top: 772px; scale: 1.06; transform-origin: 0 0; }
+:global([data-orient='portrait']) .gaCard { left: 372px; top: 864px; width: 276px; scale: 1.06; transform-origin: 0 0; }
+
+/* 12 · Automate — the workflow runs top to bottom. Handles move to the
+   bottom (out) and top (in) of each node to match, and the names of the
+   nodes in the column sit beside them, clear of the connections. The editor
+   is laid out 520 wide and drawn 1.19x. */
+:global([data-orient='portrait']) .bigCaret { left: 338px; top: 598px; }
+:global([data-orient='portrait']) .termLine { font-size: 42px; }
+:global([data-orient='portrait']) .n8nAt { left: 50px; top: 150px; width: 520px; height: 806px; scale: 1.1923; transform-origin: 0 0; }
+:global([data-orient='portrait']) .n8nTabs,
+:global([data-orient='portrait']) .n8nShare,
+:global([data-orient='portrait']) .n8nSaved,
+:global([data-orient='portrait']) .n8nRail { display: none; }
+:global([data-orient='portrait']) .n8nRight { margin-left: auto; }
+:global([data-orient='portrait']) .n8nSticky { left: 20px; top: 14px; width: 480px; }
+:global([data-orient='portrait']) .nodeTrigger { border-radius: 42px 42px 10px 10px; }
+:global([data-orient='portrait']) .node::after { left: 50%; right: auto; top: auto; bottom: -6px; margin: 0 0 0 -5px; }
+:global([data-orient='portrait']) .node:not(.nodeTrigger)::before { left: 50%; top: -5px; width: 14px; height: 6px; margin: 0 0 0 -7px; }
+:global([data-orient='portrait']) .nodePorts { left: -46px; top: 76px; width: 192px; flex-direction: row; justify-content: space-between; }
+:global([data-orient='portrait']) .nodeSide .nodeName { left: 112px; top: 50%; width: 170px; margin: 0; text-align: left; transform: translateY(-50%); }
+:global([data-orient='portrait']) .n8nToast { left: 20px; right: 20px; top: 20px; bottom: auto; justify-content: center; }
+
+/* 13 · Outro — the tagline under the lifted lockup. */
+:global([data-orient='portrait']) .tagline { top: 704px; }
 
 /* ── Dark theme ───────────────────────────────────────────────────────────── */
 :global([data-theme='dark']) .holo { background: #1A1830; }

@@ -67,6 +67,12 @@
   color: var(--cv-ink);
 }
 
+/* The portrait composition (phones, upright tablets) — see Film.tsx. */
+.film[data-orient='portrait'] .canvas {
+  width: 720px;
+  height: 1280px;
+}
+
 .scene {
   position: absolute;
   inset: 0;
@@ -165,24 +171,26 @@
   }
 }
 
-/* ── Phones: the film as a 16:9 band, CTA below ──────────────────────── */
+/* ── Phones: the film fills the screen, on its portrait canvas ─────────────
+   The navbar pill floats over the top edge, so the CTA and the play control
+   sit along the bottom instead, clear of the home indicator. The portrait
+   scenes keep their copy out of both bands. */
 @media (max-width: 768px) {
-  .film {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    gap: 0.9rem;
+  .cta {
+    top: auto;
+    left: 1rem;
+    right: 4.6rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    justify-content: center;
+    padding: 0.9rem 1.25rem;
+    font-size: 0.95rem;
   }
-  .stage {
-    position: relative;
-    inset: auto;
-    aspect-ratio: 16 / 9;
-    border-radius: 18px;
-    box-shadow: inset 0 0 0 1px rgba(13, 27, 62, 0.06);
+  .play {
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    width: 3rem;
+    height: 3rem;
   }
-  .play { right: 0.6rem; bottom: 0.6rem; width: 2.2rem; height: 2.2rem; }
-  .play svg { width: 15px; height: 15px; }
-  .cta { position: static; order: 4; align-self: stretch; justify-content: center; padding: 0.85rem 1.25rem; }
 }
 
 /* ── Dark theme ───────────────────────────────────────────────────────────── */

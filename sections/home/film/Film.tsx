@@ -1,8 +1,8 @@
 'use client';
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { SCENES, PRELOAD_IMAGES } from './scenes';
+import { SCENES, PRELOAD_IMAGES, PortraitContext } from './scenes';
 import styles from './Film.module.css';
 
 // =============================================================================
@@ -24,6 +24,10 @@ import styles from './Film.module.css';
 //     keyframe (animation-play-state) and the clock together, so they never
 //     drift apart.
 //   • Only one scene is mounted at a time.
+//   • A stage taller than it is wide (a phone, a tablet held upright) gets
+//     its own 720×1280 PORTRAIT canvas instead of a letterboxed 16:9 band:
+//     the scenes read PortraitContext and re-compose for it — stacked copy,
+//     a phone storefront, a vertical n8n flow, taps instead of a cursor.
 //
 // MOTION + ACCESSIBILITY
 //   • WCAG 2.2.2: anything that moves on its own for more than 5s needs a
@@ -46,11 +50,21 @@ const INTRO_EVENT_AFTER = SCENES.findIndex((s) => s.id === 'logo');
 
 const DESIGN_W = 1280;
 const DESIGN_H = 720;
+// The portrait canvas, and the stage shape (width / height) below which it is
+// used. 0.8 catches every phone and a tablet held upright; a square-ish
+// window stays on the landscape film.
+const PORTRAIT_W = 720;
+const PORTRAIT_H = 1280;
+const PORTRAIT_BELOW = 0.8;
 // How far past "contain" the canvas may scale to fill the screen. Laptop
 // viewports sit close to 16:9, so this crops only a few percent off one axis;
 // on a far wider or taller screen it stops here and the stage colour shows
 // instead of cropping into the content. Scenes keep a matching safe area.
 const MAX_OVERSCAN = 1.12;
+
+// The canvas is chosen before the first paint (a layout effect) so a phone
+// never flashes the landscape composition; on the server it is a no-op.
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 export default function Film() {
   const [index, setIndex] = useState(0);
@@ -59,6 +73,7 @@ export default function Film() {
   const [hidden, setHidden] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
+  const [portrait, setPortrait] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -70,6 +85,13 @@ export default function Film() {
   indexRef.current = index;
 
   const running = ready && !userPaused && !hidden;
+
+  const goTo = useCallback((target: number) => {
+    remaining.current = SCENES[target].dur;
+    skipBookkeeping.current = true;
+    setIndex(target);
+    setEpoch((e) => e + 1);
+  }, []);
 
   // ── Reduced motion: open on the final frame, paused. ────────────────────
   useEffect(() => {
@@ -94,22 +116,34 @@ export default function Film() {
     });
   }, []);
 
-  // ── Fit the 1280×720 canvas to the stage (cover, capped). ──────────────
-  useEffect(() => {
+  // ── Pick the canvas for the stage's shape, then fit it (cover, capped). ─
+  // A scene is composed for one canvas, so a LATER change of shape (a device
+  // turned) replays the current scene from its start rather than snapping its
+  // elements to new places mid-animation. The first measure needs no replay:
+  // it lands before the first paint, and the scene is keyed on the shape.
+  const shape = useRef<boolean | null>(null);
+  useIsoLayoutEffect(() => {
     const stage = stageRef.current;
     const canvas = canvasRef.current;
     if (!stage || !canvas) return;
     const fit = () => {
       const { width, height } = stage.getBoundingClientRect();
-      const contain = Math.min(width / DESIGN_W, height / DESIGN_H);
-      const cover = Math.max(width / DESIGN_W, height / DESIGN_H);
+      if (!width || !height) return;
+      const tall = width / height < PORTRAIT_BELOW;
+      const w = tall ? PORTRAIT_W : DESIGN_W;
+      const h = tall ? PORTRAIT_H : DESIGN_H;
+      const contain = Math.min(width / w, height / h);
+      const cover = Math.max(width / w, height / h);
       canvas.style.setProperty('--k', String(Math.min(cover, contain * MAX_OVERSCAN)));
+      if (shape.current !== null && shape.current !== tall) goTo(indexRef.current);
+      shape.current = tall;
+      setPortrait(tall);
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(stage);
     return () => ro.disconnect();
-  }, []);
+  }, [goTo]);
 
   // ── Pause when off-screen or when the tab is hidden. ───────────────────
   useEffect(() => {
@@ -155,13 +189,6 @@ export default function Film() {
       remaining.current = Math.max(0, remaining.current - (performance.now() - startedAt.current));
     };
   }, [running, index, epoch]);
-
-  const goTo = useCallback((target: number) => {
-    remaining.current = SCENES[target].dur;
-    skipBookkeeping.current = true;
-    setIndex(target);
-    setEpoch((e) => e + 1);
-  }, []);
 
   // Dev-only QA hook: lets a test jump to any scene and freeze it at an exact
   // millisecond. Compiled out of production builds.
@@ -220,7 +247,12 @@ export default function Film() {
   );
 
   return (
-    <div className={styles.film} data-paused={paused || undefined} data-reduced={reduced || undefined}>
+    <div
+      className={styles.film}
+      data-orient={portrait ? 'portrait' : 'landscape'}
+      data-paused={paused || undefined}
+      data-reduced={reduced || undefined}
+    >
       {/* The page's only H1. Not shown — the film carries the message on
           screen — but kept for screen readers and search engines. */}
       <h1 className={styles.srOnly}>
@@ -240,8 +272,10 @@ export default function Film() {
           sales and traffic climb, and automate the follow-up in n8n.
         </p>
         <div ref={canvasRef} className={styles.canvas} aria-hidden="true">
-          <div key={`${index}-${epoch}`} className={styles.scene} style={sceneStyle}>
-            <Scene />
+          <div key={`${index}-${epoch}-${portrait ? 'p' : 'l'}`} className={styles.scene} style={sceneStyle}>
+            <PortraitContext.Provider value={portrait}>
+              <Scene />
+            </PortraitContext.Provider>
           </div>
         </div>
 

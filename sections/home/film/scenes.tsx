@@ -4,11 +4,21 @@
 // mount. next/image's responsive srcset would pick a size from the element's
 // LAYOUT box — which the transform makes meaningless here.
 
+import { createContext, useContext } from 'react';
 import type { CSSProperties, ComponentType, ReactNode } from 'react';
 import s from './scenes.module.css';
 
+// Which canvas the scene is being composed for (set by Film.tsx). Portrait is
+// 720×1280; its safe area is x 50–670, y 150–1110 — the navbar pill covers
+// the top band on a phone and the CTA the bottom one. Positions that live in
+// data (glyphs, cards, nodes, taps) pick their portrait set here; everything
+// else is re-laid in the portrait block at the end of scenes.module.css.
+export const PortraitContext = createContext(false);
+const usePortrait = () => useContext(PortraitContext);
+
 // =============================================================================
-// Scenes — composed on a 1280×720 canvas (see Film.tsx).
+// Scenes — composed on a 1280×720 canvas, or a 720×1280 one on a phone
+// (see Film.tsx and PortraitContext above).
 // =============================================================================
 // THE STORY — what EscaLeads does, in the order a business lives it:
 //   1. the question   "How far can your business go?"
@@ -173,7 +183,10 @@ function Holo({ soft = false }: { soft?: boolean }) {
   );
 }
 
-function BrandLockup({ d = 0, shift = 190 }: { d?: number; shift?: number }) {
+function BrandLockup({ d = 0 }: { d?: number }) {
+  // The slide-in travel: the mark starts where the centred lockup's middle
+  // will be, which is closer in on the narrower portrait word.
+  const shift = usePortrait() ? 150 : 190;
   return (
     <div className={s.lockup} style={v({ '--d': `${d}ms`, '--shift': `${shift}px` })}>
       <span className={s.lockDot} />
@@ -295,6 +308,39 @@ function SiteMock() {
   );
 }
 
+// The same store as it reads on a phone: photo-led hero with the headline
+// over it, fabrics two to a row.
+function MobileSiteMock() {
+  return (
+    <div className={`${s.site} ${s.mSite}`}>
+      <div className={s.mNav}>
+        <span className={s.fanaarLogo}>
+          <img src={IMG.mark} alt="" width={300} height={218} />
+          FANAAR
+        </span>
+        <span className={s.mCart}>Cart (0)</span>
+        <span className={s.mBurger}><i /><i /></span>
+      </div>
+      <div className={s.mHero}>
+        <img src={IMG.meadow} alt="" />
+        <div className={s.mCopy}>
+          <span className={s.mEyebrow}>Lounge fabric · cut to order</span>
+          <span className={`${s.mHeadline} ${s.siteHeadlineMove}`}>We make the cloth<br />you live in.</span>
+          <span className={s.mShop}>Shop fabric</span>
+        </div>
+      </div>
+      <div className={s.mCards}>
+        {FABRICS.slice(0, 4).map((c, i) => (
+          <div key={c.t} className={`${s.siteCard} ${s.rise}`} style={at(700 + i * 110)}>
+            <img src={c.img} alt="" />
+            <span>{c.t}<em>{c.p}</em></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Browser({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
     <div className={`${s.browser} ${className ?? ''}`} style={style}>
@@ -329,7 +375,26 @@ const HOOK_GLYPHS: Glyph[] = [
   { g: '/', x: 1010, y: 436, d: 1300, o: 2600 },
 ];
 
-const HOOK_WORDS: { w: string; d: number; line: 0 | 1; em?: boolean }[] = [
+// Portrait: the same beats around a question stacked on three lines (it
+// spans roughly x 90–630, y 510–770 there).
+const HOOK_GLYPHS_P: Glyph[] = [
+  { g: '/', x: 348, y: 612, d: 0, o: 330 },
+  { g: '//', x: 362, y: 612, d: 330, o: 600 },
+  { g: '<', x: 44, y: 624, d: 760, o: 2350 },
+  { g: '>', x: 650, y: 624, d: 790, o: 2350 },
+  { g: '/', x: 170, y: 420, d: 900, o: 2400, c: 'lav' },
+  { g: '%', x: 340, y: 404, d: 950, o: 2400, c: 'blue' },
+  { g: '↗', x: 520, y: 424, d: 1000, o: 2450, c: 'blue' },
+  { g: '*', x: 350, y: 822, d: 1050, o: 2450 },
+  { g: '$', x: 170, y: 814, d: 1100, o: 2500, c: 'peach' },
+  { g: '#', x: 530, y: 820, d: 1150, o: 2500, c: 'lav' },
+  { g: '+', x: 84, y: 780, d: 1200, o: 2550 },
+  { g: '@', x: 600, y: 470, d: 1250, o: 2550, c: 'blue' },
+  { g: '/', x: 616, y: 776, d: 1300, o: 2600 },
+];
+
+type HookWord = { w: string; d: number; line: 0 | 1 | 2; em?: boolean };
+const HOOK_WORDS: HookWord[] = [
   { w: 'How', d: 650, line: 0 },
   { w: 'far', d: 850, line: 0 },
   { w: 'can', d: 1050, line: 0 },
@@ -337,6 +402,8 @@ const HOOK_WORDS: { w: string; d: number; line: 0 | 1; em?: boolean }[] = [
   { w: 'business', d: 1650, line: 1 },
   { w: 'go?', d: 2050, line: 1, em: true },
 ];
+// On a phone "go?" gets a line of its own — the payoff, at full size.
+const HOOK_WORDS_P: HookWord[] = HOOK_WORDS.map((w) => (w.em ? { ...w, line: 2 } : w));
 
 const SNIPPETS = [
   { t: 'utm_source=instagram', x: 150, y: 180, d: 1900 },
@@ -344,6 +411,13 @@ const SNIPPETS = [
   { t: 'CTR 4.2%', x: 1010, y: 520, d: 2060 },
   { t: 'order.created()', x: 170, y: 540, d: 2140 },
   { t: '<Storefront />', x: 540, y: 150, d: 2220 },
+];
+const SNIPPETS_P = [
+  { t: 'utm_source=instagram', x: 64, y: 330, d: 1900 },
+  { t: 'roas: 4.8x', x: 470, y: 352, d: 1980 },
+  { t: 'CTR 4.2%', x: 480, y: 900, d: 2060 },
+  { t: 'order.created()', x: 72, y: 920, d: 2140 },
+  { t: '<Storefront />', x: 250, y: 252, d: 2220 },
 ];
 
 const SUCK_AT = 4600;
@@ -356,10 +430,20 @@ const COLLAGE: Card[] = [
   { k: 'google', x: 840, y: 480, w: 350, h: 104, fx: 260, fy: 160, r: -2, d: 3090 },
   { k: 'order', x: 975, y: 296, w: 250, h: 72, fx: 300, fy: 0, r: 0, d: 3220 },
 ];
+// Portrait: two cards above the question, three below.
+const COLLAGE_P: Card[] = [
+  { k: 'site', x: 50, y: 176, w: 330, h: 190, fx: -200, fy: -140, r: -3, d: 2700 },
+  { k: 'chart', x: 370, y: 262, w: 300, h: 176, fx: 200, fy: -140, r: 3, d: 2830 },
+  { k: 'meta', x: 62, y: 804, w: 190, h: 250, fx: -200, fy: 160, r: 4, d: 2960 },
+  { k: 'google', x: 300, y: 964, w: 350, h: 104, fx: 220, fy: 160, r: -2, d: 3090 },
+  { k: 'order', x: 362, y: 834, w: 250, h: 72, fx: 260, fy: 0, r: 0, d: 3220 },
+];
 
 function CollageCard({ c }: { c: Card }) {
-  const sx = 640 - (c.x + c.w / 2);
-  const sy = 360 - (c.y + c.h / 2);
+  // Everything collapses into the middle of whichever canvas this is.
+  const portrait = usePortrait();
+  const sx = (portrait ? 360 : 640) - (c.x + c.w / 2);
+  const sy = (portrait ? 640 : 360) - (c.y + c.h / 2);
   return (
     <div
       className={s.collageCard}
@@ -407,19 +491,22 @@ function CollageCard({ c }: { c: Card }) {
 }
 
 function Hook() {
+  const portrait = usePortrait();
+  const words = portrait ? HOOK_WORDS_P : HOOK_WORDS;
+  const lines = portrait ? [0, 1, 2] : [0, 1];
   return (
     <div className={s.fill}>
-      <Glyphs items={HOOK_GLYPHS} />
-      {SNIPPETS.map((sn) => (
+      <Glyphs items={portrait ? HOOK_GLYPHS_P : HOOK_GLYPHS} />
+      {(portrait ? SNIPPETS_P : SNIPPETS).map((sn) => (
         <span key={sn.t} className={s.snippet} style={v({ left: `${sn.x}px`, top: `${sn.y}px`, '--d': `${sn.d}ms`, '--o': `${sn.d + 900}ms` } as Vars)}>
           {sn.t}
         </span>
       ))}
       <div className={s.hookStage}>
         <div className={s.hookLine} style={at(0, SUCK_AT)}>
-          {[0, 1].map((line) => (
+          {lines.map((line) => (
             <span key={line} className={s.hookRow}>
-              {HOOK_WORDS.filter((w) => w.line === line).map((w, i, row) => (
+              {words.filter((w) => w.line === line).map((w, i, row) => (
                 <span key={w.w}>
                   <span className={`${s.hookW} ${w.em ? s.hookEm : ''}`} style={at(w.d)}>{w.w}</span>
                   {i < row.length - 1 ? ' ' : null}
@@ -429,7 +516,7 @@ function Hook() {
           ))}
         </div>
       </div>
-      {COLLAGE.map((c) => <CollageCard key={c.k} c={c} />)}
+      {(portrait ? COLLAGE_P : COLLAGE).map((c) => <CollageCard key={c.k} c={c} />)}
       <span className={s.suckBlob} style={at(SUCK_AT + 160)} />
     </div>
   );
@@ -452,6 +539,7 @@ function Logo() {
 const BRIEF = 'We sell premium lounge fabric online. Find our buyers, build a store that feels like our cloth, and run ads that sell.';
 
 function Brief() {
+  const portrait = usePortrait();
   return (
     <div className={s.fill}>
       <div className={`${s.prompt} ${s.promptSent}`} style={at(0)}>
@@ -461,8 +549,18 @@ function Brief() {
         </span>
         <span className={s.promptTools}><b>+</b><i /></span>
       </div>
-      <Cursor x0={1080} y0={640} x1={930} y1={306} d={3250} move={520} click={3850} />
-      <Glyphs items={[
+      {portrait ? (
+        // A thumb on the send button instead of a pointer.
+        <Tap x={617} y={513} d={3780} />
+      ) : (
+        <Cursor x0={1080} y0={640} x1={930} y1={306} d={3250} move={520} click={3850} />
+      )}
+      <Glyphs items={portrait ? [
+        { g: '<', x: 64, y: 360, d: 3900, o: 4250, c: 'blue' },
+        { g: '*', x: 620, y: 330, d: 3950, o: 4250 },
+        { g: '/', x: 610, y: 820, d: 3990, o: 4250, c: 'lav' },
+        { g: '↗', x: 84, y: 840, d: 4030, o: 4250, c: 'blue' },
+      ] : [
         { g: '<', x: 250, y: 330, d: 3900, o: 4250, c: 'blue' },
         { g: '*', x: 1040, y: 220, d: 3950, o: 4250 },
         { g: '/', x: 1000, y: 470, d: 3990, o: 4250, c: 'lav' },
@@ -477,7 +575,28 @@ function Brief() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence snaps onto a dotted grid (the reference's own device), then the
 // frame closes on the one thing that matters: who the buyer is.
+// Every tile sits on the 110px grid. Portrait moves the grid's columns to
+// x 85 + 110n so a five-cell row is centred, and stacks: evidence, the title,
+// the buyer, then the rest of the evidence.
+type Box = [left: number, top: number, width: number, height: number];
+const MARKET_BOXES: Record<string, { l: Box; p: Box }> = {
+  stat: { l: [145, 140, 220, 110], p: [85, 250, 220, 110] },
+  holo: { l: [365, 140, 110, 110], p: [305, 250, 110, 110] },
+  trend: { l: [145, 360, 330, 110], p: [85, 800, 330, 110] },
+  chips: { l: [475, 360, 220, 110], p: [415, 800, 220, 110] },
+  markets: { l: [475, 470, 220, 44], p: [415, 910, 220, 44] },
+  photo: { l: [695, 140, 330, 330], p: [195, 470, 330, 330] },
+  reader: { l: [1025, 140, 110, 110], p: [415, 250, 110, 110] },
+  aov: { l: [1025, 360, 110, 110], p: [525, 250, 110, 110] },
+  rivals: { l: [255, 470, 220, 44], p: [85, 910, 220, 44] },
+};
+
 function Market() {
+  const portrait = usePortrait();
+  const box = (k: string, d: number) => {
+    const [left, top, width, height] = portrait ? MARKET_BOXES[k].p : MARKET_BOXES[k].l;
+    return at(d, undefined, { left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px` });
+  };
   return (
     <div className={s.fill}>
       <div className={s.marketCam}>
@@ -487,41 +606,41 @@ function Market() {
           <Typed text="Know the market." start={350} step={55} blinks={2} />
         </span>
 
-        <div className={`${s.tile} ${s.tileStat} ${s.dimLater}`} style={at(600, undefined, { left: '145px', top: '140px', width: '220px', height: '110px' })}>
+        <div className={`${s.tile} ${s.tileStat} ${s.dimLater}`} style={box('stat', 600)}>
           <span>Search demand · “linen fabric”</span>
           <b>+38%</b>
           <Up>vs. last year</Up>
         </div>
-        <span className={`${s.tile} ${s.tileHolo} ${s.dimLater}`} style={at(760, undefined, { left: '365px', top: '140px', width: '110px', height: '110px' })} />
-        <div className={`${s.tile} ${s.tileDark} ${s.dimLater}`} style={at(900, undefined, { left: '145px', top: '360px', width: '330px', height: '110px' })}>
+        <span className={`${s.tile} ${s.tileHolo} ${s.dimLater}`} style={box('holo', 760)} />
+        <div className={`${s.tile} ${s.tileDark} ${s.dimLater}`} style={box('trend', 900)}>
           <span>Interest over 12 months</span>
           <svg viewBox="0 0 300 60" preserveAspectRatio="none">
             <path d="M0 52 C 30 50, 50 46, 80 44 S 130 40, 160 34 S 210 26, 240 16 S 280 8, 300 4" className={s.draw} style={at(1100)} pathLength={1} />
           </svg>
         </div>
-        <div className={`${s.tile} ${s.tileChips} ${s.dimLater}`} style={at(1050, undefined, { left: '475px', top: '360px', width: '220px', height: '110px' })}>
+        <div className={`${s.tile} ${s.tileChips} ${s.dimLater}`} style={box('chips', 1050)}>
           <span>Women 25–44</span><span>Slow living</span><span>Sustainable</span><span>Home sewing</span>
         </div>
-        <div className={`${s.tile} ${s.tileLabel} ${s.dimLater}`} style={at(1200, undefined, { left: '475px', top: '470px', width: '220px', height: '44px' })}>
+        <div className={`${s.tile} ${s.tileLabel} ${s.dimLater}`} style={box('markets', 1200)}>
           <i />Top markets · UK · US · UAE
         </div>
 
-        <div className={`${s.tile} ${s.tilePhoto}`} style={at(700, undefined, { left: '695px', top: '140px', width: '330px', height: '330px' })}>
+        <div className={`${s.tile} ${s.tilePhoto}`} style={box('photo', 700)}>
           <img className={s.photoMono} src={IMG.audience} alt="" />
           <img className={s.photoColor} src={IMG.audience} alt="" />
           <span className={s.buyerRing} />
         </div>
         <span className={s.buyerTag}><i />Core buyer · 25–44 · buys for home</span>
 
-        <div className={`${s.tile} ${s.tilePhoto} ${s.dimLater}`} style={at(1350, undefined, { left: '1025px', top: '140px', width: '110px', height: '110px' })}>
+        <div className={`${s.tile} ${s.tilePhoto} ${s.dimLater}`} style={box('reader', 1350)}>
           <img className={s.photoMono} src={IMG.reader} alt="" />
         </div>
-        <div className={`${s.tile} ${s.tileStat} ${s.tileSmall} ${s.dimLater}`} style={at(1500, undefined, { left: '1025px', top: '360px', width: '110px', height: '110px' })}>
+        <div className={`${s.tile} ${s.tileStat} ${s.tileSmall} ${s.dimLater}`} style={box('aov', 1500)}>
           <span>Avg. order value</span>
           <b>$86</b>
           <i className={s.tileGo}>→</i>
         </div>
-        <div className={`${s.tile} ${s.tileLabel} ${s.tileLabelDark} ${s.dimLater}`} style={at(1650, undefined, { left: '255px', top: '470px', width: '220px', height: '44px' })}>
+        <div className={`${s.tile} ${s.tileLabel} ${s.tileLabelDark} ${s.dimLater}`} style={box('rivals', 1650)}>
           <i />Competitors: 12 tracked
         </div>
       </div>
@@ -533,15 +652,22 @@ function Market() {
 // 6 · PRESENCE — the storefront, built on what the research found
 // ─────────────────────────────────────────────────────────────────────────────
 function Site() {
+  const portrait = usePortrait();
   return (
     <div className={`${s.fill} ${s.skyBg}`}>
-      <Browser className={s.siteFrame}>
-        <SiteMock />
-      </Browser>
-      <span className={`${s.floatBadge} ${s.pop}`} style={at(2100, undefined, { left: '936px', top: '58px' })}>
+      {portrait ? (
+        <div className={`${s.phone} ${s.sitePhone}`}>
+          <div className={s.phoneScreen}><MobileSiteMock /></div>
+        </div>
+      ) : (
+        <Browser className={s.siteFrame}>
+          <SiteMock />
+        </Browser>
+      )}
+      <span className={`${s.floatBadge} ${s.pop}`} style={at(2100, undefined, portrait ? { left: '404px', top: '204px' } : { left: '936px', top: '58px' })}>
         <i className={s.liveDot} />Live · fanaar.online
       </span>
-      <span className={`${s.floatBadge} ${s.pop}`} style={at(2500, undefined, { left: '112px', top: '536px' })}>
+      <span className={`${s.floatBadge} ${s.pop}`} style={at(2500, undefined, portrait ? { left: '84px', top: '900px' } : { left: '112px', top: '536px' })}>
         <ShopBag />Built on Shopify
       </span>
     </div>
@@ -573,6 +699,15 @@ function Connect() {
 // ─────────────────────────────────────────────────────────────────────────────
 const PAN_AT = 3000;
 const G = PAN_AT + 600; // Google's screen starts moving once it is in view
+
+// Where a thumb lands on the portrait canvas, measured off the laid-out
+// portrait screens (each is the centre of the control it presses).
+const PORTRAIT_TAPS = {
+  launchToggle: { x: 103, y: 616 },
+  launchPublish: { x: 600, y: 387 },
+  scaleBudget: { x: 231, y: 978 },
+  automateRun: { x: 360, y: 1064 },
+};
 
 function MetaAdsMock() {
   return (
@@ -719,22 +854,31 @@ function GoogleAdsMock() {
 }
 
 function Launch() {
+  const portrait = usePortrait();
   return (
     <div className={s.fill}>
+      {/* Landscape pans across to Google Ads; portrait scrolls down to it. */}
       <div className={s.adsStrip} style={at(PAN_AT)}>
         <div className={`${s.adsWin} ${s.frameEnter}`}>
           <MetaAdsMock />
         </div>
-        <div className={s.adsWin} style={v({ left: '1370px' })}>
+        <div className={`${s.adsWin} ${s.adsWinNext}`}>
           <GoogleAdsMock />
         </div>
       </div>
-      <span className={s.outAt} style={at(0, 2800)}>
-        <Cursor
-          x0={1060} y0={660} x1={189} y1={300} d={600} move={640} click={1260}
-          x2={1130} y2={112} d2={1450} move2={560} click2={2080}
-        />
-      </span>
+      {portrait ? (
+        <>
+          <Tap x={PORTRAIT_TAPS.launchToggle.x} y={PORTRAIT_TAPS.launchToggle.y} d={1160} />
+          <Tap x={PORTRAIT_TAPS.launchPublish.x} y={PORTRAIT_TAPS.launchPublish.y} d={1980} />
+        </>
+      ) : (
+        <span className={s.outAt} style={at(0, 2800)}>
+          <Cursor
+            x0={1060} y0={660} x1={189} y1={300} d={600} move={640} click={1260}
+            x2={1130} y2={112} d2={1450} move2={560} click2={2080}
+          />
+        </span>
+      )}
     </div>
   );
 }
@@ -743,6 +887,9 @@ function Launch() {
 // 9 · THE SALE — the ad in a feed → Shop now → product → Shop Pay
 // ─────────────────────────────────────────────────────────────────────────────
 function Purchase() {
+  // Portrait draws the phone 1.3x about its centre (see scenes.module.css), so
+  // the taps land where its buttons end up.
+  const portrait = usePortrait();
   return (
     <div className={s.fill}>
       <Holo />
@@ -778,8 +925,8 @@ function Purchase() {
           </div>
         </div>
       </div>
-      <Tap x={640} y={590} d={1450} />
-      <Tap x={640} y={507} d={2900} />
+      <Tap x={portrait ? 360 : 640} y={portrait ? 956 : 590} d={1450} />
+      <Tap x={portrait ? 360 : 640} y={portrait ? 848 : 507} d={2900} />
     </div>
   );
 }
@@ -944,6 +1091,7 @@ function ShopifyMock({ o = 0 }: { o?: number }) {
 }
 
 function Scale() {
+  const portrait = usePortrait();
   const live = [5, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14, 18, 17, 20];
   return (
     <div className={s.fill}>
@@ -985,7 +1133,11 @@ function Scale() {
           <div className={s.gaEvent}><span>purchase</span><b>61</b><Up>112%</Up></div>
         </div>
       </div>
-      <Cursor x0={1150} y0={660} x1={1020} y1={292} d={2250} move={560} click={2900} />
+      {portrait ? (
+        <Tap x={PORTRAIT_TAPS.scaleBudget.x} y={PORTRAIT_TAPS.scaleBudget.y} d={2800} />
+      ) : (
+        <Cursor x0={1150} y0={660} x1={1020} y1={292} d={2250} move={560} click={2900} />
+      )}
     </div>
   );
 }
@@ -1016,15 +1168,39 @@ const NODES: N8nNode[] = [
   },
 ];
 
+// Portrait runs the same workflow top to bottom — the way it has to read on
+// a phone — so the If splits left (WhatsApp) and right (Gmail) at the foot.
+// (Coordinates on the portrait editor's own 520×756 canvas panel.)
+const NODE_AT_P: Record<string, [number, number]> = {
+  shopify: [210, 112],
+  sheets: [210, 252],
+  if: [210, 392],
+  wa: [50, 548],
+  gmail: [370, 548],
+};
+// The column nodes carry their names beside them; the two at the foot keep
+// theirs underneath, where nothing runs.
+const NODE_SIDE_P = new Set(['shopify', 'sheets', 'if']);
+
+type Edge = { d: string; ok?: number; label?: { x: number; y: number } };
 // Connections, from each node's output handle to the next node's input.
-const EDGES = [
+const EDGES: Edge[] = [
   { d: 'M220 250 C 280 250, 280 250, 340 250', ok: RUN + 350, label: { x: 280, y: 238 } },
   { d: 'M440 250 C 500 250, 500 250, 560 250', ok: RUN + 750, label: { x: 500, y: 238 } },
   { d: 'M660 236 C 740 236, 730 150, 810 150', ok: RUN + 1150, label: { x: 736, y: 170 } },
   { d: 'M660 264 C 740 264, 730 350, 810 350' },
 ];
+// Portrait handles sit on the bottom (out) and top (in) of each node.
+const EDGES_P: Edge[] = [
+  { d: 'M260 218 C 260 230, 260 236, 260 248', ok: RUN + 350, label: { x: 292, y: 226 } },
+  { d: 'M260 358 C 260 370, 260 376, 260 388', ok: RUN + 750, label: { x: 292, y: 366 } },
+  { d: 'M236 496 C 236 526, 100 516, 100 544', ok: RUN + 1150, label: { x: 146, y: 510 } },
+  { d: 'M284 496 C 284 526, 420 516, 420 544' },
+];
 
 function N8nMock() {
+  const portrait = usePortrait();
+  const edges = portrait ? EDGES_P : EDGES;
   return (
     <div className={s.n8n}>
       <div className={s.n8nTop}>
@@ -1048,22 +1224,27 @@ function N8nMock() {
             <b>Order follow-up</b>
             Runs on every Shopify order: logs it, then welcomes first-time buyers on WhatsApp.
           </div>
-          <svg className={s.n8nEdges} viewBox="0 0 1064 514">
-            {EDGES.map((e, i) => (
+          {/* The viewBox is the canvas panel's own size, so path units are px. */}
+          <svg className={s.n8nEdges} viewBox={portrait ? '0 0 520 756' : '0 0 1064 514'}>
+            {edges.map((e, i) => (
               <g key={i}>
                 <path d={e.d} className={`${s.edge} ${s.fadeIn}`} style={at(2000 + i * 120)} />
                 {e.ok ? <path d={e.d} className={`${s.edgeOk} ${s.drawFast}`} style={at(e.ok)} pathLength={1} /> : null}
               </g>
             ))}
           </svg>
-          {EDGES.map((e, i) => (e.label ? (
+          {edges.map((e, i) => (e.label ? (
             <span key={i} className={s.edgeLabel} style={at((e.ok ?? 0) + 200, undefined, { left: `${e.label.x}px`, top: `${e.label.y}px` })}>1 item</span>
           ) : null))}
           {NODES.map((n, i) => (
             <div
               key={n.id}
-              className={`${s.node} ${n.trigger ? s.nodeTrigger : ''} ${n.branch ? s.nodeBranch : ''}`}
-              style={at(1950 + i * 110, undefined, { left: `${n.x}px`, top: `${n.y}px`, '--ok': `${n.ok ?? 999999}ms` })}
+              className={`${s.node} ${n.trigger ? s.nodeTrigger : ''} ${n.branch ? s.nodeBranch : ''} ${portrait && NODE_SIDE_P.has(n.id) ? s.nodeSide : ''}`}
+              style={at(1950 + i * 110, undefined, {
+                left: `${portrait ? NODE_AT_P[n.id][0] : n.x}px`,
+                top: `${portrait ? NODE_AT_P[n.id][1] : n.y}px`,
+                '--ok': `${n.ok ?? 999999}ms`,
+              })}
             >
               {n.trigger ? (
                 <span className={s.nodeBolt}>
@@ -1088,6 +1269,7 @@ function N8nMock() {
 }
 
 function Automate() {
+  const portrait = usePortrait();
   return (
     <div className={`${s.fill} ${s.darkBg}`}>
       <span className={s.bigCaret} />
@@ -1097,7 +1279,11 @@ function Automate() {
       <div className={s.n8nAt}>
         <N8nMock />
       </div>
-      <Cursor x0={1100} y0={680} x1={666} y1={606} d={2350} move={600} click={3060} />
+      {portrait ? (
+        <Tap x={PORTRAIT_TAPS.automateRun.x} y={PORTRAIT_TAPS.automateRun.y} d={2980} />
+      ) : (
+        <Cursor x0={1100} y0={680} x1={666} y1={606} d={2350} move={600} click={3060} />
+      )}
     </div>
   );
 }
@@ -1106,9 +1292,15 @@ function Automate() {
 // 13 · OUTRO — lockup + tagline
 // ─────────────────────────────────────────────────────────────────────────────
 function Outro() {
+  const portrait = usePortrait();
   return (
     <div className={s.fill}>
-      <Glyphs items={[
+      <Glyphs items={portrait ? [
+        { g: '/', x: 280, y: 580, d: 0, o: 520 },
+        { g: '<', x: 420, y: 690, d: 60, o: 540, c: 'blue' },
+        { g: '%', x: 240, y: 700, d: 120, o: 560, c: 'lav' },
+        { g: '↗', x: 480, y: 570, d: 180, o: 580, c: 'blue' },
+      ] : [
         { g: '/', x: 560, y: 300, d: 0, o: 520 },
         { g: '<', x: 700, y: 410, d: 60, o: 540, c: 'blue' },
         { g: '%', x: 520, y: 420, d: 120, o: 560, c: 'lav' },
