@@ -1,12 +1,10 @@
+import Guide from './Guide';
 import styles from '../admin.module.css';
 
 export const dynamic = 'force-dynamic';
 
-// Admin Guide — the shell only, on purpose.
-//
-// The operator asked for the tab now and will say later what belongs in it.
-// Whatever that turns out to be (how to publish a post, how to add a project,
-// what the diagnostics mean, house style) drops straight into the card below.
+// Admin Guide — the owner's playbook for the four disciplines the agency sells.
+// The content lives in content.ts and diagrams.tsx; this page only frames it.
 
 export default function AdminGuidePage() {
   return (
@@ -14,15 +12,11 @@ export default function AdminGuidePage() {
       <div className={styles.pageHeader}>
         <div>
           <h1>Admin Guide</h1>
-          <p>Reference and context for running this site.</p>
+          <p>Your playbook: where you stand in each discipline, what scaled looks like, and what to do this month.</p>
         </div>
       </div>
 
-      <div className={styles.card}>
-        <div className={styles.empty}>
-          Nothing here yet &mdash; this page is waiting on its content.
-        </div>
-      </div>
+      <Guide />
     </>
   );
 }
