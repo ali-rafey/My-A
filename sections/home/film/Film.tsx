@@ -27,7 +27,7 @@ import styles from './Film.module.css';
 //   • A stage taller than it is wide (a phone, a tablet held upright) gets
 //     its own 720×1280 PORTRAIT canvas instead of a letterboxed 16:9 band:
 //     the scenes read PortraitContext and re-compose for it — stacked copy,
-//     a phone storefront, a vertical n8n flow, taps instead of a cursor.
+//     a centred strip, a vertical workflow, taps instead of a cursor.
 //
 // MOTION + ACCESSIBILITY
 //   • WCAG 2.2.2: anything that moves on its own for more than 5s needs a

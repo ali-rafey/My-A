@@ -11,8 +11,9 @@ import s from './scenes.module.css';
 // Which canvas the scene is being composed for (set by Film.tsx). Portrait is
 // 720×1280; its safe area is x 50–670, y 150–1110 — the navbar pill covers
 // the top band on a phone and the CTA the bottom one. Positions that live in
-// data (glyphs, cards, nodes, taps) pick their portrait set here; everything
-// else is re-laid in the portrait block at the end of scenes.module.css.
+// data (glyphs, cards, strip, audience, chart, wires, taps) pick their
+// portrait set here; everything else is re-laid in the portrait block at the
+// end of scenes.module.css.
 export const PortraitContext = createContext(false);
 const usePortrait = () => useContext(PortraitContext);
 
@@ -24,9 +25,9 @@ const usePortrait = () => useContext(PortraitContext);
 //   1. the question   "How far can your business go?"
 //   2. the brief      a business asks for growth
 //   3. market         study the audience and the market FIRST
-//   4. presence       build the storefront on what the research found
+//   4. presence       a store that is effortless to use
 //   5. connect        wire the store to Meta Ads and Google Ads
-//   6. launch         campaigns go live in Ads Manager and Google Ads
+//   6. launch         the campaign goes live and reaches the core buyer
 //   7. the sale       the ad in a feed → Shop now → Shop Pay
 //   8. orders         Shopify order notifications stack up
 //   9. scale          budget up, while sales and traffic climb
@@ -57,15 +58,24 @@ const IMG = {
   reel: '/film/reel.jpg',
   product: '/film/product.jpg',
   wallpaper: '/film/wallpaper.jpg',
-  twill: '/film/twill.jpg',
-  jersey: '/film/jersey.jpg',
-  pique: '/film/pique.jpg',
-  fleece: '/film/fleece.jpg',
-  terry: '/film/french-terry.jpg',
   mark: '/film/fanaar-mark.png',
+  shopify: '/film/marks/shopify.png',
 };
 
-export const PRELOAD_IMAGES = Object.values(IMG).concat('/logo-icon.png');
+// The "In wear" strip: the third section of the live Fanaar storefront, with
+// its own photographs, names and notes, replayed in the presence scene.
+const COLLECTION = [
+  { id: 'air', name: 'Air', desc: 'Cloth you can see the light through.', notes: ['Held up to the light', 'Open weave — low cover factor', 'The first thing anyone tests'] },
+  { id: 'stillness', name: 'Stillness', desc: 'The hour when nothing is asked of you.', notes: ['Sleeves past the wrist', 'Knit that keeps its shape', 'Warmth without the weight'] },
+  { id: 'morning', name: 'Morning', desc: 'A first cup, a cuff not yet fastened.', notes: ['Linen, creased and unbothered', 'Cool against a warm room', 'Softer with every wash'] },
+  { id: 'open-air', name: 'Open air', desc: 'Cloth reads differently with weather in it.', notes: ['Cut loose enough to move', 'Wind finds the drape', 'Colour held under full sun'] },
+  { id: 'afternoon', name: 'Afternoon', desc: 'Wide trousers, bare feet, dappled ground.', notes: ['Weight that falls straight', 'No cling in the heat', 'Shadow reads the surface'] },
+  { id: 'touch', name: 'Touch', desc: 'The hand decides before the eye does.', notes: ['Hand-feel, judged in a second', 'A grain you can find blind', 'The test no spec sheet passes'] },
+  { id: 'movement', name: 'Movement', desc: 'Fabric only tells the truth in motion.', notes: ['Drape measured by how it falls', 'Sheer enough to blur', 'Recovery after every step'] },
+  { id: 'drape', name: 'Drape', desc: 'How it hangs is the whole design.', notes: ['The shoulder sets the line', 'Fullness without bulk', 'Seams that disappear'] },
+].map((c) => ({ ...c, img: `/film/collection/${c.id}.jpg` }));
+
+export const PRELOAD_IMAGES = [...Object.values(IMG), ...COLLECTION.map((c) => c.img), '/logo-icon.png', '/logo-icon-dark.png'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Primitives
@@ -190,7 +200,9 @@ function BrandLockup({ d = 0 }: { d?: number }) {
   return (
     <div className={s.lockup} style={v({ '--d': `${d}ms`, '--shift': `${shift}px` })}>
       <span className={s.lockDot} />
-      <img className={s.lockMark} src="/logo-icon.png" alt="" width={500} height={500} />
+      {/* One mark per theme; the dark one is light ink, so it needs no disc. */}
+      <img className={`${s.lockMark} ${s.markLight}`} src="/logo-icon.png" alt="" width={500} height={500} />
+      <img className={`${s.lockMark} ${s.markDark}`} src="/logo-icon-dark.png" alt="" width={500} height={500} />
       <span className={s.lockWord}>
         <span className={s.lockEsca}>esca</span>
         <span className={s.lockLeads}>leads</span>
@@ -234,13 +246,10 @@ function Up({ children }: { children: ReactNode }) {
 const CHECK = <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m3.5 8.5 3 3 6-7" /></svg>;
 
 // Brand marks, drawn simply — recognisable at a glance, not traced.
+// Shopify's own bag, as the raster mark the brand ships — a hand-drawn bag
+// read as a generic shopping icon, not as Shopify.
 function ShopBag({ size = 18 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <path d="M5.5 8h13l-1.2 12.5H6.7z" fill="#95BF47" />
-      <path d="M9 8V6.8a3 3 0 0 1 6 0V8" fill="none" stroke="#5E8E3E" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
+  return <img className={s.markImg} src={IMG.shopify} alt="" width={size} height={size} />;
 }
 function MetaMark({ size = 20 }: { size?: number }) {
   return (
@@ -262,94 +271,63 @@ function GaMark() {
   return <span className={s.gaLogo}><i /><i /><i /></span>;
 }
 
+// n8n's mark, traced from its official logo (the node chain).
+const N8N_PATH = 'M24 8.4c0 1.325-1.102 2.4-2.462 2.4-1.146 0-2.11-.765-2.384-1.8h-3.436c-.602 0-1.115.424-1.214 1.003l-.101.592a2.38 2.38 0 01-.8 1.405c.412.354.704.844.8 1.405l.1.592A1.222 1.222 0 0015.719 15h.975c.273-1.035 1.237-1.8 2.384-1.8 1.36 0 2.461 1.075 2.461 2.4S20.436 18 19.078 18c-1.147 0-2.11-.765-2.384-1.8h-.975c-1.204 0-2.23-.848-2.428-2.005l-.101-.592a1.222 1.222 0 00-1.214-1.003H10.97c-.308.984-1.246 1.7-2.356 1.7-1.11 0-2.048-.716-2.355-1.7H4.817c-.308.984-1.246 1.7-2.355 1.7C1.102 14.3 0 13.225 0 11.9s1.102-2.4 2.462-2.4c1.183 0 2.172.815 2.408 1.9h1.337c.236-1.085 1.225-1.9 2.408-1.9 1.184 0 2.172.815 2.408 1.9h.952c.601 0 1.115-.424 1.213-1.003l.102-.592c.198-1.157 1.225-2.005 2.428-2.005h3.436c.274-1.035 1.238-1.8 2.384-1.8C22.898 6 24 7.075 24 8.4zm-1.23 0c0 .663-.552 1.2-1.232 1.2-.68 0-1.23-.537-1.23-1.2 0-.663.55-1.2 1.23-1.2.68 0 1.231.537 1.231 1.2zM2.461 13.1c.68 0 1.23-.537 1.23-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.231.537-1.231 1.2 0 .663.55 1.2 1.23 1.2zm6.153 0c.68 0 1.231-.537 1.231-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.231.537-1.231 1.2 0 .663.55 1.2 1.23 1.2zm10.462 3.7c.68 0 1.23-.537 1.23-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.23.537-1.23 1.2 0 .663.55 1.2 1.23 1.2z';
+function N8nMark({ size = 26 }: { size?: number }) {
+  return (
+    <svg viewBox="0 5.5 24 13" width={size} height={(size * 13) / 24} aria-hidden="true">
+      <path d={N8N_PATH} fill="#EA4B71" fillRule="evenodd" clipRule="evenodd" />
+    </svg>
+  );
+}
+function SheetsMark() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6z" fill="#0F9D58" /><path d="M15 2v5h5" fill="#87CEAC" /><path d="M9 11h8v7H9zM9 14.5h8M13 11v7" fill="none" stroke="#fff" strokeWidth="1.3" /></svg>;
+}
+function WaMark() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#25D366" /><path d="M8.6 7.6c.3-.3.8-.3 1 .1l.9 1.7c.1.3.1.6-.1.8l-.6.7c.5 1.2 1.5 2.2 2.7 2.8l.7-.6c.2-.2.5-.3.8-.1l1.7.9c.4.2.4.7.1 1l-.9.9c-.6.6-1.6.7-2.4.3-2.2-1-4-2.8-5-5-.4-.8-.3-1.8.3-2.4Z" fill="#fff" /></svg>;
+}
+function GmailMark() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5V18h4v-7l5 3.6 5-3.6v7h4V7.5l-2-1.5-7 5.2L5 6z" fill="#EA4335" /><path d="M3 7.5 5 6v12H3z" fill="#4285F4" /><path d="M21 7.5 19 6v12h2z" fill="#34A853" /></svg>;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared screens (the example business: Fanaar)
+// Motion-graphic primitives — the big title and the designer's callout
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FABRICS = [
-  { t: 'Twill', p: '$18/m', img: IMG.twill },
-  { t: 'Jersey', p: '$14/m', img: IMG.jersey },
-  { t: 'Piqué', p: '$16/m', img: IMG.pique },
-  { t: 'Fleece', p: '$22/m', img: IMG.fleece },
-  { t: 'French Terry', p: '$19/m', img: IMG.terry },
-];
-
-function SiteMock() {
+/** A headline that builds word by word, then lifts away at `out`. */
+function IntroTitle({ words, out }: { words: { w: string; em?: boolean }[]; out: number }) {
   return (
-    <div className={s.site}>
-      <div className={s.siteNav}>
-        <span className={s.fanaarLogo}>
-          <img src={IMG.mark} alt="" width={300} height={218} />
-          FANAAR
-        </span>
-        <span className={s.siteLinks}>Shop fabric · Swatches · Journal · About</span>
-        <span className={s.siteCart}>Cart (0)</span>
-        <span className={s.siteCta}>Shop now</span>
-      </div>
-      <div className={s.siteHero}>
-        <div className={s.siteCopy}>
-          <span className={s.siteEyebrow}>Lounge fabric · cut to order</span>
-          <span className={`${s.siteHeadline} ${s.siteHeadlineMove}`}>
-            We make the cloth<br />you live in.
-          </span>
-          <span className={s.siteSub}>Traced to origin · Tested by batch · Shipped worldwide</span>
-        </div>
-        <img src={IMG.meadow} alt="" />
-      </div>
-      <div className={s.siteCards}>
-        {FABRICS.map((c, i) => (
-          <div key={c.t} className={`${s.siteCard} ${s.rise}`} style={at(700 + i * 110)}>
-            <img src={c.img} alt="" />
-            <span>{c.t}<em>{c.p}</em></span>
-          </div>
-        ))}
-      </div>
+    <div className={s.introTitle} style={at(0, out)}>
+      {words.map((w, i) => (
+        <span key={w.w} className={`${s.hookW} ${w.em ? s.hookEm : ''}`} style={at(80 + i * 170)}>{w.w}</span>
+      ))}
     </div>
   );
 }
 
-// The same store as it reads on a phone: photo-led hero with the headline
-// over it, fabrics two to a row.
-function MobileSiteMock() {
+/**
+ * A designer's callout: a dot on the thing, a leader, a note. `side` is where
+ * the note sits relative to the dot — left, right or up.
+ */
+function Spec({ x, y, d, side, icon, children }: {
+  x: number; y: number; d: number; side: 'l' | 'r' | 'u'; icon: ReactNode; children: ReactNode;
+}) {
+  const place = side === 'l' ? s.specL : side === 'u' ? s.specU : s.specR;
   return (
-    <div className={`${s.site} ${s.mSite}`}>
-      <div className={s.mNav}>
-        <span className={s.fanaarLogo}>
-          <img src={IMG.mark} alt="" width={300} height={218} />
-          FANAAR
-        </span>
-        <span className={s.mCart}>Cart (0)</span>
-        <span className={s.mBurger}><i /><i /></span>
-      </div>
-      <div className={s.mHero}>
-        <img src={IMG.meadow} alt="" />
-        <div className={s.mCopy}>
-          <span className={s.mEyebrow}>Lounge fabric · cut to order</span>
-          <span className={`${s.mHeadline} ${s.siteHeadlineMove}`}>We make the cloth<br />you live in.</span>
-          <span className={s.mShop}>Shop fabric</span>
-        </div>
-      </div>
-      <div className={s.mCards}>
-        {FABRICS.slice(0, 4).map((c, i) => (
-          <div key={c.t} className={`${s.siteCard} ${s.rise}`} style={at(700 + i * 110)}>
-            <img src={c.img} alt="" />
-            <span>{c.t}<em>{c.p}</em></span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <span className={`${s.spec} ${place}`} style={at(d, undefined, { left: `${x}px`, top: `${y}px` })}>
+      <i className={s.specLead} />
+      <span className={s.specNote}>{icon}{children}</span>
+    </span>
   );
 }
 
-function Browser({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
-  return (
-    <div className={`${s.browser} ${className ?? ''}`} style={style}>
-      <div className={s.browserBar}><i /><i /><i /><span>fanaar.online</span></div>
-      <div className={s.browserBody}>{children}</div>
-    </div>
-  );
-}
+const SPEC_ICON = {
+  speed: <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.2 1.5 3.5 9h3.8L6.6 14.5 12.5 7H8.7z" /></svg>,
+  motion: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M2 13.5C7.5 13.5 7.5 2.5 14 2.5" /></svg>,
+  touch: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="8" cy="8" r="2.4" fill="currentColor" stroke="none" /><circle cx="8" cy="8" r="5.7" /></svg>,
+};
 
+// The hook collage's sales curve.
 const LINE = 'M0 190 C 60 182, 90 176, 130 168 S 210 150, 250 146 S 330 120, 370 112 S 450 92, 490 70 S 560 40, 600 22';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -482,7 +460,7 @@ function CollageCard({ c }: { c: Card }) {
       )}
       {c.k === 'order' && (
         <div className={s.miniLead}>
-          <i><ShopBag size={22} /></i>
+          <i><ShopBag size={26} /></i>
           <span><b>New order · #1047</b><em>$72.00 · Online Store</em></span>
         </div>
       )}
@@ -649,27 +627,137 @@ function Market() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6 · PRESENCE — the storefront, built on what the research found
+// 6 · PRESENCE — "Make it effortless."
 // ─────────────────────────────────────────────────────────────────────────────
+// Why it is here: the store has to be a pleasure to use. So no browser window
+// — the storefront's own "In wear" strip (the third section of the live Fanaar
+// site: its photographs and its copy) plays the way it plays there. One soft
+// glide; the feature grows while its neighbours step aside by exactly the
+// overflow; the notes and the name change with it. Blue callouts mark WHY it
+// feels effortless — the speed, the tap target, the motion.
+type StripGeo = { w: number; h: number; gap: number; k: number; cx: number; cy: number };
+const STRIP = [...COLLECTION, ...COLLECTION, ...COLLECTION];
+const STRIP_GEO: Record<'l' | 'p', StripGeo> = {
+  l: { w: 112, h: 150, gap: 10, k: 2.1, cx: 640, cy: 372 },
+  p: { w: 120, h: 160, gap: 10, k: 2.2, cx: 360, cy: 620 },
+};
+const STRIP_FROM = COLLECTION.length; // "Air", in the reel's middle pass
+const STRIP_IN = 1000; // the reel glides in as the title lifts away
+const STRIP_STEPS = [2450, 3450]; // each press of [ → ] moves the feature one on
+// The centre of "[ → ]", where the pointer and the thumb press it.
+const NEXT_AT = { l: { x: 1142, y: 632 }, p: { x: 483, y: 1010 } };
+
 function Site() {
   const portrait = usePortrait();
+  const g = STRIP_GEO[portrait ? 'p' : 'l'];
+  const next = NEXT_AT[portrait ? 'p' : 'l'];
+  const pitch = g.w + g.gap;
+  const aside = (g.w * (g.k - 1)) / 2; // how far each neighbour steps aside
+  const actives = [STRIP_FROM, STRIP_FROM + 1, STRIP_FROM + 2];
+  const offset = (a: number) => g.cx - (a * pitch + g.w / 2);
+  const pose = (i: number, a: number) =>
+    `translateX(${i < a ? -aside : i > a ? aside : 0}px) scale(${i === a ? g.k : 1})`;
+  // The notes and the name leave on a press and the next ones arrive after it.
+  const swap = (k: number) => at(k === 0 ? STRIP_IN + 250 : STRIP_STEPS[k - 1] + 140, STRIP_STEPS[k]);
+  const shown = actives.map((a) => STRIP[a]);
+
+  // Callout anchors, taken from the strip at rest (the feature is always
+  // centred, so these hold through every glide).
+  const featureTop = g.cy - (g.h * g.k) / 2;
+  const stillTop = g.cy - g.h / 2;
+  const speedAt = portrait
+    ? { x: g.cx - pitch - aside - 8, y: stillTop }
+    : { x: g.cx - 2 * pitch - aside, y: stillTop };
+  const motionAt = portrait
+    ? { x: g.cx + 60, y: featureTop, side: 'u' as const }
+    : { x: g.cx + (g.w * g.k) / 2, y: featureTop + 24, side: 'r' as const };
+  const touchAt = { x: portrait ? next.x : next.x - 20, y: next.y - 22 };
+
   return (
-    <div className={`${s.fill} ${s.skyBg}`}>
+    <div className={`${s.fill} ${s.fanaarBg}`}>
+      <IntroTitle words={[{ w: 'Make' }, { w: 'it' }, { w: 'effortless.', em: true }]} out={1150} />
+
+      <span className={`${s.fanaarMark} ${s.rise}`} style={at(STRIP_IN + 150)}>
+        <img src={IMG.mark} alt="" width={300} height={218} />
+        FANAAR
+      </span>
+      <div className={s.stripNotes}>
+        {shown.map((c, k) => (
+          <span key={c.id} className={s.slipSwap} style={swap(k)}>
+            {c.notes.map((n) => <span key={n}>{n}</span>)}
+          </span>
+        ))}
+      </div>
+
+      <div
+        className={s.stripTrack}
+        style={v({
+          top: `${stillTop}px`,
+          height: `${g.h}px`,
+          '--xin': `${offset(STRIP_FROM) + 520}px`,
+          '--x0': `${offset(actives[0])}px`,
+          '--x1': `${offset(actives[1])}px`,
+          '--x2': `${offset(actives[2])}px`,
+          '--din': `${STRIP_IN}ms`,
+          '--s1': `${STRIP_STEPS[0]}ms`,
+          '--s2': `${STRIP_STEPS[1]}ms`,
+        })}
+      >
+        {STRIP.map((c, i) => {
+          // Only the stills whose pose changes at a press animate: the one
+          // leaving the feature and the one taking it.
+          const moves = STRIP_STEPS
+            .map((t, k) => ({ t, from: pose(i, actives[k]), to: pose(i, actives[k + 1]) }))
+            .filter((m) => m.from !== m.to);
+          const style: Vars = { left: `${i * pitch}px`, width: `${g.w}px`, zIndex: i, transform: pose(i, actives[0]) };
+          moves.forEach((m, j) => {
+            const n = j === 0 ? 'a' : 'b';
+            style[`--f${n}`] = m.from;
+            style[`--t${n}`] = m.to;
+            style[`--d${n}`] = `${m.t}ms`;
+          });
+          const moving = moves.length === 2 ? s.stillAB : moves.length === 1 ? s.stillA : '';
+          return (
+            <span key={`${c.id}-${i}`} className={`${s.still} ${moving}`} style={v(style)}>
+              <img src={c.img} alt="" />
+            </span>
+          );
+        })}
+      </div>
+
+      <div className={s.stripName}>
+        <span className={`${s.stripEyebrow} ${s.rise}`} style={at(STRIP_IN + 250)}>In wear</span>
+        <span className={s.stripNameSwap}>
+          {shown.map((c, k) => (
+            <span key={c.id} className={s.slipSwap} style={swap(k)}>
+              <b>{c.name}</b>
+              <em>{c.desc}</em>
+            </span>
+          ))}
+        </span>
+      </div>
+      <div className={`${s.stripNav} ${s.rise}`} style={at(STRIP_IN + 350)}>
+        <span>[ ← ]</span>
+        <span>View fabrics</span>
+        <span>[ → ]</span>
+      </div>
+
+      {/* Why it feels effortless. */}
+      <Spec x={speedAt.x} y={speedAt.y} d={1750} side="u" icon={SPEC_ICON.speed}>Loads in 0.9s</Spec>
+      <span className={s.tapBox} style={at(2150, undefined, { left: `${next.x - 22}px`, top: `${next.y - 22}px` })} />
+      <Spec x={touchAt.x} y={touchAt.y} d={2200} side="u" icon={SPEC_ICON.touch}>44px tap target</Spec>
+      <Spec x={motionAt.x} y={motionAt.y} d={2650} side={motionAt.side} icon={SPEC_ICON.motion}>Ease-out · 1s glide</Spec>
+
       {portrait ? (
-        <div className={`${s.phone} ${s.sitePhone}`}>
-          <div className={s.phoneScreen}><MobileSiteMock /></div>
-        </div>
+        STRIP_STEPS.map((t) => <Tap key={t} x={next.x} y={next.y} d={t - 120} />)
       ) : (
-        <Browser className={s.siteFrame}>
-          <SiteMock />
-        </Browser>
+        <span className={s.outAt} style={at(0, 4300)}>
+          <Cursor
+            x0={1010} y0={700} x1={next.x - 5} y1={next.y - 3} d={1850} move={520} click={STRIP_STEPS[0] - 70}
+            x2={next.x - 5} y2={next.y - 3} d2={STRIP_STEPS[1] - 200} move2={40} click2={STRIP_STEPS[1] - 70}
+          />
+        </span>
       )}
-      <span className={`${s.floatBadge} ${s.pop}`} style={at(2100, undefined, portrait ? { left: '404px', top: '204px' } : { left: '936px', top: '58px' })}>
-        <i className={s.liveDot} />Live · fanaar.online
-      </span>
-      <span className={`${s.floatBadge} ${s.pop}`} style={at(2500, undefined, portrait ? { left: '84px', top: '900px' } : { left: '112px', top: '536px' })}>
-        <ShopBag />Built on Shopify
-      </span>
     </div>
   );
 }
@@ -695,188 +783,198 @@ function Connect() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8 · LAUNCH — Meta Ads Manager, then the camera pans to Google Ads
+// 8 · LAUNCH — put it in front of them
 // ─────────────────────────────────────────────────────────────────────────────
-const PAN_AT = 3000;
-const G = PAN_AT + 600; // Google's screen starts moving once it is in view
+// Why it is here: the campaign goes live and the ad reaches the people the
+// research found. So no Ads Manager — one creative and one Publish; then the
+// ad lands in every placement while, across the audience, the core buyer
+// lights up. Meta and Google are the marks on the creative, the way a buyer
+// meets them.
+const PUB = 1400; // Publish is pressed
+const RING_MS = 1500; // a pulse ring takes this long to reach its full radius
 
-// Where a thumb lands on the portrait canvas, measured off the laid-out
-// portrait screens (each is the centre of the control it presses).
-const PORTRAIT_TAPS = {
-  launchToggle: { x: 103, y: 616 },
-  launchPublish: { x: 600, y: 387 },
-  scaleBudget: { x: 231, y: 978 },
-  automateRun: { x: 360, y: 1064 },
+type Person = { x: number; y: number; hit: boolean; a: number; d: number };
+type Placed = { x: number; y: number; w: number; h: number; r: number };
+type PlaceKind = 'stories' | 'feed' | 'search' | 'shopping';
+type LaunchGeo = {
+  cx: number; cy: number; ring: number;
+  card: Box; button: Box; target: number; counters: number;
+  place: Record<PlaceKind, Placed>;
+  crowd: Person[];
 };
 
-function MetaAdsMock() {
-  return (
-    <div className={s.meta}>
-      <div className={s.metaTop}>
-        <span className={s.metaBrand}><MetaMark size={16} />Ads Manager</span>
-        <span className={s.metaAcct}>Fanaar Textile <em>▾</em></span>
-        <span className={s.metaPixel}><i />Pixel · Purchase events received</span>
-        <span className={s.metaPublish}>Publish</span>
-      </div>
-      <div className={s.metaBody}>
-        <div className={s.metaRail}>{[0, 1, 2, 3, 4].map((i) => <i key={i} data-on={i === 0 || undefined} />)}</div>
-        <div className={s.metaMain}>
-          <div className={s.metaTabs}>
-            <span data-on>Campaigns</span><span>Ad sets</span><span>Ads</span>
-            <em>Last 7 days ▾</em>
-          </div>
-          <div className={s.metaTools}>
-            <span className={s.metaCreate}>+ Create</span><span>Duplicate</span><span>Edit</span><span>A/B test</span>
-          </div>
-          <div className={`${s.metaRow} ${s.metaHead}`}>
-            <span>Off/On</span><span>Campaign</span><span>Delivery</span><span>Budget</span><span>Results</span><span>Cost per result</span><span>Amount spent</span><span>ROAS</span>
-          </div>
-          <div className={`${s.metaRow} ${s.metaHot}`}>
-            <span><i className={`${s.tgl} ${s.tglFlip}`} style={at(1300)} /></span>
-            <span><b>Linen launch — Advantage+ shopping</b></span>
-            <span className={s.deliv}>
-              <em className={s.dvOff}>Off</em>
-              <em className={s.dvReview}><i />In review</em>
-              <em className={s.dvActive}><i />Active</em>
-            </span>
-            <span>$40.00<small>Daily</small></span>
-            <span className={s.metaLate}><b>38</b><small>Purchases</small></span>
-            <span className={s.metaLate}>$7.42</span>
-            <span className={s.metaLate}>$282.10</span>
-            <span className={s.metaLate}><b>4.80</b></span>
-          </div>
-          <div className={s.metaRow}>
-            <span><i className={s.tgl} data-on /></span>
-            <span><b>Retargeting — viewed product</b></span>
-            <span className={s.deliv}><em className={s.dvStatic}><i />Active</em></span>
-            <span>$20.00<small>Daily</small></span>
-            <span><b>21</b><small>Purchases</small></span>
-            <span>$5.11</span>
-            <span>$107.40</span>
-            <span><b>6.12</b></span>
-          </div>
-          <div className={s.metaRow}>
-            <span><i className={s.tgl} data-on /></span>
-            <span><b>Lookalike — past buyers</b></span>
-            <span className={s.deliv}><em className={s.dvStatic}><i />Active</em></span>
-            <span>$25.00<small>Daily</small></span>
-            <span><b>17</b><small>Purchases</small></span>
-            <span>$6.35</span>
-            <span>$108.00</span>
-            <span><b>5.20</b></span>
-          </div>
-          <div className={s.metaRow}>
-            <span><i className={s.tgl} /></span>
-            <span><b>Swatch kit — traffic</b></span>
-            <span className={s.deliv}><em className={s.dvMuted}>Off</em></span>
-            <span>$10.00<small>Daily</small></span>
-            <span>—</span><span>—</span><span>$0.00</span><span>—</span>
-          </div>
-          <div className={s.metaRow}>
-            <span><i className={s.tgl} /></span>
-            <span><b>Winter linen — draft</b></span>
-            <span className={s.deliv}><em className={s.dvMuted}>Draft</em></span>
-            <span>$30.00<small>Daily</small></span>
-            <span>—</span><span>—</span><span>$0.00</span><span>—</span>
-          </div>
-          <div className={s.metaFoot}>Results from 5 campaigns</div>
-        </div>
-      </div>
-      <span className={s.metaToast}><i>{CHECK}</i>Campaign published</span>
-    </div>
-  );
+// The audience: a staggered field of people, lit as the pulse reaches them.
+function crowd(cols: number, rows: number, x0: number, y0: number, dx: number, dy: number, cx: number, cy: number, ring: number): Person[] {
+  const out: Person[] = [];
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      const x = x0 + c * dx + (r % 2 ? dx / 2 : 0);
+      const y = y0 + r * dy;
+      out.push({
+        x,
+        y,
+        // A fixed two in nine are the core buyer, so every loop lights the same.
+        hit: (c * 7 + r * 11) % 9 < 2,
+        a: 120 + (c + r) * 16,
+        d: Math.round(PUB + (Math.hypot(x - cx, y - cy) / ring) * RING_MS),
+      });
+    }
+  }
+  return out;
 }
 
-const GA_CLICKS = 'M0 150 C 40 146, 70 140, 110 134 S 180 118, 220 110 S 290 96, 330 80 S 410 58, 450 50 S 540 26, 600 16';
-const GA_CONV = 'M0 170 C 50 168, 90 164, 130 160 S 200 150, 240 146 S 320 132, 360 124 S 440 104, 480 96 S 560 74, 600 64';
+const LAUNCH: Record<'l' | 'p', LaunchGeo> = {
+  l: {
+    cx: 640, cy: 315, ring: 820,
+    card: [545, 190, 190, 250], button: [525, 468, 230, 50], target: 92, counters: 574,
+    place: {
+      stories: { x: 150, y: 116, w: 124, h: 220, r: -4 },
+      feed: { x: 1000, y: 108, w: 170, h: 214, r: 3 },
+      search: { x: 96, y: 432, w: 300, h: 100, r: -2 },
+      shopping: { x: 1010, y: 396, w: 160, h: 200, r: 4 },
+    },
+    crowd: crowd(21, 11, 72, 60, 56, 60, 640, 315, 820),
+  },
+  p: {
+    cx: 360, cy: 445, ring: 900,
+    card: [250, 300, 220, 290], button: [235, 624, 250, 54], target: 196, counters: 952,
+    place: {
+      stories: { x: 52, y: 282, w: 116, h: 206, r: -4 },
+      feed: { x: 544, y: 272, w: 124, h: 170, r: 3 },
+      search: { x: 56, y: 736, w: 290, h: 96, r: -2 },
+      shopping: { x: 468, y: 716, w: 150, h: 190, r: 4 },
+    },
+    crowd: crowd(11, 17, 64, 180, 58, 56, 360, 445, 900),
+  },
+};
 
-function GoogleAdsMock() {
-  const tiles = [
-    { k: 'Clicks', val: '4.21K', c: 'blue' },
-    { k: 'Impressions', val: '186K', c: '' },
-    { k: 'Conversions', val: '214', c: 'red' },
-    { k: 'Conv. value', val: '$18.6K', c: '' },
-  ];
+const PLACE_TAG: Record<PlaceKind, { meta: boolean; label: string }> = {
+  stories: { meta: true, label: 'Instagram Stories' },
+  feed: { meta: true, label: 'Instagram Feed' },
+  search: { meta: false, label: 'Google Search' },
+  shopping: { meta: false, label: 'Google Shopping' },
+};
+
+/** The same ad, as it lands in one placement — flown out from the creative. */
+function Placement({ kind, p, d, cx, cy }: { kind: PlaceKind; p: Placed; d: number; cx: number; cy: number }) {
+  const tag = PLACE_TAG[kind];
   return (
-    <div className={s.gads}>
-      <div className={s.gTop}>
-        <span className={s.gBrand}><GoogleAdsMark />Google Ads</span>
-        <span className={s.gAcct}>Fanaar Textile<em>482-193-7710</em></span>
-        <span className={s.gSearch}>Search for a page or campaign</span>
-        <span className={s.gAvatar}>F</span>
+    <div
+      className={s.place}
+      style={v({
+        left: `${p.x}px`, top: `${p.y}px`, width: `${p.w}px`,
+        '--sx': `${cx - (p.x + p.w / 2)}px`, '--sy': `${cy - (p.y + p.h / 2)}px`, '--r': `${p.r}deg`, '--d': `${d}ms`,
+      })}
+    >
+      <div className={`${s.placeBody} ${s[`pl_${kind}`]}`} style={v({ height: `${p.h}px` })}>
+        {kind === 'stories' && (
+          <>
+            <img src={IMG.reel} alt="" />
+            <span className={s.storyBar}><i /><i /></span>
+            <span className={s.storyUser}><i />fanaar.textile</span>
+            <span className={s.storyCta}>Shop now</span>
+          </>
+        )}
+        {kind === 'feed' && (
+          <>
+            <span className={s.feedHead}><i />fanaar.textile</span>
+            <img src={IMG.swatches} alt="" />
+            <span className={s.feedCta}>Shop now <b>›</b></span>
+          </>
+        )}
+        {kind === 'search' && (
+          <>
+            <span><b>Sponsored</b> · fanaar.online</span>
+            <strong>Stonewashed Linen by the Metre — Fanaar</strong>
+            <em>Premium lounge fabric, lab-tested by batch.</em>
+          </>
+        )}
+        {kind === 'shopping' && (
+          <>
+            <img src={IMG.product} alt="" />
+            <b>Stonewashed Linen</b>
+            <strong>$24.00 / m</strong>
+            <em>fanaar.online</em>
+          </>
+        )}
       </div>
-      <div className={s.gBody}>
-        <div className={s.gRail}>
-          <span className={s.gCreate}>+</span>
-          {['Campaigns', 'Goals', 'Tools', 'Billing', 'Admin'].map((t, i) => (
-            <span key={t} data-on={i === 0 || undefined}><i />{t}</span>
-          ))}
-        </div>
-        <div className={s.gMain}>
-          <span className={s.gCrumb}>All campaigns ›</span>
-          <div className={s.gTitle}>
-            <b>PMax — Fanaar storefront</b>
-            <span className={s.gState}>
-              <em className={s.gPending}>Pending</em>
-              <em className={s.gEligible}><i>{CHECK}</i>Eligible</em>
-            </span>
-            <span className={s.gType}>Performance Max</span>
-          </div>
-          <div className={s.gTiles}>
-            {tiles.map((t, i) => (
-              <div key={t.k} className={`${s.gTile} ${t.c ? s[`gt_${t.c}`] : ''}`} data-on={t.c ? true : undefined}>
-                <span>{t.k}</span>
-                <b><Odo value={t.val} d={G + 200 + i * 120} dur={1400} /></b>
-              </div>
-            ))}
-          </div>
-          <div className={s.gChartCard}>
-            <svg viewBox="0 0 600 180" className={s.gChart}>
-              {[45, 90, 135].map((y) => <line key={y} x1="0" x2="600" y1={y} y2={y} className={s.gridLine} />)}
-              <path d={GA_CONV} className={`${s.gLineRed} ${s.draw}`} style={at(G + 450)} pathLength={1} />
-              <path d={GA_CLICKS} className={`${s.gLineBlue} ${s.draw}`} style={at(G + 300)} pathLength={1} />
-            </svg>
-            <div className={s.gSide}>
-              <span className={s.gCap}>Conversion goal</span>
-              <b>Purchase (Shopify)</b>
-              <span className={`${s.gRecording} ${s.pop}`} style={at(G + 900)}><i />Recording conversions</span>
-              <span className={s.gCap}>Asset group · Ad strength</span>
-              <div className={s.gAssets}>
-                <img src={IMG.reel} alt="" /><img src={IMG.product} alt="" /><img src={IMG.meadow} alt="" />
-                <em className={s.pop} style={at(G + 1100)}>Excellent</em>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <span className={s.placeTag}>
+        {tag.meta ? <MetaMark size={11} /> : <GoogleAdsMark size={13} />}
+        {tag.label}
+      </span>
     </div>
   );
 }
 
 function Launch() {
   const portrait = usePortrait();
+  const g = LAUNCH[portrait ? 'p' : 'l'];
+  const [bx, by, bw, bh] = g.button;
+  const press = { x: bx + bw / 2, y: by + bh / 2 };
+  const kinds: PlaceKind[] = ['stories', 'feed', 'search', 'shopping'];
   return (
     <div className={s.fill}>
-      {/* Landscape pans across to Google Ads; portrait scrolls down to it. */}
-      <div className={s.adsStrip} style={at(PAN_AT)}>
-        <div className={`${s.adsWin} ${s.frameEnter}`}>
-          <MetaAdsMock />
-        </div>
-        <div className={`${s.adsWin} ${s.adsWinNext}`}>
-          <GoogleAdsMock />
-        </div>
+      {g.crowd.map((p, i) => (
+        <span
+          key={i}
+          className={`${s.person} ${p.hit ? s.personHit : ''}`}
+          style={v({ left: `${p.x}px`, top: `${p.y}px`, '--a': `${p.a}ms`, '--d': `${p.d}ms` })}
+        />
+      ))}
+      {[0, 1, 2].map((k) => (
+        <span
+          key={k}
+          className={s.ring}
+          style={at(PUB + k * 260, undefined, {
+            left: `${g.cx - g.ring}px`, top: `${g.cy - g.ring}px`, width: `${g.ring * 2}px`, height: `${g.ring * 2}px`,
+          })}
+        />
+      ))}
+      <span className={s.targetTag} style={at(300, undefined, { top: `${g.target}px` })}>
+        <i />Core buyer · 25–44 · buys for home
+      </span>
+
+      <div
+        className={s.adCard}
+        style={v({
+          left: `${g.card[0]}px`, top: `${g.card[1]}px`, width: `${g.card[2]}px`, height: `${g.card[3]}px`,
+          '--d': '150ms', '--p': `${PUB}ms`,
+        })}
+      >
+        <span className={s.adHead}><i />fanaar.textile<em>Sponsored</em></span>
+        <img src={IMG.reel} alt="" />
+        <span className={s.adCaption}>Stonewashed linen, cut to the metre.</span>
+        <span className={s.adCta}>Shop now <b>›</b></span>
+        <span className={`${s.adBadge} ${s.adBadgeL}`}><MetaMark size={15} /></span>
+        <span className={`${s.adBadge} ${s.adBadgeR}`}><GoogleAdsMark size={20} /></span>
       </div>
+
+      <div
+        className={s.publish}
+        style={at(500, undefined, { left: `${bx}px`, top: `${by}px`, width: `${bw}px`, height: `${bh}px`, '--p': `${PUB}ms` })}
+      >
+        <span>Publish campaign</span>
+        <span className={s.publishLive}><i />Live on Meta + Google</span>
+      </div>
+
+      {kinds.map((k, i) => (
+        <Placement key={k} kind={k} p={g.place[k]} d={PUB + 450 + i * 170} cx={g.cx} cy={g.cy} />
+      ))}
+
+      <div className={s.reachRow} style={at(PUB + 1500, undefined, { top: `${g.counters}px` })}>
+        {[['Reach', '48.2K'], ['Clicks', '1,930'], ['Sales', '38']].map(([k, val], i) => (
+          <span key={k} className={s.reach}>
+            <em>{k}</em>
+            <b><Odo value={val} d={PUB + 1600 + i * 140} dur={1500} /></b>
+          </span>
+        ))}
+      </div>
+
       {portrait ? (
-        <>
-          <Tap x={PORTRAIT_TAPS.launchToggle.x} y={PORTRAIT_TAPS.launchToggle.y} d={1160} />
-          <Tap x={PORTRAIT_TAPS.launchPublish.x} y={PORTRAIT_TAPS.launchPublish.y} d={1980} />
-        </>
+        <Tap x={press.x} y={press.y} d={PUB - 80} />
       ) : (
-        <span className={s.outAt} style={at(0, 2800)}>
-          <Cursor
-            x0={1060} y0={660} x1={189} y1={300} d={600} move={640} click={1260}
-            x2={1130} y2={112} d2={1450} move2={560} click2={2080}
-          />
+        <span className={s.outAt} style={at(0, PUB + 700)}>
+          <Cursor x0={1080} y0={690} x1={press.x - 5} y1={press.y - 3} d={650} move={600} click={PUB - 60} />
         </span>
       )}
     </div>
@@ -934,356 +1032,436 @@ function Purchase() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 10 · ORDERS — the store owner's lock screen
 // ─────────────────────────────────────────────────────────────────────────────
-const NOTIFS = [
-  { items: 1, amt: '$72.00', d: 500 },
-  { items: 3, amt: '$186.00', d: 1250 },
-  { items: 1, amt: '$48.00', d: 1800 },
-  { items: 4, amt: '$240.00', d: 2200 },
-  { items: 2, amt: '$96.00', d: 2500 },
-  { items: 2, amt: '$132.00', d: 2750 },
+// Drawn to an iPhone's own proportions and in the format the Shopify app
+// really sends on iOS — "Order #1542" over "$250.00, 3 items from Online
+// Store", a timestamp on the right, the white app tile — in the system's own
+// frosted material: light glass in the light theme, dark glass in the dark.
+// Two older orders are already there; six new ones land on top, each pushing
+// the stack down one slot as iOS does, and a card pushed past the last slot
+// fades away the way iOS folds older notifications out of sight.
+type Notif = { id: string; amt: string; items: number; when: string; d?: number };
+const NOTIFS: Notif[] = [
+  // Oldest first, so each later card draws over the one it pushes down.
+  { id: '#1045', amt: '$112.00', items: 2, when: '41m ago' },
+  { id: '#1046', amt: '$120.00', items: 2, when: '18m ago' },
+  { id: '#1047', amt: '$72.00', items: 1, when: 'now', d: 500 },
+  { id: '#1048', amt: '$186.00', items: 3, when: 'now', d: 1250 },
+  { id: '#1049', amt: '$72.00', items: 1, when: 'now', d: 1800 },
+  { id: '#1050', amt: '$48.00', items: 1, when: 'now', d: 2200 },
+  { id: '#1051', amt: '$108.00', items: 2, when: 'now', d: 2500 },
+  { id: '#1052', amt: '$56.00', items: 1, when: 'now', d: 2750 },
 ];
+/** Slots the lock screen has room for; the next push fades a card out. */
+const NOTIF_SLOTS = 7;
 
-// Each new order lands on top and pushes the older ones down, like iOS: every
-// later arrival wraps an older card in one more one-slot shift.
+// Each card is wrapped in one shift per later arrival, so every new order
+// moves everything under it down exactly one slot.
 function Notification({ i }: { i: number }) {
   const n = NOTIFS[i];
+  // The cards already on screen start stacked under each other.
+  let slot = NOTIFS.slice(i + 1).filter((m) => m.d === undefined).length;
   let el: ReactNode = (
-    <div className={s.notif} style={at(n.d)}>
-      <span className={s.notifIcon}><ShopBag size={20} /></span>
-      <div>
-        <span className={s.notifApp}>SHOPIFY<em>now</em></span>
-        <b>Fanaar Textile</b>
-        <span>You have a new order for {n.items} {n.items === 1 ? 'item' : 'items'} totaling {n.amt} from Online Store.</span>
-      </div>
+    <div className={`${s.notif} ${n.d === undefined ? s.notifThere : ''}`} style={n.d === undefined ? undefined : at(n.d)}>
+      <span className={s.notifIcon}><ShopBag size={21} /></span>
+      <span className={s.notifText}>
+        <span className={s.notifHead}>
+          <b>Order {n.id}</b>
+          <em>{n.when}</em>
+        </span>
+        <span className={s.notifBody}>
+          {n.amt}, {n.items} {n.items === 1 ? 'item' : 'items'} from Online Store
+        </span>
+      </span>
     </div>
   );
+  const start = slot;
   for (let j = i + 1; j < NOTIFS.length; j += 1) {
-    el = <div className={s.notifShift} style={at(NOTIFS[j].d)}>{el}</div>;
+    const later = NOTIFS[j];
+    if (later.d === undefined) continue;
+    slot += 1;
+    const out = slot === NOTIF_SLOTS;
+    el = <div className={out ? s.notifShiftOut : s.notifShift} style={at(later.d)}>{el}</div>;
+    if (out) break;
   }
-  return <div className={s.notifSlot}>{el}</div>;
+  return <div className={s.notifSlot} style={v({ '--start': start })}>{el}</div>;
 }
+
+const SIGNAL = (
+  <svg viewBox="0 0 18 12" fill="currentColor" aria-hidden="true">
+    <rect x="0" y="8" width="3" height="4" rx="0.8" /><rect x="5" y="5.5" width="3" height="6.5" rx="0.8" />
+    <rect x="10" y="3" width="3" height="9" rx="0.8" /><rect x="15" y="0" width="3" height="12" rx="0.8" />
+  </svg>
+);
+const WIFI = (
+  <svg viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
+    <path d="M8 2.4c2.2 0 4.2.85 5.7 2.25l1.2-1.25A9.9 9.9 0 0 0 8 .6 9.9 9.9 0 0 0 1.1 3.4l1.2 1.25A8.1 8.1 0 0 1 8 2.4Zm0 3.4c1.3 0 2.5.5 3.4 1.3l1.2-1.25A6.6 6.6 0 0 0 8 4a6.6 6.6 0 0 0-4.6 1.85L4.6 7.1A4.8 4.8 0 0 1 8 5.8Zm0 3.35c.45 0 .85.17 1.15.45L8 10.8 6.85 9.6c.3-.28.7-.45 1.15-.45Z" />
+  </svg>
+);
+const BATTERY = (
+  <svg viewBox="0 0 27 12" aria-hidden="true">
+    <rect x="0.5" y="0.5" width="23" height="11" rx="3.4" fill="none" stroke="currentColor" opacity="0.4" />
+    <rect x="2" y="2" width="16" height="8" rx="2" fill="currentColor" />
+    <path d="M25 4v4c.8-.3 1.4-1.1 1.4-2S25.8 4.3 25 4Z" fill="currentColor" opacity="0.4" />
+  </svg>
+);
 
 function Orders() {
   return (
     <div className={s.fill}>
       <Holo soft />
-      <div className={`${s.phone} ${s.phoneLeft} ${s.phoneIn}`}>
+      <div className={`${s.phone} ${s.phoneLock} ${s.phoneIn}`}>
         <div className={`${s.phoneScreen} ${s.lock}`}>
           <img src={IMG.wallpaper} alt="" />
+          <span className={s.island} />
+          <span className={s.lockStatus}>{SIGNAL}{WIFI}{BATTERY}</span>
           <span className={s.lockDate}>Friday 19 September</span>
           <span className={s.lockTime}>9:41</span>
           <div className={s.notifs}>
-            {NOTIFS.map((_, i) => <Notification key={i} i={i} />)}
+            {NOTIFS.map((n, i) => <Notification key={n.id} i={i} />)}
           </div>
+          <span className={`${s.lockButton} ${s.lockButtonL}`}>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 2h8v4l-2 3v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V9L8 6Z" /></svg>
+          </span>
+          <span className={`${s.lockButton} ${s.lockButtonR}`}>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 4h6l1.5 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5Zm3 4.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" /></svg>
+          </span>
+          <span className={s.homeBar} />
         </div>
       </div>
       <div className={s.salesToday}>
         <span className={s.rise} style={at(300)}>Sales today</span>
         <b><Odo value="$774.00" d={500} dur={2600} /></b>
-        <em className={s.pop} style={at(3000)}><Up>6 orders in the last hour</Up></em>
+        <em className={s.pop} style={at(3000)}><Up>8 orders in the last hour</Up></em>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 11 · SCALE — budget up; sales and traffic climb with it
+// 11 · SCALE — more budget on what works; the numbers follow
 // ─────────────────────────────────────────────────────────────────────────────
-const SALES = 'M0 200 C 50 196, 80 190, 120 186 S 190 170, 230 164 S 300 150, 340 130 S 420 108, 460 86 S 540 44, 600 18';
-const SALES_PREV = 'M0 204 C 60 202, 120 198, 180 196 S 280 190, 340 186 S 440 180, 500 176 S 570 172, 600 170';
-const SPARKS = [
-  'M0 26 C 12 24, 20 22, 30 18 S 48 14, 60 6',
-  'M0 28 C 10 27, 22 24, 30 20 S 46 10, 60 4',
-  'M0 26 C 14 25, 22 20, 32 18 S 50 12, 60 8',
-  'M0 24 C 12 23, 24 22, 34 16 S 50 10, 60 7',
-];
+// Why it is here: the winning campaign gets four times the budget and sales
+// and traffic climb with it. So no Shopify admin and no Analytics window — the
+// growth is drawn on the page: the budget slides from $40 to $160 and the
+// sales line turns up at that exact moment. Shopify, Analytics and Meta are
+// the small marks on the numbers each of them reports.
+const KNOB = 2450; // the budget starts to move…
+const BUMP = 3000; // …and lands at ×4, where the line turns up
 
-function ShopifyMock({ o = 0 }: { o?: number }) {
-  const nav = ['Home', 'Orders', 'Products', 'Customers', 'Content', 'Analytics', 'Marketing', 'Discounts'];
-  const metrics = [
-    { k: 'Sessions', val: '24,860', c: '62%' },
-    { k: 'Total sales', val: '$48,920', c: '128%' },
-    { k: 'Orders', val: '612', c: '94%' },
-    { k: 'Conversion rate', val: '3.4%', c: '41%' },
-  ];
-  // Listed newest first but revealed oldest first, so each new order lands
-  // on top of the last one.
-  const orders = [
-    { id: '#1052', who: 'Amelia R.', what: 'Jersey · 4 m', amt: '$56.00', d: 3100 },
-    { id: '#1051', who: 'Noor K.', what: 'Twill · 6 m', amt: '$108.00', d: 2700 },
-    { id: '#1050', who: 'Clara M.', what: 'Linen · 3 m', amt: '$72.00', d: 2300 },
-  ];
-  const products = [
-    { k: 'Stonewashed Linen', p: 38 },
-    { k: 'Jersey', p: 27 },
-    { k: 'French Terry', p: 19 },
-  ];
-  return (
-    <div className={s.shop}>
-      <div className={s.shopTop}>
-        <span className={s.shopBrand}><ShopBag size={20} />shopify</span>
-        <span className={s.shopSearch}>Search<kbd>⌘ K</kbd></span>
-        <span className={s.shopStore}><i>FT</i>Fanaar Textile</span>
-      </div>
-      <div className={s.shopBody}>
-        <div className={s.shopNav}>
-          {nav.map((n, i) => (
-            <span key={n} data-on={i === 0 || undefined}>
-              <i />{n}{n === 'Orders' ? <em>12</em> : null}
-            </span>
-          ))}
-          <b>Sales channels</b>
-          <span><i />Online Store</span>
-        </div>
-        <div className={s.shopMain}>
-          <div className={s.shopPills}><span>Today</span><span>All channels</span></div>
-          <div className={s.shopGrid}>
-            <div className={s.shopCard}>
-              <div className={s.shopMetrics}>
-                {metrics.map((m, i) => (
-                  <div key={m.k} className={s.shopMetric} data-on={i === 1 || undefined}>
-                    <span>{m.k}</span>
-                    <b><Odo value={m.val} d={o + 350 + i * 120} dur={1600} /></b>
-                    <div className={s.shopDelta}>
-                      <span className={s.pop} style={at(o + 1900 + i * 100)}><Up>{m.c}</Up></span>
-                      <svg viewBox="0 0 60 30"><path d={SPARKS[i]} className={s.draw} style={at(o + 500 + i * 120)} pathLength={1} /></svg>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className={s.shopChartHead}>
-                <b>Total sales over time</b>
-                <span><i />This month <i data-prev />Last month</span>
-              </div>
-              <svg viewBox="0 0 600 220" className={s.shopChart}>
-                {[55, 110, 165].map((y) => <line key={y} x1="0" x2="600" y1={y} y2={y} className={s.gridLine} />)}
-                <path d={SALES_PREV} className={`${s.shopPrev} ${s.areaIn}`} style={at(o + 600)} />
-                <path d={SALES} className={`${s.shopLine} ${s.draw}`} style={at(o + 700)} pathLength={1} />
-              </svg>
-            </div>
-            <div className={s.shopSide}>
-              <div className={s.shopCard}>
-                <b className={s.shopCardTitle}>New orders</b>
-                {orders.map((od) => (
-                  <div key={od.id} className={`${s.shopOrder} ${s.orderIn}`} style={at(o + od.d)}>
-                    <span><b>{od.id}</b>{od.who}</span>
-                    <span>{od.what}</span>
-                    <em>{od.amt}</em>
-                    <i>Paid</i>
-                  </div>
-                ))}
-              </div>
-              <div className={s.shopCard}>
-                <b className={s.shopCardTitle}>Top products by sales</b>
-                {products.map((p, i) => (
-                  <div key={p.k} className={s.shopProduct}>
-                    <span>{p.k}</span><em>{p.p}%</em>
-                    <i><b className={s.growX} style={v({ width: `${p.p * 2.4}%`, '--d': `${o + 1200 + i * 140}ms` })} /></i>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+type ScaleGeo = {
+  chart: Box;
+  slow: string; // before the budget moves, in chart units
+  fast: string; // after — starts where `slow` ends
+  prev: string; // last month, dashed
+  grid: number[];
+  turn: number; // x where the line turns up
+  pins: [number, number][]; // points on `fast`
+  budget: { left: number; top: number; slider: number };
+};
+const SCALE_GEO: Record<'l' | 'p', ScaleGeo> = {
+  l: {
+    chart: [110, 250, 1060, 300],
+    slow: 'M0 280 C 120 276, 240 262, 330 252 S 440 240, 490 235',
+    fast: 'M490 235 C 580 226, 650 200, 720 170 S 860 100, 940 70 S 1020 40, 1060 30',
+    prev: 'M0 288 C 200 285, 400 281, 600 276 S 900 268, 1060 262',
+    grid: [75, 150, 225],
+    turn: 490,
+    pins: [[720, 170], [940, 70], [1060, 30]],
+    budget: { left: 110, top: 590, slider: 260 },
+  },
+  p: {
+    chart: [60, 440, 600, 300],
+    slow: 'M0 272 C 70 268, 140 256, 190 248 S 250 236, 280 232',
+    fast: 'M280 232 C 330 224, 370 200, 410 172 S 490 100, 530 74 S 580 42, 600 32',
+    prev: 'M0 284 C 120 281, 240 277, 360 273 S 520 266, 600 262',
+    grid: [75, 150, 225],
+    turn: 280,
+    pins: [[410, 172], [530, 74], [600, 32]],
+    budget: { left: 60, top: 800, slider: 320 },
+  },
+};
+
+// The budget row: value (110) + gap (14), then the slider; knob on its centre line.
+const SLIDER_X = 124;
+const KNOB_Y = 48;
 
 function Scale() {
   const portrait = usePortrait();
-  const live = [5, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14, 18, 17, 20];
+  const g = SCALE_GEO[portrait ? 'p' : 'l'];
+  const [cl, ct, cw, ch] = g.chart;
+  const area = `${g.slow} ${g.fast.replace(/^M\S+ \S+ /, '')} L${cw} ${ch} L0 ${ch} Z`;
+  const knob0 = g.budget.left + SLIDER_X + g.budget.slider * 0.25;
+  const knob1 = g.budget.left + SLIDER_X + g.budget.slider;
+  const knobY = g.budget.top + KNOB_Y;
+  const pins: { icon: ReactNode; k: string; val: ReactNode }[] = [
+    { icon: <GaMark />, k: 'Traffic', val: <Up>62%</Up> },
+    { icon: <ShopBag size={16} />, k: 'Orders', val: '612' },
+    { icon: <MetaMark size={11} />, k: 'ROAS', val: '4.8×' },
+  ];
   return (
     <div className={s.fill}>
-      <div className={s.scaleTitle} style={at(0, 1150)}>
-        <span className={s.hookW} style={at(80)}>Scale</span>{' '}
-        <span className={s.hookW} style={at(240)}>what</span>{' '}
-        <span className={`${s.hookW} ${s.hookEm}`} style={at(420)}>works.</span>
-      </div>
-      <div className={s.scaleCam}>
-        <div className={s.scaleShop}>
-          <div className={s.enterAt} style={at(1100)}>
-            <ShopifyMock o={1100} />
-          </div>
-        </div>
+      <IntroTitle words={[{ w: 'Scale' }, { w: 'what' }, { w: 'works.', em: true }]} out={1150} />
 
-        <div className={`${s.budgetCard} ${s.cardFly}`} style={at(1700)}>
-          <span className={s.bcHead}><MetaMark size={13} />Ads Manager</span>
-          <b className={s.bcName}>Linen launch — Advantage+</b>
-          <span className={s.bcLabel}>Daily budget</span>
-          <span className={s.bcBudget}>
-            <em className={s.bcOld}>$40.00</em>
-            <em className={s.bcNew}>$160.00</em>
+      <div className={s.scaleStat}>
+        <span className={`${s.toolTag} ${s.rise}`} style={at(1200)}><ShopBag size={16} />Total sales · this month</span>
+        <b className={s.rise} style={at(1250)}><Odo value="$48,920" d={1350} dur={3000} /></b>
+        <em className={s.pop} style={at(4500)}><Up>128% on last month</Up></em>
+      </div>
+      <span className={`${s.livePill} ${s.pop}`} style={at(2000)}>
+        <i className={s.liveDot} />
+        <GaMark />
+        <b><Odo value="312" d={2100} dur={1400} /></b>
+        on the site right now
+      </span>
+
+      <svg
+        className={s.scaleChart}
+        viewBox={`0 0 ${cw} ${ch}`}
+        style={v({ left: `${cl}px`, top: `${ct}px`, width: `${cw}px`, height: `${ch}px` })}
+      >
+        {g.grid.map((y) => <line key={y} x1="0" x2={cw} y1={y} y2={y} className={`${s.gridLine} ${s.fadeIn}`} style={at(1150)} />)}
+        <line x1="0" x2={cw} y1={ch} y2={ch} className={`${s.chartBase} ${s.fadeIn}`} style={at(1150)} />
+        <path d={g.prev} className={`${s.chartPrev} ${s.fadeIn}`} style={at(1250)} />
+        <path d={area} className={s.chartArea} style={at(BUMP + 1300)} />
+        <path d={g.slow} className={`${s.chartLine} ${s.draw}`} style={at(1300)} pathLength={1} />
+        <path d={g.fast} className={`${s.chartLine} ${s.draw}`} style={at(BUMP)} pathLength={1} />
+      </svg>
+      <span className={s.turnLine} style={at(BUMP - 100, undefined, { left: `${cl + g.turn}px`, top: `${ct}px`, height: `${ch}px` })} />
+      <span className={`${s.turnTag} ${s.pop}`} style={at(BUMP, undefined, { left: `${cl + g.turn}px`, top: `${ct - 10}px` })}>Budget ×4</span>
+
+      {g.pins.map(([px, py], i) => (
+        <span key={pins[i].k} className={s.pin} style={at(BUMP + 520 + i * 390, undefined, { left: `${cl + px}px`, top: `${ct + py}px` })}>
+          <i className={s.pinDot} />
+          <span className={s.pinNote}>{pins[i].icon}<em>{pins[i].k}</em><b>{pins[i].val}</b></span>
+        </span>
+      ))}
+
+      <div className={`${s.budget} ${s.rise}`} style={at(1500, undefined, { left: `${g.budget.left}px`, top: `${g.budget.top}px` })}>
+        <span className={s.budgetHead}><MetaMark size={12} />Linen launch · daily budget</span>
+        <span className={s.budgetRow}>
+          <span className={s.flipNum} style={v({ '--k': `${BUMP - 60}ms` })}><span>$40</span><span>$160</span></span>
+          <span
+            className={s.slider}
+            style={v({
+              width: `${g.budget.slider}px`,
+              '--k0': `${g.budget.slider * 0.25}px`, '--k1': `${g.budget.slider}px`,
+              '--k': `${KNOB}ms`, '--kd': `${BUMP - KNOB}ms`,
+            })}
+          >
+            <i className={s.sliderFill} />
+            <i className={s.sliderKnob} />
           </span>
-          <div className={s.bcStats}>
-            <span>ROAS<b>4.8×</b></span>
-            <span>Purchases<b>214</b></span>
-          </div>
-          <span className={s.bcBtn}>Increase budget</span>
-          <span className={s.bcScaled}><Up>Scaled 4×</Up></span>
-        </div>
-
-        <div className={`${s.gaCard} ${s.cardFly}`} style={at(2000)}>
-          <span className={s.gaCardHead}><GaMark />Analytics<em>fanaar.online</em></span>
-          <span className={s.gaCap}>Users in last 30 minutes</span>
-          <b className={s.gaBig}><Odo value="312" d={2200} dur={1400} /></b>
-          <div className={s.gaBars}>
-            {live.map((h, i) => <i key={i} className={s.growY} style={v({ height: `${h * 5}%`, '--d': `${2300 + i * 45}ms` })} />)}
-          </div>
-          <div className={s.gaEvent}><span>purchase</span><b>61</b><Up>112%</Up></div>
-        </div>
+          <span className={`${s.times} ${s.pop}`} style={at(BUMP)}>×4</span>
+        </span>
       </div>
+
       {portrait ? (
-        <Tap x={PORTRAIT_TAPS.scaleBudget.x} y={PORTRAIT_TAPS.scaleBudget.y} d={2800} />
+        <span
+          className={s.drag}
+          style={v({
+            left: `${knob0}px`, top: `${knobY}px`, '--dx': `${knob1 - knob0}px`,
+            '--d': `${KNOB - 300}ms`, '--k': `${KNOB}ms`, '--kd': `${BUMP - KNOB}ms`, '--o': `${BUMP + 250}ms`,
+          })}
+        />
       ) : (
-        <Cursor x0={1150} y0={660} x1={1020} y1={292} d={2250} move={560} click={2900} />
+        <span className={s.outAt} style={at(0, BUMP + 700)}>
+          <Cursor
+            x0={640} y0={710} x1={knob0 - 5} y1={knobY - 3} d={1850} move={520} click={KNOB - 60}
+            x2={knob1 - 5} y2={knobY - 3} d2={KNOB} move2={BUMP - KNOB} click2={BUMP + 20}
+          />
+        </span>
       )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 12 · AUTOMATE — the busywork runs itself, in n8n
+// 12 · AUTOMATE — the busywork runs itself
 // ─────────────────────────────────────────────────────────────────────────────
-const RUN = 3200; // when the workflow executes
+// Why it is here: once orders flow, the follow-up has to happen without
+// anyone. So no n8n editor — an order drops in, a pulse runs through the
+// workflow (n8n is the mark on the hub), and the three jobs a person used to
+// do happen on their own: the order is logged, the buyer is welcomed on
+// WhatsApp, the reorder email is booked. A second order runs the same way,
+// faster, because it always will. No pointer: nobody presses anything.
+const RUNS = [2350, 4950]; // an order enters the workflow
+const IN_MS = [460, 340]; // order → hub, per run
+const OUT_MS = [540, 380]; // hub → each job (landscape fan), per run
+const SPINE_MS = [1100, 760]; // hub → last job (phone spine), per run
+const FAN = 80; // the fanned jobs set off this far apart
 
-type N8nNode = { id: string; x: number; y: number; name: string; sub: string; icon: ReactNode; trigger?: boolean; ok?: number; branch?: boolean };
-const NODES: N8nNode[] = [
-  { id: 'shopify', x: 120, y: 200, name: 'Shopify Trigger', sub: 'On order created', icon: <ShopBag size={40} />, trigger: true, ok: RUN + 150 },
-  {
-    id: 'sheets', x: 340, y: 200, name: 'Google Sheets', sub: 'Append row: orders', ok: RUN + 550,
-    icon: <svg viewBox="0 0 24 24" width="36" height="36"><path d="M6 2h9l5 5v15H6z" fill="#0F9D58" /><path d="M15 2v5h5" fill="#87CEAC" /><path d="M9 11h8v7H9zM9 14.5h8M13 11v7" fill="none" stroke="#fff" strokeWidth="1.3" /></svg>,
-  },
-  {
-    id: 'if', x: 560, y: 200, name: 'If', sub: 'First order?', ok: RUN + 950, branch: true,
-    icon: <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#408000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h5l4-6h5M10 12l4 6h5" /><path d="m17 4 2 2-2 2M17 16l2 2-2 2" /></svg>,
-  },
-  {
-    id: 'wa', x: 810, y: 100, name: 'WhatsApp', sub: 'Send welcome + care guide', ok: RUN + 1350,
-    icon: <svg viewBox="0 0 24 24" width="38" height="38"><circle cx="12" cy="12" r="10" fill="#25D366" /><path d="M8.6 7.6c.3-.3.8-.3 1 .1l.9 1.7c.1.3.1.6-.1.8l-.6.7c.5 1.2 1.5 2.2 2.7 2.8l.7-.6c.2-.2.5-.3.8-.1l1.7.9c.4.2.4.7.1 1l-.9.9c-.6.6-1.6.7-2.4.3-2.2-1-4-2.8-5-5-.4-.8-.3-1.8.3-2.4Z" fill="#fff" /></svg>,
-  },
-  {
-    id: 'gmail', x: 810, y: 300, name: 'Gmail', sub: 'Send reorder offer',
-    icon: <svg viewBox="0 0 24 24" width="36" height="36"><path d="M3 7.5V18h4v-7l5 3.6 5-3.6v7h4V7.5l-2-1.5-7 5.2L5 6z" fill="#EA4335" /><path d="M3 7.5 5 6v12H3z" fill="#4285F4" /><path d="M21 7.5 19 6v12h2z" fill="#34A853" /></svg>,
-  },
-];
-
-// Portrait runs the same workflow top to bottom — the way it has to read on
-// a phone — so the If splits left (WhatsApp) and right (Gmail) at the foot.
-// (Coordinates on the portrait editor's own 520×756 canvas panel.)
-const NODE_AT_P: Record<string, [number, number]> = {
-  shopify: [210, 112],
-  sheets: [210, 252],
-  if: [210, 392],
-  wa: [50, 548],
-  gmail: [370, 548],
+type Job = 'sheet' | 'wa' | 'mail';
+const JOBS: Job[] = ['sheet', 'wa', 'mail'];
+type FlowGeo = {
+  order: Box;
+  hub: [number, number, number]; // centre x, centre y, radius
+  label: [number, number, 'below' | 'left'];
+  jobs: Record<Job, Box>;
+  handled: Box;
+  // Landscape fans out from the hub, one wire per job. A phone has no room
+  // for three side by side, so one spine runs down through the stacked jobs
+  // and each fires as the pulse reaches its top (`at`: fraction of the spine).
+  flow:
+    | { kind: 'fan'; in: string; out: Record<Job, string> }
+    | { kind: 'spine'; in: string; spine: string; at: Record<Job, number> };
 };
-// The column nodes carry their names beside them; the two at the foot keep
-// theirs underneath, where nothing runs.
-const NODE_SIDE_P = new Set(['shopify', 'sheets', 'if']);
+const FLOW: Record<'l' | 'p', FlowGeo> = {
+  l: {
+    order: [70, 300, 350, 104],
+    hub: [620, 352, 58],
+    label: [620, 424, 'below'],
+    jobs: { sheet: [800, 104, 372, 176], wa: [800, 297, 372, 110], mail: [800, 432, 372, 130] },
+    handled: [70, 452, 350, 76],
+    flow: {
+      kind: 'fan',
+      in: 'M420 352 L 562 352',
+      out: {
+        sheet: 'M678 352 C 740 352, 738 192, 800 192',
+        wa: 'M678 352 L 800 352',
+        mail: 'M678 352 C 740 352, 738 497, 800 497',
+      },
+    },
+  },
+  p: {
+    order: [60, 160, 600, 104],
+    hub: [360, 366, 60],
+    label: [276, 366, 'left'],
+    jobs: { sheet: [60, 466, 600, 172], wa: [60, 678, 600, 140], mail: [60, 858, 600, 148] },
+    handled: [60, 1030, 600, 72],
+    flow: {
+      kind: 'spine',
+      in: 'M360 264 L 360 306',
+      spine: 'M360 426 L 360 858',
+      at: { sheet: 40 / 432, wa: 252 / 432, mail: 1 },
+    },
+  },
+};
 
-type Edge = { d: string; ok?: number; label?: { x: number; y: number } };
-// Connections, from each node's output handle to the next node's input.
-const EDGES: Edge[] = [
-  { d: 'M220 250 C 280 250, 280 250, 340 250', ok: RUN + 350, label: { x: 280, y: 238 } },
-  { d: 'M440 250 C 500 250, 500 250, 560 250', ok: RUN + 750, label: { x: 500, y: 238 } },
-  { d: 'M660 236 C 740 236, 730 150, 810 150', ok: RUN + 1150, label: { x: 736, y: 170 } },
-  { d: 'M660 264 C 740 264, 730 350, 810 350' },
-];
-// Portrait handles sit on the bottom (out) and top (in) of each node.
-const EDGES_P: Edge[] = [
-  { d: 'M260 218 C 260 230, 260 236, 260 248', ok: RUN + 350, label: { x: 292, y: 226 } },
-  { d: 'M260 358 C 260 370, 260 376, 260 388', ok: RUN + 750, label: { x: 292, y: 366 } },
-  { d: 'M236 496 C 236 526, 100 516, 100 544', ok: RUN + 1150, label: { x: 146, y: 510 } },
-  { d: 'M284 496 C 284 526, 420 516, 420 544' },
-];
+const box = ([left, top, width, height]: Box) => ({ left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px` });
 
-function N8nMock() {
-  const portrait = usePortrait();
-  const edges = portrait ? EDGES_P : EDGES;
-  return (
-    <div className={s.n8n}>
-      <div className={s.n8nTop}>
-        <span className={s.n8nCrumb}>Personal <em>/</em> <b>New order → follow-up</b></span>
-        <span className={s.n8nTabs}><b>Editor</b><span>Executions</span></span>
-        <span className={s.n8nRight}>
-          <span className={s.n8nActive}>Active<i className={`${s.tgl} ${s.tglFlip} ${s.tglGreen}`} style={at(RUN + 2100)} /></span>
-          <span className={s.n8nShare}>Share</span>
-          <span className={s.n8nSaved}>Saved</span>
-        </span>
-      </div>
-      <div className={s.n8nBody}>
-        <div className={s.n8nRail}>
-          <span className={s.n8nLogo}>
-            <svg viewBox="0 0 32 20" width="26" height="16"><circle cx="4" cy="10" r="3" fill="#EA4B71" /><circle cx="16" cy="4" r="3" fill="#EA4B71" /><circle cx="16" cy="16" r="3" fill="#EA4B71" /><circle cx="28" cy="10" r="3" fill="#EA4B71" /><path d="M7 10h4l2-5M11 10l2 5M19 4l6 5M19 16l6-5" stroke="#EA4B71" strokeWidth="1.8" fill="none" /></svg>
-          </span>
-          {[0, 1, 2, 3].map((i) => <i key={i} />)}
-        </div>
-        <div className={s.n8nCanvas}>
-          <div className={`${s.n8nSticky} ${s.rise}`} style={at(1900)}>
-            <b>Order follow-up</b>
-            Runs on every Shopify order: logs it, then welcomes first-time buyers on WhatsApp.
-          </div>
-          {/* The viewBox is the canvas panel's own size, so path units are px. */}
-          <svg className={s.n8nEdges} viewBox={portrait ? '0 0 520 756' : '0 0 1064 514'}>
-            {edges.map((e, i) => (
-              <g key={i}>
-                <path d={e.d} className={`${s.edge} ${s.fadeIn}`} style={at(2000 + i * 120)} />
-                {e.ok ? <path d={e.d} className={`${s.edgeOk} ${s.drawFast}`} style={at(e.ok)} pathLength={1} /> : null}
-              </g>
-            ))}
-          </svg>
-          {edges.map((e, i) => (e.label ? (
-            <span key={i} className={s.edgeLabel} style={at((e.ok ?? 0) + 200, undefined, { left: `${e.label.x}px`, top: `${e.label.y}px` })}>1 item</span>
-          ) : null))}
-          {NODES.map((n, i) => (
-            <div
-              key={n.id}
-              className={`${s.node} ${n.trigger ? s.nodeTrigger : ''} ${n.branch ? s.nodeBranch : ''} ${portrait && NODE_SIDE_P.has(n.id) ? s.nodeSide : ''}`}
-              style={at(1950 + i * 110, undefined, {
-                left: `${portrait ? NODE_AT_P[n.id][0] : n.x}px`,
-                top: `${portrait ? NODE_AT_P[n.id][1] : n.y}px`,
-                '--ok': `${n.ok ?? 999999}ms`,
-              })}
-            >
-              {n.trigger ? (
-                <span className={s.nodeBolt}>
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" fill="#FF6D5A" /></svg>
-                </span>
-              ) : null}
-              <span className={s.nodeIcon}>{n.icon}</span>
-              {n.ok ? <span className={s.nodeOk}>{CHECK}</span> : null}
-              {n.branch ? <span className={s.nodePorts}><em>true</em><em>false</em></span> : null}
-              <span className={s.nodeName}><b>{n.name}</b>{n.sub}</span>
-            </div>
-          ))}
-          <span className={s.n8nExec}>
-            <svg viewBox="0 0 16 16" width="14" height="14"><path d="M6 2h4M7 2v4L3.5 12.5A1.5 1.5 0 0 0 4.8 14.8h6.4a1.5 1.5 0 0 0 1.3-2.3L9 6V2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
-            Execute workflow
-          </span>
-          <span className={s.n8nToast}><i>{CHECK}</i>Workflow executed successfully</span>
-        </div>
-      </div>
-    </div>
-  );
+type Leg = { d: string; t: number; ms: number; linear?: boolean };
+// Every wire a run travels, and when each job receives it.
+function flowTiming(g: FlowGeo) {
+  const hubAt = (r: number) => RUNS[r] + IN_MS[r];
+  const f = g.flow;
+  if (f.kind === 'fan') {
+    return {
+      legs: (r: number): Leg[] => [
+        { d: f.in, t: RUNS[r], ms: IN_MS[r] },
+        ...JOBS.map((j, k) => ({ d: f.out[j], t: hubAt(r) + k * FAN, ms: OUT_MS[r] })),
+      ],
+      arrive: (r: number, j: Job) => hubAt(r) + JOBS.indexOf(j) * FAN + OUT_MS[r],
+    };
+  }
+  return {
+    legs: (r: number): Leg[] => [
+      { d: f.in, t: RUNS[r], ms: IN_MS[r] },
+      { d: f.spine, t: hubAt(r), ms: SPINE_MS[r], linear: true },
+    ],
+    arrive: (r: number, j: Job) => Math.round(hubAt(r) + f.at[j] * SPINE_MS[r]),
+  };
 }
 
 function Automate() {
   const portrait = usePortrait();
+  const g = FLOW[portrait ? 'p' : 'l'];
+  const [hx, hy, hr] = g.hub;
+  const { legs, arrive } = flowTiming(g);
+  const orders = [
+    { id: '#1051', who: 'Noor K.', what: 'Twill · 6 m', amt: '$108.00', d: 1700, o: RUNS[1] - 350 },
+    { id: '#1052', who: 'Amelia R.', what: 'Jersey · 4 m', amt: '$56.00', d: RUNS[1] - 250 },
+  ];
+  const rows: [string, string, string, string, number?][] = [
+    ['#1049', 'Sara K.', 'Linen', '$72.00'],
+    ['#1050', 'Clara M.', 'Piqué', '$48.00'],
+    ['#1051', 'Noor K.', 'Twill', '$108.00', arrive(0, 'sheet')],
+    ['#1052', 'Amelia R.', 'Jersey', '$56.00', arrive(1, 'sheet')],
+  ];
   return (
     <div className={`${s.fill} ${s.darkBg}`}>
       <span className={s.bigCaret} />
       <span className={`${s.termLine} ${s.inout}`} style={at(250, 1450)}>
         <em>→</em> <Typed text="automate the busywork" start={300} step={42} />
       </span>
-      <div className={s.n8nAt}>
-        <N8nMock />
+
+      <svg className={s.wires} viewBox={portrait ? '0 0 720 1280' : '0 0 1280 720'}>
+        {legs(0).map((leg, i) => (
+          <g key={leg.d}>
+            <path d={leg.d} className={`${s.wire} ${s.fadeIn}`} style={at(1950 + i * 80)} />
+            <path d={leg.d} className={s.wireOk} style={at(leg.t, undefined, { '--run': `${leg.ms}ms` })} pathLength={1} />
+          </g>
+        ))}
+      </svg>
+      {RUNS.map((_, r) => legs(r).map((leg) => (
+        <span
+          key={`${r}-${leg.d}`}
+          className={`${s.pulse} ${leg.linear ? s.pulseLinear : ''}`}
+          style={{ offsetPath: `path('${leg.d}')`, ...at(leg.t, undefined, { '--run': `${leg.ms}ms` }) }}
+        />
+      )))}
+
+      {orders.map((o) => (
+        <div key={o.id} className={s.orderCard} style={at(o.d, o.o, box(g.order))}>
+          <i><ShopBag size={34} /></i>
+          <span><b>New order · {o.id}</b><em>{o.who} · {o.what}</em></span>
+          <strong>{o.amt}</strong>
+        </div>
+      ))}
+
+      <div className={s.hub} style={at(1850, undefined, { left: `${hx - hr}px`, top: `${hy - hr}px`, width: `${hr * 2}px`, height: `${hr * 2}px` })}>
+        <N8nMark size={56} />
+        {RUNS.map((run, r) => <span key={run} className={s.hubRing} style={at(run + IN_MS[r])} />)}
       </div>
-      {portrait ? (
-        <Tap x={PORTRAIT_TAPS.automateRun.x} y={PORTRAIT_TAPS.automateRun.y} d={2980} />
-      ) : (
-        <Cursor x0={1100} y0={680} x1={666} y1={606} d={2350} move={600} click={3060} />
-      )}
+      <span
+        className={`${s.hubLabel} ${g.label[2] === 'left' ? s.hubLabelLeft : ''} ${s.fadeIn}`}
+        style={at(2000, undefined, { left: `${g.label[0]}px`, top: `${g.label[1]}px` })}
+      >
+        <b>n8n</b><i className={s.hubSep}> · </i>runs on every order
+      </span>
+
+      <div className={`${s.job} ${s.rise}`} style={at(1950, undefined, box(g.jobs.sheet))}>
+        <span className={s.jobHead}><SheetsMark />Orders<em>Google Sheets</em></span>
+        <div className={s.sheet}>
+          <span className={s.sheetHead}><i>Order</i><i>Customer</i><i>Fabric</i><i>Total</i></span>
+          {rows.map(([id, who, what, amt, d]) => (
+            <span key={id} className={`${s.sheetRow} ${d ? s.sheetNew : ''}`} style={d ? at(d) : undefined}>
+              <i>{id}</i><i>{who}</i><i>{what}</i><i>{amt}</i>
+            </span>
+          ))}
+        </div>
+        <span className={s.jobDone} style={at(arrive(0, 'sheet') + 60)}>{CHECK}</span>
+      </div>
+
+      <div className={`${s.job} ${s.rise}`} style={at(2050, undefined, box(g.jobs.wa))}>
+        <span className={s.jobHead}><WaMark />WhatsApp<em>to Noor K.</em></span>
+        <div className={s.waBody}>
+          <span className={`${s.typing} ${s.inout}`} style={at(arrive(0, 'wa') - 40, arrive(0, 'wa') + 320)}><i /><i /><i /></span>
+          <span className={s.bubble} style={at(arrive(0, 'wa') + 340)}>
+            Hi Noor, your twill is on its way. Care guide inside.
+            <em>9:41 <i className={s.ticks}>{CHECK}{CHECK}</i></em>
+          </span>
+        </div>
+        <span className={s.jobDone} style={at(arrive(0, 'wa') + 400)}>{CHECK}</span>
+      </div>
+
+      <div className={`${s.job} ${s.rise}`} style={at(2150, undefined, box(g.jobs.mail))}>
+        <span className={s.jobHead}><GmailMark />Gmail<em>Reorder offer</em></span>
+        <b className={s.mailSubject}>10% off your next metre, Noor</b>
+        <span className={s.mailLine}>For when the twill runs out.</span>
+        <span className={`${s.mailWhen} ${s.pop}`} style={at(arrive(0, 'mail') + 40)}><i />Scheduled · in 30 days</span>
+        <span className={s.jobDone} style={at(arrive(0, 'mail') + 80)}>{CHECK}</span>
+      </div>
+
+      <div className={`${s.handled} ${s.rise}`} style={at(4000, undefined, box(g.handled))}>
+        <i>{CHECK}</i>
+        <span>
+          <b>Every order, handled.</b>
+          <em>
+            <span className={s.flipNum} style={v({ '--k': `${arrive(1, 'sheet') + 40}ms` })}><span>38</span><span>39</span></span>
+            {' '}orders this week · zero manual steps
+          </em>
+        </span>
+      </div>
     </div>
   );
 }
@@ -1326,7 +1504,7 @@ export const SCENES: { id: string; dur: number; tone?: 'dark'; Comp: ComponentTy
   { id: 'logo', dur: 2200, Comp: Logo },
   { id: 'brief', dur: 4600, Comp: Brief },
   { id: 'market', dur: 5600, Comp: Market },
-  { id: 'site', dur: 4400, Comp: Site },
+  { id: 'site', dur: 5400, Comp: Site },
   { id: 'connect', dur: 3000, Comp: Connect },
   { id: 'launch', dur: 6200, Comp: Launch },
   { id: 'purchase', dur: 4800, Comp: Purchase },
