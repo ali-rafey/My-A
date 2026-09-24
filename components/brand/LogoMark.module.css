@@ -1,0 +1,5 @@
+/* One mark per theme. `!important` because the caller's own class often sets
+   `display: block`, and that must not bring the other theme's mark back. */
+.dark { display: none !important; }
+:global([data-theme='dark']) .light { display: none !important; }
+:global([data-theme='dark']) .dark { display: block !important; }

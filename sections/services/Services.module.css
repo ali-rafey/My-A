@@ -80,6 +80,8 @@
   color: var(--sv-accent);
 }
 .label img { border-radius: 50%; background: var(--surface-logo-chip); }
+/* Dark shows the light-ink mark (components/brand/LogoMark.tsx): no chip. */
+:global([data-theme='dark']) .label img { background: none; }
 
 .title {
   margin: 0;

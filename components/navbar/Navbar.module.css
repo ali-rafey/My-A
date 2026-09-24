@@ -452,6 +452,10 @@
   pointer-events: none;
 }
 
+/* The dark theme's mark is light ink (see components/brand/LogoMark.tsx), so
+   it stands on the dark glass by itself and needs no plate. */
+:global([data-theme='dark']) .logoButton::before { display: none; }
+
 .logoButton:focus-visible {
   outline: 2px solid var(--surface-accent);
   outline-offset: 4px;

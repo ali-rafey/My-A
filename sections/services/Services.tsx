@@ -1,10 +1,10 @@
 'use client';
 
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { services } from '@/lib/content/static';
 import { serviceSlug } from '@/lib/content/service-slug';
+import LogoMark from '@/components/brand/LogoMark';
 import CardFilm from './film/CardFilm';
 import styles from './Services.module.css';
 
@@ -163,7 +163,7 @@ export default function Services() {
         <header className={styles.head}>
           <div>
             <p className={styles.label}>
-              <Image src="/logo-icon.png" alt="" width={22} height={22} />
+              <LogoMark size={22} />
               Our services
             </p>
             <h1 id="services-title" className={styles.title}>

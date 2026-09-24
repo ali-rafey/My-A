@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import LogoMark from '@/components/brand/LogoMark';
 import MobileNav from './MobileNav';
 import ThemeToggle from './ThemeToggle';
 import styles from './Navbar.module.css';
@@ -318,11 +318,8 @@ export default function Navbar() {
           aria-label={isOpen ? 'Collapse navigation' : 'Open navigation'}
           aria-expanded={isOpen}
         >
-          <Image
-            src="/logo-icon.png"
+          <LogoMark
             alt="EscaLeads"
-            width={500}
-            height={500}
             priority
             // Laid out at 60px but displayed at 80px while collapsed (CSS
             // scale), so request a source sized for the larger of the two.

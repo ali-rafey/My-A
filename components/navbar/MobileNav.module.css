@@ -370,3 +370,7 @@
 /* ── Dark theme ───────────────────────────────────────────────────────────── */
 :global([data-theme='dark']) .ctaBtn,
 :global([data-theme='dark']) .panelCta { --mn-cta: #E8EDF7; --mn-cta-text: #0B1120; }
+/* The dark theme's mark is light ink (components/brand/LogoMark.tsx), so the
+   chips that used to hold the navy mark up off the dark panel go bare. */
+:global([data-theme='dark']) .homeBtn,
+:global([data-theme='dark']) .panelLogoChip { background: none; }

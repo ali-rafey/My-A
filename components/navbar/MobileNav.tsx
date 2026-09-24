@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import LogoMark from '@/components/brand/LogoMark';
 import ThemeToggle from './ThemeToggle';
 import styles from './MobileNav.module.css';
 
@@ -86,14 +86,7 @@ export default function MobileNav() {
         aria-hidden={!open}
       >
         <span className={styles.panelLogoChip}>
-          <Image
-            src="/logo-icon.png"
-            alt="EscaLeads"
-            width={500}
-            height={500}
-            sizes="160px"
-            className={styles.panelLogo}
-          />
+          <LogoMark alt="EscaLeads" sizes="160px" className={styles.panelLogo} />
         </span>
 
         <ul className={styles.list}>
@@ -165,14 +158,7 @@ export default function MobileNav() {
         <span className={styles.spacer} />
 
         <Link href="/" onClick={close} aria-label="Home" className={styles.homeBtn}>
-          <Image
-            src="/logo-icon.png"
-            alt=""
-            width={500}
-            height={500}
-            sizes="96px"
-            className={styles.homeLogo}
-          />
+          <LogoMark sizes="96px" className={styles.homeLogo} />
         </Link>
 
         <Link
