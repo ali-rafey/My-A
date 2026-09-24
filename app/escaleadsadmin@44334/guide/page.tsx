@@ -3,7 +3,7 @@ import styles from '../admin.module.css';
 
 export const dynamic = 'force-dynamic';
 
-// Admin Guide — the owner's playbook for the four disciplines the agency sells.
+// Admin Guide — the owner's playbook for the four pillars the agency sells.
 // The content lives in content.ts and diagrams.tsx; this page only frames it.
 
 export default function AdminGuidePage() {
@@ -12,7 +12,7 @@ export default function AdminGuidePage() {
       <div className={styles.pageHeader}>
         <div>
           <h1>Admin Guide</h1>
-          <p>Your playbook: where you stand in each discipline, what scaled looks like, and what to do this month.</p>
+          <p>The EscaLeads playbook: what each pillar includes, how to audit it, how to deliver it, and the numbers that prove it worked.</p>
         </div>
       </div>
 
