@@ -337,6 +337,73 @@
 .dot[data-on='true'] { width: 2.6rem; background: var(--wk-ink); }
 .dot:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 3px; }
 
+/* ── The phone deck ─────────────────────────────────────────────────────────
+   One project in front; the ones before it peek out above, the ones after it
+   below, each a step smaller and dimmer (see WorkDeck.tsx). Every cell fills
+   the deck and centres its card, so the cards share one centre and only
+   their transforms differ — which is what lets a swipe re-pose the whole deck
+   as one smooth move. The card is the desktop card, unchanged. */
+.stack {
+  --peek: 22px;
+  position: relative;
+  flex: 1;
+  min-height: 20rem;
+  /* Vertical swipes are the deck's; sideways ones stay the browser's. */
+  touch-action: pan-x pinch-zoom;
+  animation: wkRise 0.6s 0.1s var(--wk-ease) both;
+}
+.stack:focus-visible { outline: 2px solid var(--wk-blue); outline-offset: 4px; border-radius: 12px; }
+
+.deckCell {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.deckCell .card {
+  /* Room is kept for the peeks on each side of the front card (--levels is
+     set on the deck from how many projects there are). */
+  --cw: min(100cqw, calc(100cqh - var(--cap) - 2 * var(--levels, 2) * var(--peek)));
+  --h: calc(var(--cw) + var(--cap));
+  width: var(--cw);
+  pointer-events: auto;
+  transform: translateY(var(--y, 0px)) scale(var(--s));
+  transition: transform 0.56s var(--wk-ease), opacity 0.4s ease;
+}
+/* Every card scales about its centre, so each offset puts back what the scale
+   takes off: a card above shows `k` peeks of its top edge over the front card;
+   a card below shows `k` peeks of its picture's bottom edge under the front
+   card's caption (its own caption is hidden, so only the picture shows). */
+.deckCell[data-side='above'] .card {
+  --y: calc(var(--k) * var(--peek) - (1 - var(--s)) * var(--h) / 2);
+}
+.deckCell[data-side='below'] .card {
+  --y: calc(var(--k) * var(--peek) + (1 - var(--s)) * var(--h) / 2 + var(--s) * var(--cap));
+}
+.deckCell[data-gone] .card { opacity: 0; pointer-events: none; }
+
+.deckCell .media { box-shadow: 0 0 0 1px var(--wk-line), 0 18px 36px -24px rgba(13, 27, 62, 0.55); }
+/* The front card's caption is opaque, so the picture behind it stays behind. */
+.deckCell .caption { background: var(--wk-paper); transition: opacity 0.18s ease; }
+.deckCell .chip { transition: opacity 0.18s ease; }
+.deckCell:not([data-side='front']) .caption,
+.deckCell:not([data-side='front']) .chip { opacity: 0; }
+/* Dimmed with a veil of the page colour rather than opacity, so a peek never
+   shows the card behind it through itself. */
+.deckCell .media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--wk-paper);
+  opacity: var(--veil, 0);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
 /* ── The write-up ─────────────────────────────────────────────────────────── */
 .overlay {
   position: absolute;
@@ -481,7 +548,8 @@
 @keyframes wkSheetIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .masthead, .bar, .overlay, .sheet { animation: none; }
+  .masthead, .bar, .overlay, .sheet, .stack { animation: none; }
+  .deckCell .card, .deckCell .caption, .deckCell .chip, .deckCell .media::after { transition-duration: 0.01ms !important; }
   .page[data-on='true'] .cell { animation: none; }
   .page[data-on='false'] .cell { transition: none; }
   .media, .arrow, .dot, .cardTitle { transition-duration: 0.01ms !important; }
@@ -497,6 +565,7 @@
   .bar { padding: 0.55rem 0 0.7rem; }
   .card { --cap: 3rem; }
   .cardTitle { font-size: clamp(0.9rem, 1.2vw, 1.05rem); }
+  .stack { --peek: 18px; }
 }
 
 @media (max-width: 1099px) {
@@ -508,9 +577,14 @@
   .section { height: auto; min-height: 100svh; margin-bottom: -5.5rem; padding: 5.5rem 0 6.5rem; }
   .masthead { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
   .note { max-width: none; margin-bottom: 0; }
-  /* One per page, swiped through. Mirrors pageSizeFor() in WorkDeck.tsx. */
-  .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  /* One per page, swiped through. Mirrors pageSizeFor() in WorkDeck.tsx.
+     The row keeps the deck's height (no `auto` here): each cell sizes its
+     plate from its own height, and an auto row would give it none. */
+  .page { grid-template-columns: minmax(0, 1fr); }
   .viewport { min-height: 20rem; }
+  /* The server renders the paged grid; on a phone the deck replaces it on
+     mount, opening on a different project, so the grid is not shown there. */
+  .viewport { visibility: hidden; }
   .sheet { grid-template-columns: minmax(0, 1fr); max-height: 100%; overflow-y: auto; }
   .overlay { padding-bottom: 5rem; }
 }

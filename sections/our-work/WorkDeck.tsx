@@ -13,8 +13,14 @@ import styles from './WorkShowcase.module.css';
 // dim, the next set rises in. Arrows, dots, arrow keys and a plain sideways
 // swipe all do the same thing.
 //
-// A desktop page holds four plates in one row, a narrow window two, a phone
-// one. Paging appears by itself as soon as there are more projects than that.
+// A desktop page holds four plates in one row, a narrow window two. Paging
+// appears by itself as soon as there are more projects than that.
+//
+// A phone gets a DECK instead: one project in front, the ones before it
+// peeking out above and the ones after it below, each a step smaller and
+// dimmer. A vertical swipe (or the wheel, the arrow keys, or a tap on a peek)
+// brings the next one forward. It opens on the middle project, so there is
+// always something on both sides. The card itself is the same as on desktop.
 //
 // One row rather than a two-by-two because the plates are square: two rows of
 // square plates cannot fit a screen without squeezing the page down to a
@@ -38,6 +44,10 @@ export type DeckProject = {
 };
 
 const PAGE_LOCK_MS = 620;
+/** How far a finger has to travel before a swipe turns the deck. */
+const SWIPE_PX = 36;
+/** Peeks shown on each side of the front card; the rest wait out of sight. */
+const DECK_DEPTH = 2;
 
 /** How many cards a page holds at this size. Mirrors the CSS grid exactly. */
 function pageSizeFor(width: number): number {
@@ -64,10 +74,14 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const lockRef = useRef(false);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const touchY = useRef<number | null>(null);
+  const centred = useRef(false);
 
   const pages = chunk(projects, perPage);
   const count = pages.length;
   const current = Math.min(page, count - 1);
+  // One project per page is the phone layout, which is the deck.
+  const deck = perPage === 1;
 
   useEffect(() => {
     const sync = () => setPerPage(pageSizeFor(window.innerWidth));
@@ -76,18 +90,24 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
     return () => window.removeEventListener('resize', sync);
   }, []);
 
-  // Regrouping on resize can strand the view past the last page.
+  // Regrouping on resize can strand the view past the last page. The first
+  // time the deck appears it opens on the middle project instead of the first.
   useEffect(() => {
+    if (perPage === 1 && !centred.current) {
+      centred.current = true;
+      setPage(Math.floor(projects.length / 2));
+      return;
+    }
     setPage((p) => Math.min(p, Math.max(0, Math.ceil(projects.length / perPage) - 1)));
   }, [perPage, projects.length]);
 
   const goTo = useCallback((index: number) => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const target = Math.max(0, Math.min(index, viewport.children.length - 1));
+    const target = Math.max(0, Math.min(index, count - 1));
     setPage(target);
-    viewport.scrollTo({ left: target * viewport.clientWidth, behavior: 'smooth' });
-  }, []);
+    // The paged grid scrolls to its page; the deck just re-poses its cards.
+    const viewport = viewportRef.current;
+    if (viewport) viewport.scrollTo({ left: target * viewport.clientWidth, behavior: 'smooth' });
+  }, [count]);
 
   // A sideways swipe or a drag on the trackpad scrolls the viewport natively;
   // this keeps the indicator honest about where it landed.
@@ -108,6 +128,21 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
     goTo(current + (event.deltaY > 0 ? 1 : -1));
   };
 
+  // The deck turns on a vertical swipe; it lets the browser keep sideways
+  // gestures (touch-action: pan-x in the CSS).
+  const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchY.current = event.touches[0]?.clientY ?? null;
+  };
+  const onTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchY.current;
+    touchY.current = null;
+    const end = event.changedTouches[0]?.clientY;
+    if (start === null || end === undefined || open !== null) return;
+    const dy = end - start;
+    if (Math.abs(dy) < SWIPE_PX) return;
+    goTo(current + (dy < 0 ? 1 : -1));
+  };
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); goTo(current + 1); }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); goTo(current - 1); }
@@ -125,6 +160,41 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
 
   const project = open === null ? null : projects.find((c) => c.id === open) ?? null;
 
+  const renderCard = (item: DeckProject, i: number, focusable: boolean, onPick: () => void, label: string) => (
+    <button
+      type="button"
+      className={styles.card}
+      style={{ '--i': i } as React.CSSProperties}
+      onClick={onPick}
+      tabIndex={focusable ? 0 : -1}
+      aria-label={label}
+    >
+      <span className={styles.media}>
+        {item.image ? (
+          <Image
+            className={styles.shot}
+            src={item.image}
+            alt=""
+            fill
+            sizes="(max-width: 767px) 92vw, 46vw"
+          />
+        ) : (
+          <span className={styles.plate} aria-hidden="true">{item.title.slice(0, 1)}</span>
+        )}
+        {item.category ? <span className={styles.chip}>{item.category}</span> : null}
+      </span>
+      <span className={styles.caption}>
+        {item.statusLabel ? (
+          <span className={styles.kicker}>
+            <i aria-hidden="true" />
+            {item.statusLabel}
+          </span>
+        ) : null}
+        <span className={styles.cardTitle}>{item.title}</span>
+      </span>
+    </button>
+  );
+
   return (
     <>
       <div className={styles.bar}>
@@ -139,9 +209,9 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
               className={styles.arrow}
               onClick={() => goTo(current - 1)}
               disabled={current === 0}
-              aria-label="Previous projects"
+              aria-label={deck ? 'Previous project' : 'Previous projects'}
             >
-              &#8592;
+              {deck ? <>&#8593;</> : <>&#8592;</>}
             </button>
             <span className={styles.pageNum}>
               {num(current + 1)} <i>/</i> {num(count)}
@@ -151,73 +221,82 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
               className={styles.arrow}
               onClick={() => goTo(current + 1)}
               disabled={current === count - 1}
-              aria-label="More projects"
+              aria-label={deck ? 'Next project' : 'More projects'}
             >
-              &#8594;
+              {deck ? <>&#8595;</> : <>&#8594;</>}
             </button>
           </div>
         ) : null}
       </div>
 
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role */}
-      <div
-        ref={viewportRef}
-        className={styles.viewport}
-        onScroll={onScroll}
-        onWheel={onWheel}
-        onKeyDown={onKeyDown}
-        tabIndex={count > 1 ? 0 : -1}
-        role={count > 1 ? 'group' : undefined}
-        aria-label={count > 1 ? 'Projects, use the arrow keys to page' : undefined}
-      >
-        {pages.map((group, pageIndex) => (
-          <div
-            key={pageIndex}
-            className={styles.page}
-            data-per={perPage}
-            data-fill={group.length}
-            data-on={pageIndex === current}
-            aria-hidden={pageIndex !== current}
-          >
-            {group.map((item, i) => (
-              <span key={item.id} className={styles.cell}>
-              <button
-                type="button"
-                className={styles.card}
-                style={{ '--i': i } as React.CSSProperties}
-                onClick={() => setOpen(item.id)}
-                tabIndex={pageIndex === current ? 0 : -1}
-                aria-label={`${item.title} — read the write-up`}
+      {deck ? (
+        <div
+          className={styles.stack}
+          // Room is kept for as many peeks per side as this deck can ever show.
+          style={{ '--levels': Math.min(DECK_DEPTH, count - 1) } as React.CSSProperties}
+          onWheel={onWheel}
+          onKeyDown={onKeyDown}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          tabIndex={count > 1 ? 0 : -1}
+          role={count > 1 ? 'group' : undefined}
+          aria-label={count > 1 ? 'Projects, swipe up or down or use the arrow keys' : undefined}
+        >
+          {projects.map((item, i) => {
+            const k = i - current;
+            // Past the visible depth a card waits, hidden, at the last step.
+            const step = Math.max(-DECK_DEPTH, Math.min(DECK_DEPTH, k));
+            const depth = Math.abs(step);
+            return (
+              <span
+                key={item.id}
+                className={styles.deckCell}
+                data-side={k === 0 ? 'front' : k < 0 ? 'above' : 'below'}
+                data-gone={Math.abs(k) > DECK_DEPTH || undefined}
+                style={{ '--k': step, '--s': 1 - depth * 0.06, '--veil': [0, 0.36, 0.6][depth], zIndex: 20 - Math.abs(k) } as React.CSSProperties}
+                aria-hidden={k !== 0}
               >
-                <span className={styles.media}>
-                  {item.image ? (
-                    <Image
-                      className={styles.shot}
-                      src={item.image}
-                      alt=""
-                      fill
-                      sizes="(max-width: 767px) 92vw, 46vw"
-                    />
-                  ) : (
-                    <span className={styles.plate} aria-hidden="true">{item.title.slice(0, 1)}</span>
-                  )}
-                  {item.category ? <span className={styles.chip}>{item.category}</span> : null}
-                </span>
-                <span className={styles.caption}>
-                  {item.statusLabel ? (
-                    <span className={styles.kicker}>
-                      <i aria-hidden="true" />
-                      {item.statusLabel}
-                    </span>
-                  ) : null}
-                  <span className={styles.cardTitle}>{item.title}</span>
-                </span>
-              </button>
+                {renderCard(
+                  item,
+                  0,
+                  k === 0,
+                  () => (k === 0 ? setOpen(item.id) : goTo(i)),
+                  k === 0 ? `${item.title} — read the write-up` : `Bring ${item.title} to the front`,
+                )}
               </span>
-            ))}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
+        <div
+          ref={viewportRef}
+          className={styles.viewport}
+          onScroll={onScroll}
+          onWheel={onWheel}
+          onKeyDown={onKeyDown}
+          tabIndex={count > 1 ? 0 : -1}
+          role={count > 1 ? 'group' : undefined}
+          aria-label={count > 1 ? 'Projects, use the arrow keys to page' : undefined}
+        >
+          {pages.map((group, pageIndex) => (
+            <div
+              key={pageIndex}
+              className={styles.page}
+              data-per={perPage}
+              data-fill={group.length}
+              data-on={pageIndex === current}
+              aria-hidden={pageIndex !== current}
+            >
+              {group.map((item, i) => (
+                <span key={item.id} className={styles.cell}>
+                  {renderCard(item, i, pageIndex === current, () => setOpen(item.id), `${item.title} — read the write-up`)}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
 
       {count > 1 ? (
         <div className={styles.dots}>
@@ -228,7 +307,7 @@ export default function WorkDeck({ projects }: { projects: DeckProject[] }) {
               className={styles.dot}
               data-on={i === current}
               onClick={() => goTo(i)}
-              aria-label={`Projects ${num(i + 1)} of ${num(count)}`}
+              aria-label={deck ? `Project ${num(i + 1)} of ${num(count)}` : `Projects ${num(i + 1)} of ${num(count)}`}
               aria-current={i === current}
             />
           ))}
