@@ -9,7 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './admin.module.css';
 
-const ADMIN_BASE = '/escaleadsadmin@44334';
+const ADMIN_BASE = '/admin';
 
 type NavItem = { href: string; label: string; exact?: boolean };
 

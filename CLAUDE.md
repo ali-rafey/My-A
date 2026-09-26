@@ -12,7 +12,7 @@ The same content lives in `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, and `.cursorrul
 
 - A homepage rendered as an SPA-style scroll experience (six sections share one URL).
 - A real, routed `/blogs` listing and `/blogs/[slug]` detail pages, ISR-cached.
-- A hidden admin portal at `/escaleadsadmin@44334` for CMS and lead management.
+- An admin portal at `/admin` for CMS and lead management.
 - A Supabase Postgres backend with RLS for `blogs` and `leads`.
 - Lead capture from the public contact form, including server-side IP + Vercel geolocation.
 - Google Analytics 4 (measurement ID `G-1K5C057XHQ`) on every public route.
@@ -71,7 +71,7 @@ app/
       blogs/(route|[id]/route).ts     CRUD, all wrapped in withAdminGuard
       leads/(route|[id]|export)/      list, mark read, delete, CSV
       diagnostics/route.ts            self-test endpoint
-  escaleadsadmin@44334/               hidden admin URL — folder name is literal
+  admin/                              admin portal — the folder name sets the URL
     page.tsx                          login form OR dashboard depending on session
     layout.tsx                        intentionally minimal — no public Navbar here
     AdminTopbar.tsx
@@ -159,7 +159,7 @@ The following paths are **frozen**. They contain security-critical or schema-cri
 - `supabase/schema.sql`
 - `.env.local`, `.env.local.example`, `.env*`
 - `app/api/admin/login/route.ts`, `app/api/admin/logout/route.ts`
-- The folder name `app/escaleadsadmin@44334/` and the URL it produces
+- The folder name `app/admin/` and the URL it produces, and the redirect from the old `/escaleadsadmin@44334` address in `middleware.ts`
 - The three global stylesheets in `styles/` (`reset.css`, `tokens.css`, `global.css`) — design tokens are referenced everywhere; renaming a token is a site-wide breakage
 
 ### 4.3 No refactors of working code
@@ -204,11 +204,11 @@ If your change breaks any of these without the operator explicitly asking for it
 3. **Public blog listing** at `/blogs` (ISR 60s).
 4. **Public blog detail** at `/blogs/[slug]` (SSG + ISR + Article JSON-LD + BreadcrumbList JSON-LD).
 5. **Contact form** → `POST /api/leads` → row in Supabase `leads` table with IP, country, region, city.
-6. **Admin login** at `/escaleadsadmin@44334`. Username/password from env. 8-hour iron-session cookie.
+6. **Admin login** at `/admin`. Username/password from env. 8-hour iron-session cookie.
 7. **Admin Blog CRUD** — list, create (HTML editor + live preview), edit, delete. Affected blog paths revalidated on save.
 8. **Admin Leads management** — list, mark read/unread, delete, export CSV. Each row shows IP and Location.
-9. **Admin Diagnostics page** at `/escaleadsadmin@44334/diagnostics` — runs the live self-test against env, schema, anon insert, service-role read/update/delete, count parity, and prints visible rows.
-10. **`robots.txt`** disallows `/escaleadsadmin@44334`. **`sitemap.xml`** auto-includes published blog slugs.
+9. **Admin Diagnostics page** at `/admin/diagnostics` — runs the live self-test against env, schema, anon insert, service-role read/update/delete, count parity, and prints visible rows.
+10. **`robots.txt`** disallows `/admin`. **`sitemap.xml`** auto-includes published blog slugs.
 11. **GA4** fires `g/collect` on every route change EXCEPT admin paths.
 12. **Security headers** (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) on every response.
 13. **Mobile navbar drawer** — hamburger toggles a glass-morphic drawer on `≤768px`.
@@ -220,8 +220,8 @@ If your change breaks any of these without the operator explicitly asking for it
 
 These are NOT bugs. Do not "fix" them. They each exist because of a specific failure mode encountered in production.
 
-### 6.1 The admin URL contains an `@` character
-`/escaleadsadmin@44334` is intentional and matches the folder name `app/escaleadsadmin@44334/`. Next.js parallel routes use a **leading** `@` (e.g. `@modal`); a mid-name `@` is a regular path segment. The middleware matches BOTH `/escaleadsadmin@44334` and the percent-encoded `/escaleadsadmin%4044334` because some browsers encode and some don't.
+### 6.1 The admin portal lives at `/admin`; the old address only redirects
+The portal moved from `/escaleadsadmin@44334` to `/admin` (folder `app/admin/`) on 2026-09-27 at the operator's request. `middleware.ts` forwards the old address — both the literal `@` and the percent-encoded `%40`, because browsers differ — to the same page under `/admin` with a **temporary 307**, so old bookmarks keep working and a later move is not blocked by a cached permanent redirect. Nothing is served from the old path; do not remove the redirect. Admin-path checks (middleware, Navbar, GA4) match `/admin` exactly or `/admin/…`, never a bare `startsWith('/admin')`, so a future public page such as `/administration` is not mistaken for the portal.
 
 ### 6.2 The Blogs section exists on BOTH the homepage AND `/blogs`
 The homepage's `#blogs` section is a 3-card preview that links to individual posts. The `/blogs` page is the full listing. This duplication is a product requirement (preserve original layout while adding a routed listing for SEO), not a refactor candidate.

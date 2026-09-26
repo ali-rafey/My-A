@@ -12,7 +12,7 @@ export default function NewBlogPage() {
           <h1>New post</h1>
           <p>Compose a draft, then toggle <strong>Published</strong> when ready.</p>
         </div>
-        <Link href="/escaleadsadmin@44334/blogs" className={`${styles.button} ${styles.buttonGhost}`}>
+        <Link href="/admin/blogs" className={`${styles.button} ${styles.buttonGhost}`}>
           ← Back to all posts
         </Link>
       </div>

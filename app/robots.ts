@@ -8,8 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // Block the hidden admin portal and any API endpoints from being crawled.
-        disallow: ['/escaleadsadmin@44334', '/escaleadsadmin@44334/', '/api/'],
+        // Block the admin portal and any API endpoints from being crawled.
+        disallow: ['/admin', '/admin/', '/api/'],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

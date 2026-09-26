@@ -81,7 +81,7 @@ export default function BlogEditor({ mode, initial }: Props) {
 
       setSuccess(mode === 'create' ? 'Post created.' : 'Post updated.');
       if (mode === 'create' && data.blog) {
-        router.push(`/escaleadsadmin@44334/blogs/${data.blog.id}/edit`);
+        router.push(`/admin/blogs/${data.blog.id}/edit`);
         router.refresh();
       } else {
         router.refresh();
@@ -209,7 +209,7 @@ export default function BlogEditor({ mode, initial }: Props) {
         <button
           type="button"
           className={`${styles.button} ${styles.buttonGhost}`}
-          onClick={() => router.push('/escaleadsadmin@44334/blogs')}
+          onClick={() => router.push('/admin/blogs')}
         >
           Cancel
         </button>

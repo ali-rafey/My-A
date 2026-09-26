@@ -16,7 +16,7 @@ export default async function AdminBlogsPage() {
           <h1>Blog Manager</h1>
           <p>{blogs.length} post{blogs.length === 1 ? '' : 's'} total.</p>
         </div>
-        <Link className={styles.button} href="/escaleadsadmin@44334/blogs/new">
+        <Link className={styles.button} href="/admin/blogs/new">
           + New post
         </Link>
       </div>
@@ -59,7 +59,7 @@ export default async function AdminBlogsPage() {
                     <div className={styles.tableActions}>
                       <Link
                         className={`${styles.button} ${styles.buttonGhost}`}
-                        href={`/escaleadsadmin@44334/blogs/${blog.id}/edit`}
+                        href={`/admin/blogs/${blog.id}/edit`}
                       >
                         Edit
                       </Link>

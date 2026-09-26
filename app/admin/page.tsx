@@ -76,16 +76,16 @@ export default async function AdminRootPage() {
       <div className={styles.card}>
         <h2 className={styles.sectionHeading}>Quick links</h2>
         <div className={styles.formActions}>
-          <Link className={styles.button} href="/escaleadsadmin@44334/blogs/new">
+          <Link className={styles.button} href="/admin/blogs/new">
             Write a new post
           </Link>
-          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/blogs">
+          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/admin/blogs">
             Manage blogs
           </Link>
-          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/leads">
+          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/admin/leads">
             Review inbound
           </Link>
-          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/prospects">
+          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/admin/prospects">
             Work prospects
           </Link>
         </div>

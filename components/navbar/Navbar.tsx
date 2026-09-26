@@ -118,7 +118,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-const ADMIN_PATH_PREFIXES = ['/escaleadsadmin@44334', '/escaleadsadmin%4044334'];
+const ADMIN_BASE = '/admin';
 
 // Length of the expand morph. Must stay in sync with `--nav-duration` on
 // `.expanded` in Navbar.module.css — the showcase below has to hold the bar
@@ -135,7 +135,7 @@ export default function Navbar() {
   // visitor's own click does. (The comment on the scrim always promised this;
   // the code previously showed the scrim for the showcase too.)
   const [showcasing, setShowcasing] = useState(false);
-  const onAdmin = ADMIN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+  const onAdmin = pathname === ADMIN_BASE || pathname.startsWith(`${ADMIN_BASE}/`);
   // Ali's portfolio at /meet-ali is a standalone sub-site with its own
   // masthead and "Back to EscaLeads" links — the marketing navbar stays off it.
   const onPortfolio = pathname === '/meet-ali' || pathname.startsWith('/meet-ali/');

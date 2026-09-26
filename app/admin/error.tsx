@@ -25,7 +25,7 @@ export default function AdminError({
         <button type="button" className={styles.button} onClick={() => reset()}>
           Try again
         </button>
-        <Link href="/escaleadsadmin@44334" className={`${styles.button} ${styles.buttonGhost}`}>
+        <Link href="/admin" className={`${styles.button} ${styles.buttonGhost}`}>
           Dashboard
         </Link>
       </div>

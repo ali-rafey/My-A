@@ -10,7 +10,7 @@ A complete, session-to-session reference for the EscaLeads codebase. Pair this w
 
 - A **scroll-SPA homepage** at `/` that stitches six sections together under one URL (Home, Services, How It Works, Blogs preview, Our Work, Contact). The navbar smooth-scrolls between section `id`s.
 - A **routed blog** at `/blogs` and `/blogs/[slug]`, server-rendered with ISR.
-- A **hidden admin portal** at `/escaleadsadmin@44334` (the `@` is a literal path segment, not a parallel-route marker) for CMS and lead management.
+- An **admin portal** at `/admin` for CMS and lead management (the old `/escaleadsadmin@44334` address redirects there).
 - A **Supabase Postgres backend** with Row-Level Security (RLS) for two tables: `blogs` and `leads`.
 - **Server-side lead capture** with IP + geolocation enrichment (Vercel edge headers, optionally upgraded by IPinfo).
 - **Google Analytics 4** (measurement id `G-1K5C057XHQ`) on every public route, with manual SPA pageview tracking.
@@ -84,7 +84,7 @@ NPM scripts in `package.json`:
 │   │       │   ├── [id]/route.ts     PATCH (mark read) + DELETE
 │   │       │   └── export/route.ts   GET CSV download
 │   │       └── diagnostics/route.ts  end-to-end self-test
-│   └── escaleadsadmin@44334/         hidden admin (folder name is literal)
+│   └── admin/                        admin portal (the folder name sets the URL)
 │       ├── layout.tsx                minimal — does NOT render the public Navbar
 │       ├── page.tsx                  login OR dashboard (session-gated)
 │       ├── LoginForm.tsx             client form posting /api/admin/login
@@ -188,12 +188,12 @@ NPM scripts in `package.json`:
 | `/blogs/[slug]` | SSG via `generateStaticParams` + ISR 60s | `app/blogs/[slug]/page.tsx` | Article + BreadcrumbList JSON-LD, OG/Twitter tags |
 | `/sitemap.xml` | Generated | `app/sitemap.ts` | Static entries + dynamic published slugs |
 | `/robots.txt` | Generated | `app/robots.ts` | Disallows admin + `/api/` |
-| `/escaleadsadmin@44334` | `force-dynamic` | `app/escaleadsadmin@44334/page.tsx` | Login form when no session, dashboard when authenticated |
-| `/escaleadsadmin@44334/blogs` | `force-dynamic` | `app/escaleadsadmin@44334/blogs/page.tsx` | Table of all blogs (drafts visible) |
-| `/escaleadsadmin@44334/blogs/new` | `force-dynamic` | `.../blogs/new/page.tsx` | BlogEditor in create mode |
-| `/escaleadsadmin@44334/blogs/[id]/edit` | `force-dynamic` | `.../blogs/[id]/edit/page.tsx` | BlogEditor in edit mode |
-| `/escaleadsadmin@44334/leads` | `force-dynamic` | `.../leads/page.tsx` | Card list + summary stats + CSV export |
-| `/escaleadsadmin@44334/diagnostics` | `force-dynamic` | `.../diagnostics/page.tsx` | Run-button + results table |
+| `/admin` | `force-dynamic` | `app/admin/page.tsx` | Login form when no session, dashboard when authenticated |
+| `/admin/blogs` | `force-dynamic` | `app/admin/blogs/page.tsx` | Table of all blogs (drafts visible) |
+| `/admin/blogs/new` | `force-dynamic` | `.../blogs/new/page.tsx` | BlogEditor in create mode |
+| `/admin/blogs/[id]/edit` | `force-dynamic` | `.../blogs/[id]/edit/page.tsx` | BlogEditor in edit mode |
+| `/admin/leads` | `force-dynamic` | `.../leads/page.tsx` | Card list + summary stats + CSV export |
+| `/admin/diagnostics` | `force-dynamic` | `.../diagnostics/page.tsx` | Run-button + results table |
 
 ### API routes (Node runtime, force-dynamic)
 
@@ -215,7 +215,7 @@ NPM scripts in `package.json`:
 
 ### Middleware (`middleware.ts`)
 
-Runs in the **Edge runtime**. Matches `/escaleadsadmin@44334` and its percent-encoded twin `/escaleadsadmin%4044334` (browsers vary on encoding `@`):
+Runs in the **Edge runtime**. Gates `/admin` and everything under `/admin/`, and forwards the old `/escaleadsadmin@44334` address (and its percent-encoded twin `/escaleadsadmin%4044334`) to the same page under `/admin` with a temporary 307:
 
 1. Sets `X-Robots-Tag: noindex, nofollow, noarchive` on every admin response.
 2. For non-root admin paths, redirects to the admin root with `?redirect=...` if the iron-session cookie is **absent**. Cookie presence only — full HMAC validation happens server-side via `getAdminSession()`. This keeps iron-session out of the Edge bundle.
@@ -229,7 +229,7 @@ Root HTML shell. Loads Inter via `next/font`, renders public Navbar above `<main
 
 ### `components/navbar/Navbar.tsx`
 Client component. Single source for the public navbar. Behaviour:
-- Returns `null` when `pathname` starts with either admin prefix (so admin pages have no public chrome).
+- Returns `null` on `/admin` and anything under `/admin/` (so admin pages have no public chrome).
 - Tracks `scrolled` (toggles a class after 60px of scroll).
 - On `/`, sets up an `IntersectionObserver` (thresholds 0.45, rootMargin `-20% 0px -45% 0px`) to highlight the active nav item as the user scrolls.
 - Section links smooth-scroll on `/`; when on any other path, navigates to `/#<id>`.
@@ -247,7 +247,7 @@ Each homepage section is its own folder with `<Name>.tsx` + `<Name>.module.css`.
 `BlogsPreview` is an `async` server component that calls `listPublishedBlogs()` directly and renders the first three cards plus a "View all posts →" link.
 
 ### Admin pages
-- `app/escaleadsadmin@44334/page.tsx` — session-gated. Without a session it returns `<LoginForm />`. With one, it renders four stat cards (total blogs, drafts, total leads, unread) computed with four parallel `count: 'exact', head: true` queries against the service-role client, plus quick links.
+- `app/admin/page.tsx` — session-gated. Without a session it returns `<LoginForm />`. With one, it renders four stat cards (total blogs, drafts, total leads, unread) computed with four parallel `count: 'exact', head: true` queries against the service-role client, plus quick links.
 - `LoginForm.tsx` — client form posting `/api/admin/login`, reads `?redirect=` from `useSearchParams()` to bounce back to the originally requested page.
 - `AdminTopbar.tsx` — client nav with Dashboard / Blogs / Leads / Diagnostics + a Logout button calling `/api/admin/logout`.
 - `blogs/page.tsx` — table of all blogs (service role, so drafts are visible). Each row has Edit / View (if published) / Delete.
@@ -381,7 +381,7 @@ Errors include specific SQL hints (e.g. `grant insert on public.leads to anon, a
 
 ## 8. Auth and security
 
-- **Hidden URL** `/escaleadsadmin@44334`. The `@` is a literal segment, not a parallel-route marker (which would require a leading `@`). Middleware matches both encoded and decoded forms.
+- **Portal URL** `/admin`. The previous address `/escaleadsadmin@44334` redirects to it (307); nothing is served from the old path. With a guessable URL, the login's rate limit and a strong password carry the protection.
 - **Iron-session** HMAC-signed HTTP-only cookie. 8h max age. `secure` in production, `sameSite: 'lax'`. `SESSION_SECRET` must be ≥32 chars (validated lazily at request time so cold start doesn't crash).
 - **Split sessions vs cookie module** — `lib/auth/cookie.ts` exports only the cookie name (Edge-safe, no Node `crypto`). `lib/auth/session.ts` does iron-session work and is server-only. Middleware imports the former; route handlers import the latter.
 - **Two-stage auth check** — Edge middleware redirects to the admin root if the session cookie is absent. Route handlers / pages then validate the HMAC via `getAdminSession()` / `requireAdmin()`. A forged-but-present cookie passes the middleware gate and dies at the route handler.
@@ -389,7 +389,7 @@ Errors include specific SQL hints (e.g. `grant insert on public.leads to anon, a
 - **Timing-safe credential compare** in `/api/admin/login` (custom xor-OR over equal-length strings; bails early on length mismatch but the secrets are constant-length in practice).
 - **Rate limiting** — `lib/rate-limit.ts` in-memory token bucket. `/api/admin/login` and `/api/leads` use 5/min/IP; default admin write is 60/min/IP. Per-instance, not global — fine for current Vercel scale.
 - **CSP and headers** — `next.config.mjs` ships strict CSP (only googletagmanager + supabase + GA + g.doubleclick whitelisted), `frame-ancestors 'none'`, `Strict-Transport-Security` 2-year preload, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying camera/mic/geolocation/interest-cohort, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
-- **`X-Robots-Tag: noindex`** added to every admin response by middleware. `robots.txt` also disallows `/escaleadsadmin@44334` and `/api/`.
+- **`X-Robots-Tag: noindex`** added to every admin response by middleware. `robots.txt` also disallows `/admin` and `/api/`.
 - **`poweredByHeader: false`** in `next.config.mjs` so the framework signature doesn't leak.
 
 ---
@@ -431,7 +431,7 @@ This is so a fresh Vercel deploy with no env vars can still build successfully.
 Homepage sections are server components except where interaction is needed (Contact form, HeroActions buttons). Don't promote whole sections to client just because one piece needs `useState`.
 
 ### 9.11 Admin layout intentionally minimal
-`app/escaleadsadmin@44334/layout.tsx` does NOT render the public Navbar (the Navbar itself also returns null on admin paths — belt-and-braces). Admin uses its own `AdminTopbar`.
+`app/admin/layout.tsx` does NOT render the public Navbar (the Navbar itself also returns null on admin paths — belt-and-braces). Admin uses its own `AdminTopbar`.
 
 ### 9.12 IP and geo are server-only
 `lib/client-info.ts` is `import 'server-only'`. Values are stored on the lead row and shown only in the authenticated admin dashboard. No client-side disclosure by product decision.

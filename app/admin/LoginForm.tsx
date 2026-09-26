@@ -7,7 +7,7 @@ import styles from './admin.module.css';
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/escaleadsadmin@44334';
+  const redirectTo = searchParams.get('redirect') || '/admin';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

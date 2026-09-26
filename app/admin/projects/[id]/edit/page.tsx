@@ -17,7 +17,7 @@ export default async function EditProjectPage({ params }: { params: { id: string
           <h1>Edit project</h1>
           <p>{project.title}</p>
         </div>
-        <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/projects">
+        <Link className={`${styles.button} ${styles.buttonGhost}`} href="/admin/projects">
           Back to work
         </Link>
       </div>

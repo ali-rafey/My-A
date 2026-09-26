@@ -127,7 +127,7 @@ export const GET = withAdminGuard(async (_req: NextRequest) => {
         name: '__diagnostic__',
         email: 'diagnostic@example.invalid',
         phone: null,
-        message: 'Self-test row from /escaleadsadmin@44334/diagnostics',
+        message: 'Self-test row from /admin/diagnostics',
         ip_address: '0.0.0.0',
         country: 'XX',
         region: 'TEST',

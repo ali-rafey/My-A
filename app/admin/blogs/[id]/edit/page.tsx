@@ -17,7 +17,7 @@ export default async function EditBlogPage({ params }: { params: { id: string } 
           <h1>Edit post</h1>
           <p>{blog.published ? 'Currently published.' : 'Currently a draft.'}</p>
         </div>
-        <Link href="/escaleadsadmin@44334/blogs" className={`${styles.button} ${styles.buttonGhost}`}>
+        <Link href="/admin/blogs" className={`${styles.button} ${styles.buttonGhost}`}>
           ← Back to all posts
         </Link>
       </div>

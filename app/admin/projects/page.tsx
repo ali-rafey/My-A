@@ -29,7 +29,7 @@ export default async function AdminProjectsPage() {
           <h1>Work Manager</h1>
           <p>{projects.length} project{projects.length === 1 ? '' : 's'} total. Published ones appear on /our-work.</p>
         </div>
-        <Link className={styles.button} href="/escaleadsadmin@44334/projects/new">
+        <Link className={styles.button} href="/admin/projects/new">
           + New project
         </Link>
       </div>
@@ -90,7 +90,7 @@ export default async function AdminProjectsPage() {
                     <div className={styles.tableActions}>
                       <Link
                         className={`${styles.button} ${styles.buttonGhost}`}
-                        href={`/escaleadsadmin@44334/projects/${project.id}/edit`}
+                        href={`/admin/projects/${project.id}/edit`}
                       >
                         Edit
                       </Link>

@@ -12,7 +12,7 @@ export default function NewProjectPage() {
           <h1>New project</h1>
           <p>Add a piece of work to /our-work.</p>
         </div>
-        <Link className={`${styles.button} ${styles.buttonGhost}`} href="/escaleadsadmin@44334/projects">
+        <Link className={`${styles.button} ${styles.buttonGhost}`} href="/admin/projects">
           Back to work
         </Link>
       </div>

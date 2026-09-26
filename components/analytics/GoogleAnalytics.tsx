@@ -14,7 +14,7 @@ import { useEffect, Suspense } from 'react';
 // useEffect call. So the first paint AND all subsequent SPA route changes are tracked.
 
 const DEFAULT_MEASUREMENT_ID = 'G-1K5C057XHQ';
-const ADMIN_PATH_PREFIXES = ['/escaleadsadmin@44334', '/escaleadsadmin%4044334'];
+const ADMIN_BASE = '/admin';
 
 declare global {
   interface Window {
@@ -29,7 +29,7 @@ function Tracker({ measurementId }: { measurementId: string }) {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
-    if (ADMIN_PATH_PREFIXES.some((p) => pathname.startsWith(p))) return;
+    if (pathname === ADMIN_BASE || pathname.startsWith(`${ADMIN_BASE}/`)) return;
 
     const query = searchParams.toString();
     const url = query ? `${pathname}?${query}` : pathname;

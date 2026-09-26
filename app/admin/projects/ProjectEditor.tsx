@@ -71,7 +71,7 @@ export default function ProjectEditor({ mode, initial }: { mode: Mode; initial?:
 
       setSuccess(mode === 'create' ? 'Project created.' : 'Project updated.');
       if (mode === 'create' && data.project) {
-        router.push(`/escaleadsadmin@44334/projects/${data.project.id}/edit`);
+        router.push(`/admin/projects/${data.project.id}/edit`);
       }
       router.refresh();
     } catch (err) {
@@ -214,7 +214,7 @@ export default function ProjectEditor({ mode, initial }: { mode: Mode; initial?:
         <button
           type="button"
           className={`${styles.button} ${styles.buttonGhost}`}
-          onClick={() => router.push('/escaleadsadmin@44334/projects')}
+          onClick={() => router.push('/admin/projects')}
         >
           Cancel
         </button>
