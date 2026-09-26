@@ -1122,15 +1122,6 @@
 @keyframes dragMove { to { transform: translateX(var(--dx)); } }
 
 /* ── 12 · Automate — an order runs the workflow by itself ─────────────────── */
-.bigCaret {
-  position: absolute;
-  left: 600px;
-  top: 318px;
-  width: 4px;
-  height: 84px;
-  background: #D7B8FF;
-  animation: fadeOut 1ms linear 260ms forwards;
-}
 .termLine {
   position: absolute;
   left: 50%;
@@ -1141,8 +1132,25 @@
   letter-spacing: -0.02em;
   color: #EEF1F7;
   white-space: nowrap;
+  /* On screen from the first frame (the caret is the scene's opening beat);
+     it only leaves, as the workflow takes the screen. */
+  animation: fadeOut 260ms ease var(--o) forwards;
 }
-.termLine em { font-style: normal; color: #86D35B; }
+.termLine em { display: inline-block; font-style: normal; color: #86D35B; }
+/* Drawn like the typing caret (.ch::after) and at its spot, so the first
+   keystroke simply carries it on. */
+.termCaret { position: relative; display: inline-block; width: 0; height: 1em; vertical-align: -0.12em; }
+.termCaret::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.08em;
+  bottom: 0.04em;
+  width: max(2px, 0.06em);
+  border-radius: 2px;
+  background: currentColor;
+  animation: fadeOut 1ms linear 300ms forwards;
+}
 .wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .wire { fill: none; stroke: rgba(255, 255, 255, 0.2); stroke-width: 2; stroke-dasharray: 5 7; }
 .wireOk { fill: none; stroke: #3DDC84; stroke-width: 2.5; stroke-dasharray: 1 2; stroke-dashoffset: 1; animation: draw var(--run) linear var(--d) forwards; }
@@ -1373,7 +1381,6 @@
 
 /* 12 · Automate — one spine down the middle; type sized for a phone (the
    canvas is drawn at roughly 0.6 there, so body text is 17px and up). */
-:global([data-orient='portrait']) .bigCaret { left: 338px; top: 598px; }
 :global([data-orient='portrait']) .termLine { font-size: 42px; }
 :global([data-orient='portrait']) .wire,
 :global([data-orient='portrait']) .wireOk { stroke-width: 3; }

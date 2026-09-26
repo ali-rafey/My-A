@@ -1379,9 +1379,11 @@ function Automate() {
   ];
   return (
     <div className={`${s.fill} ${s.darkBg}`}>
-      <span className={s.bigCaret} />
-      <span className={`${s.termLine} ${s.inout}`} style={at(250, 1450)}>
-        <em>→</em> <Typed text="automate the busywork" start={300} step={42} />
+      {/* The prompt waits where the typing will begin — the same caret as the
+          typing's own, which takes over from the first keystroke — so nothing
+          jumps between the empty screen and the line. */}
+      <span className={s.termLine} style={at(250, 1450)}>
+        <em className={s.pop}>→</em> <span className={s.termCaret} /><Typed text="automate the busywork" start={300} step={42} />
       </span>
 
       <svg className={s.wires} viewBox={portrait ? '0 0 720 1280' : '0 0 1280 720'}>

@@ -36,11 +36,13 @@
   overflow: hidden;
   background: var(--cv-bg);
   isolation: isolate;
-  transition: background-color 0.28s ease;
 }
 
 /* A dark scene on a screen far wider than 16:9 shows the stage at its sides;
-   match it so there is no light band around a dark frame. */
+   match it so there is no light band around a dark frame. It switches in one
+   step, not with a transition: easing between paper and near-black while the
+   next scene fades in mixes the two into a muddy grey. A clean cut is the
+   film's grammar here. */
 .stage[data-tone='dark'] { background: var(--cv-dark); }
 
 /* Film grain, static — the reference has a faint paper texture. */
