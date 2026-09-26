@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import ProjectEditor from '../ProjectEditor';
 import styles from '../../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  await requireAdminPage();
   return (
     <>
       <div className={styles.pageHeader}>

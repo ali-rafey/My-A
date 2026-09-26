@@ -5,10 +5,12 @@ import type { Project } from '@/lib/supabase/types';
 import { formatDate } from '@/lib/format';
 import DeleteProjectButton from './DeleteProjectButton';
 import styles from '../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProjectsPage() {
+  await requireAdminPage();
   let projects: Project[];
   let loadError: string | null = null;
   try {

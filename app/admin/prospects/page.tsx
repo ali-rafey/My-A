@@ -3,10 +3,12 @@ import type { Prospect } from '@/lib/supabase/types';
 import ProspectsBoard from './ProspectsBoard';
 import ProspectsExportButton from './ProspectsExportButton';
 import styles from '../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProspectsPage() {
+  await requireAdminPage();
   // getProspects throws on a Supabase failure by design — a silent fallback would render every
   // prospect as "New" and the operator would re-contact people they had already emailed.
   let prospects: Prospect[];

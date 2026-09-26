@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation';
 import { adminGetBlog } from '@/lib/content/blogs';
 import BlogEditor from '../../BlogEditor';
 import styles from '../../../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditBlogPage({ params }: { params: { id: string } }) {
+  await requireAdminPage();
   const blog = await adminGetBlog(params.id).catch(() => null);
   if (!blog) notFound();
 

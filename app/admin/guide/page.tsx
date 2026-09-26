@@ -1,12 +1,14 @@
 import Guide from './Guide';
 import styles from '../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 // Admin Guide — the owner's playbook for the four pillars the agency sells.
 // The content lives in content.ts and diagrams.tsx; this page only frames it.
 
-export default function AdminGuidePage() {
+export default async function AdminGuidePage() {
+  await requireAdminPage();
   return (
     <>
       <div className={styles.pageHeader}>

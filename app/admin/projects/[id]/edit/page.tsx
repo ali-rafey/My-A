@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation';
 import { adminGetProject } from '@/lib/content/projects';
 import ProjectEditor from '../../ProjectEditor';
 import styles from '../../../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditProjectPage({ params }: { params: { id: string } }) {
+  await requireAdminPage();
   const project = await adminGetProject(params.id);
   if (!project) notFound();
 

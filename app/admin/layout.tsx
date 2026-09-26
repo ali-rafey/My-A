@@ -14,8 +14,10 @@ export const metadata: Metadata = {
 // only swaps `{children}`, so the sidebar no longer flashes or remounts.
 //
 // When the visitor isn't authenticated we render `{children}` unwrapped so the root page can
-// show its own centered login layout (no sidebar context makes sense before login). Middleware
-// gates non-root admin URLs anyway — a logged-out visitor only ever lands on the root path.
+// show its own centered login layout (no sidebar context makes sense before login). This layout
+// is NOT the gate for the other admin pages: each of them calls requireAdminPage() itself
+// (lib/auth/require-admin-page.ts), because middleware only checks that a cookie is present and a
+// page can be requested without its layout re-rendering.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getAdminSession();
 

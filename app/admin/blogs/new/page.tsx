@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import BlogEditor from '../BlogEditor';
 import styles from '../../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
-export default function NewBlogPage() {
+export default async function NewBlogPage() {
+  await requireAdminPage();
   return (
     <>
       <div className={styles.pageHeader}>

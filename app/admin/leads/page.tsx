@@ -4,6 +4,7 @@ import type { Lead } from '@/lib/supabase/types';
 import LeadRow from './LeadRow';
 import ExportButton from './ExportButton';
 import styles from '../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ async function getLeads(): Promise<Lead[]> {
 }
 
 export default async function AdminLeadsPage() {
+  await requireAdminPage();
   const leads = await getLeads();
   const unread = leads.filter((lead) => !lead.read).length;
   const readCount = leads.length - unread;

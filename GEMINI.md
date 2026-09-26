@@ -232,8 +232,8 @@ This is deliberate. Importing `isomorphic-dompurify` loads `jsdom` synchronously
 ### 6.4 `lib/auth/cookie.ts` exists separately from `lib/auth/session.ts`
 The middleware runs in the Edge runtime and cannot import `iron-session` (it pulls Node `crypto`). `lib/auth/cookie.ts` exports only the cookie-name constant and is Edge-safe. `lib/auth/session.ts` does the actual session work and is server-only. **Do not consolidate them.**
 
-### 6.5 The middleware only checks cookie presence, not validity
-The Edge middleware checks that the iron-session cookie exists. The actual HMAC validation happens in route handlers via `getAdminSession()` (which throws on tamper). This is a deliberate split — keeping iron-session out of the Edge bundle is a hard requirement.
+### 6.5 The middleware only checks cookie presence, not validity — so every admin page checks the session itself
+The Edge middleware checks that the iron-session cookie exists. It does not validate it, so a cookie with **any** value gets past it. Keeping iron-session out of the Edge bundle is a hard requirement, so the real check lives on the server: admin API routes validate through `withAdminGuard` → `requireAdmin()`, and **every admin page except `/admin` itself must call `await requireAdminPage()` (`lib/auth/require-admin-page.ts`) as its first statement**, before reading any data and outside any try/catch. The admin layout is not a gate — a page segment can be fetched without its layout re-rendering. A page that skips `requireAdminPage()` serves its data to anyone who sets a fake cookie (this was a live hole until 2026-09-27).
 
 ### 6.6 Both server-side Supabase clients force `cache: 'no-store'`
 `lib/supabase/server.ts` passes a `global.fetch` that always sets `cache: 'no-store'`. This is required because Next.js wraps native fetch with its data cache, and supabase-js uses native fetch — without no-store, two consecutive server-side queries (e.g. dashboard count and leads list) can return inconsistent snapshots. Removing this WILL reintroduce the dashboard-vs-leads-page count mismatch.

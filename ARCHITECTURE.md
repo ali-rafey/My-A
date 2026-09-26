@@ -218,7 +218,7 @@ NPM scripts in `package.json`:
 Runs in the **Edge runtime**. Gates `/admin` and everything under `/admin/`, and forwards the old `/escaleadsadmin@44334` address (and its percent-encoded twin `/escaleadsadmin%4044334`) to the same page under `/admin` with a temporary 307:
 
 1. Sets `X-Robots-Tag: noindex, nofollow, noarchive` on every admin response.
-2. For non-root admin paths, redirects to the admin root with `?redirect=...` if the iron-session cookie is **absent**. Cookie presence only — full HMAC validation happens server-side via `getAdminSession()`. This keeps iron-session out of the Edge bundle.
+2. For non-root admin paths, redirects to the admin root with `?redirect=...` if the iron-session cookie is **absent**. Cookie presence only — a cookie with any value passes — which keeps iron-session out of the Edge bundle. The real check is server-side: every admin page except `/admin` calls `requireAdminPage()` (`lib/auth/require-admin-page.ts`) first, and API routes go through `withAdminGuard`.
 
 ---
 

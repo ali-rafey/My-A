@@ -3,10 +3,12 @@ import { adminListBlogs } from '@/lib/content/blogs';
 import { formatDate } from '@/lib/format';
 import DeleteBlogButton from './DeleteBlogButton';
 import styles from '../admin.module.css';
+import { requireAdminPage } from '@/lib/auth/require-admin-page';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminBlogsPage() {
+  await requireAdminPage();
   const blogs = await adminListBlogs().catch(() => []);
 
   return (
